@@ -16,50 +16,94 @@ detail in the paper "[MorphNet: Fast & Simple Resource-Constrained Learning of
 Deep Network Structure](https://arxiv.org/abs/1711.06798)", published at
 [CVPR 2018](http://cvpr2018.thecvf.com/).
 
+In short, the MorphNet regularizer pushes weights down, and once they are small
+enough, the corresponding output channels are marked for removal from the
+network.
+
 ## Usage
 
-We assume you start from a working convolutional network. MorphNet will discover
-and propose for your review a new network structure, which will differ from the
-original only by the number of output channels of various layers.
+Suppose you have a working convolutional neural network for image classification
+but want to shrink the model to satisfy some constraints (e.g., memory,
+latency). Given an existing model (the “seed network”) and a target criterion,
+MorphNet will propose a new model by adjusting the number of output channels in
+each convolution layer.
 
-To apply MorphNet method, you would add a new regularizer during training. The
-regularizer pushes certain weights down, with the idea that once they are small
-enough, the corresponding channels can be removed from the network. While the
-training is going on, MorphNet will periodically save JSON files with the
-proposed network structure (i.e., the proposed channel counts for each layer).
-As it takes time to reduce the weights, you would normally see the proposed
-output counts go down as the step count increases. You would typically wait for
-the training to converge, or at least to stabilize to some degree.
+Note that MorphNet does not change the topology of the network -- the proposed
+model will have the same number of layers and connectivity pattern as the seed
+network.
 
-Once you obtained the proposed network structure, you would modify your model to
-use the new channel counts, and run the training again, from scratch. This
-second round of training is required because removing the output channels with
-small weights is still a meaningful modification to the network.
+To use MorphNet, you must:
 
-We refer to the first round of training as the **structure learning**, and the
-second round of training as the **retraining**.
+1.  Choose a regularizer from `morphnet.network_regularizers`. The choice is
+    based on
 
-There are several hyperparameters you need to choose for the structure learning
-phase:
+    *   your target cost (e.g., FLOPs, latency)
+    *   your network architecture: use `Gamma` regularizer if the seed network
+        has BatchNorm; use `GroupLasso` otherwise.
 
-*   MorphNet NetworkRegularizer (see section below).
-*   Regularization strength, which is a multiplicative factor applied to
-    MorphNet regularization loss. We recommend a full search through a wide
-    range of values, with adjacent values separated by a factor of ~1.5-2.0.
-*   Learning rate schedule. We recommend using a relatively low fixed learning
-    rate.
-*   Threshold that decides how low the weights need to be before MorphNet
-    proposes to remove the corresponding output channel. The exact semantics of
-    the threshold (i.e., whether it applies to the weight norm, or batch norm
-    gamma, etc.) depends on the regularizer type.
+    Note: If you use BatchNorm, you must enable the scale parameters (“gamma
+    variables”), e.g. by setting `scale=True` if you are using
+    `tf.keras.layers.BatchNormalization`.
 
-The retraining phase should use the exact same hyperparameters you use for the
-normal training.
+2.  Initialize the regularizer with a threshold and the output ops of your model
+    (e.g., logits for classification).
 
-In addition, depending on your ultimate goal, you may linearly expand the
-network before or after the structure learning phase. This way, you will end up
-with roughly the same network size as without MorphNet, but (hopefully) better
-accuracy.
+    MorphNet regularizer crawls your graph starting from the output ops, and
+    applies regularization to some of the ops it encounters. It uses the
+    threshold to determine which output channels are unimportant and can be
+    eliminated.
+
+3.  Add the regularization term to your loss.
+
+    As always, regularization loss must be scaled. We recommend to search for
+    the scaling hyperparameter (*regularization strength*) along a logarithmic
+    scale spanning a few orders of magnitude around `1/(# of params)`.
+
+    Note: MorphNet does not currently add the regularization loss to the
+    tf.GraphKeys.REGULARIZATION_LOSSES collection; this choice is subject to
+    revision.
+
+    Note: Do not confuse `get_regularization_term()` (the loss you should add to
+    your training) with `get_cost()` (the estimated cost of the network if the
+    proposed structure is applied).
+
+4.  Train the model.
+
+    Note: We recommend using a fixed learning rate (no decay) for this step,
+    though this is not strictly necessary.
+
+5.  Save the proposed model structure with the `StructureExporter`.
+
+    The exported files are in JSON format. Note that as the training progresses,
+    the proposed model structure will change. There are no specific guidelines
+    on the stopping time, although you would likely want to wait for the
+    regularization loss (reported via summaries) to stabilize.
+
+6.  (Optional) Create summary ops to monitor the training progress through
+    TensorBoard.
+
+7.  Modify your model using the `StructureExporter` output.
+
+8.  Retrain the model from scratch, without the MorphNet regularizer.
+
+    Note: Use the standard values for all hyperparameters (such as the learning
+    rate schedule).
+
+9.  (Optional) Linearly expand the network to adjust the accuracy vs cost
+    trade-off as desired. Alternatively, this step can be performed at the very
+    beginning.
+
+We refer to the first round of training as *structure learning* and the second
+round as *retraining*.
+
+To summarize, the key hyperparameters for MorphNet are:
+
+*   Regularization strength
+*   Regularizer threshold
+
+Note that the regularizer type is not a hyperparameter, since it's uniquely
+determined by the metric of interest (FLOPs, latency) and the presence of
+BatchNorm.
 
 ## Regularizer Types
 
@@ -82,16 +126,10 @@ models with batch norm; it requires that batch norm scale is enabled.
 *Latency* optimizes for the estimated inference latency of the network, based on
 the provided hardware.
 
-## Code Examples
+## Example: Adding a FLOPs Regularizer
 
-### Adding a MorphNet Regularizer
-
-Most of the MorphNet logic is inside the NetworkRegularizer object. Each
-NetworkRegularizer represents a resource that we wish to target/constrain when
-optimizing the network, as well as an algorithm that performs this optimization.
-To apply MorphNet regularizer, the code would look similar to the example below.
-The example refers to a specific type of NetworkRegularizer that targets FLOPs
-(other regularizer types are available through the same library).
+The example below demonstrates how to use MorphNet to reduce the number of FLOPs
+in your model.
 
 ```python
 from morph_net.network_regularizers import flop_regularizer
