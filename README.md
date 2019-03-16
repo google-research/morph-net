@@ -63,9 +63,9 @@ accuracy.
 
 ## Regularizer Types
 
-Regularizer classes can be found under ```network_regularizers/``` directory.
-They are named by the algorithm they use and the target cost they attempt to
-minimize. For example, ```GammaFlopsRegularizer``` uses the batch norm gamma in
+Regularizer classes can be found under `network_regularizers/` directory. They
+are named by the algorithm they use and the target cost they attempt to
+minimize. For example, `GammaFlopsRegularizer` uses the batch norm gamma in
 order to regularize the FLOP cost.
 
 ### Regularizer Algorithms
@@ -77,8 +77,7 @@ models with batch norm; it requires that batch norm scale is enabled.
 
 *Flops* optimizes the estimated FLOP count of the inference network.
 
-*Model Size* optimizes the parameter count (number of weights) of the
-network.
+*Model Size* optimizes the parameter count (number of weights) of the network.
 
 *Latency* optimizes for the estimated inference latency of the network, based on
 the provided hardware.
@@ -115,8 +114,8 @@ train_op = optimizer.minimize(model_loss + regularizer_loss)
 
 You should monitor the progress of structure learning training via Tensorboard.
 In particular, you should consider adding a summary that computes the current
-MorphNet regularization loss and the cost if the currently proposed structure
-is adopted.
+MorphNet regularization loss and the cost if the currently proposed structure is
+adopted.
 
 ```python
 tf.summary.scalar(
@@ -127,7 +126,7 @@ tf.summary.scalar(network_regularizer.cost_name,
                   network_regularizer.get_cost())
 ```
 
-![TensorBoardDisplayOfFlops](g3doc/tensorboard.png "Example of the TensorBoard display of the resource regularized by MorphNet.")
+![TensorBoardDisplayOfFlops](https://drive.google.com/uc?export=view&id=1Jsmcxg-7pyLCw_KPb9Bzs2YXxSDDpGTU "Example of the TensorBoard display of the resource regularized by MorphNet.")
 
 Larger values of `regularization_strength` will converge to smaller effective
 FLOP count. If `regularization_strength` is large enough, the FLOP count will
