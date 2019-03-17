@@ -89,9 +89,9 @@ To use MorphNet, you must:
     Note: Use the standard values for all hyperparameters (such as the learning
     rate schedule).
 
-9.  (Optional) Linearly expand the network to adjust the accuracy vs cost
-    trade-off as desired. Alternatively, this step can be performed at the very
-    beginning.
+9.  (Optional) Uniformly expand the network to adjust the accuracy vs. cost
+    trade-off as desired. Alternatively, this step can be performed *before*
+    the structure learning step.
 
 We refer to the first round of training as *structure learning* and the second
 round as *retraining*.
@@ -114,17 +114,18 @@ order to regularize the FLOP cost.
 
 ### Regularizer Algorithms
 
-*GroupLasso* is designed for models without batch norm. *Gamma* is designed for
+* *GroupLasso* is designed for models without batch norm.
+* *Gamma* is designed for
 models with batch norm; it requires that batch norm scale is enabled.
 
 ### Regularizer Target Costs
 
-*Flops* optimizes the estimated FLOP count of the inference network.
+*Flops* targets the FLOP count of the inference network.
 
-*Model Size* optimizes the parameter count (number of weights) of the network.
+*Model Size* targets the number of weights of the network.
 
-*Latency* optimizes for the estimated inference latency of the network, based on
-the provided hardware.
+* *Latency* optimizes for the estimated inference latency of the network, based on
+the specific hardware characteristics.
 
 ## Example: Adding a FLOPs Regularizer
 
@@ -140,8 +141,7 @@ logits = build_model()
 network_regularizer = flop_regularizer.GammaFlopsRegularizer(
     [logits.op], gamma_threshold=1e-3)
 regularization_strength = 1e-10
-regularizer_loss = (
-    network_regularizer.get_regularization_term() * regularization_strength)
+regularizer_loss = (network_regularizer.get_regularization_term() * regularization_strength)
 
 model_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels, logits)
 
@@ -156,12 +156,8 @@ MorphNet regularization loss and the cost if the currently proposed structure is
 adopted.
 
 ```python
-tf.summary.scalar(
-              'RegularizationLoss',
-              network_regularizer.get_regularization_term() *
-              regularization_strength)
-tf.summary.scalar(network_regularizer.cost_name,
-                  network_regularizer.get_cost())
+tf.summary.scalar('RegularizationLoss', regularizer_loss)
+tf.summary.scalar(network_regularizer.cost_name, network_regularizer.get_cost())
 ```
 
 ![TensorBoardDisplayOfFlops](https://drive.google.com/uc?export=view&id=1Jsmcxg-7pyLCw_KPb9Bzs2YXxSDDpGTU "Example of the TensorBoard display of the resource regularized by MorphNet.")
