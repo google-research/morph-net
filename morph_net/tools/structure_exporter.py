@@ -1,4 +1,40 @@
-"""Helper module for calculating the live activation counts."""
+"""Helper module for calculating the live activation counts.
+
+To export the learned sizes of a model, one needs to follow the following steps:
+
+Build a model:
+```
+  net = conv2d(input, 16, 3)
+  ...
+  logits = conv2d(net, num_classes, 1)
+```
+
+Create a Network Regularizer:
+```
+  flop_reg = flop_regularizer.GammaFlopsRegularizer([logits.op])
+  flop_loss = flop_reg.get_loss()
+```
+
+Create a StructureExporter object:
+```
+  exporter = structure_exporter.StructureExporter(
+    flop_reg.op_regularizer_manager)
+```
+
+The graph now can be finalized.
+
+To use the class functionality, first populate tensor values:
+```
+  alive_tensors = exporter.alive_tensors()
+  alive_vectors = sess.run([alive_tensors])
+```
+
+Then call any of the xxx_alive_counts functions:
+```
+  alive_counts = exporter.get_alive_counts()  # or
+  exporter.save_alive_counts(f)
+```
+"""
 
 from __future__ import absolute_import
 from __future__ import division
