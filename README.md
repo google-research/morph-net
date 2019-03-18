@@ -160,7 +160,7 @@ tf.summary.scalar('RegularizationLoss', regularizer_loss)
 tf.summary.scalar(network_regularizer.cost_name, network_regularizer.get_cost())
 ```
 
-![TensorBoardDisplayOfFlops](https://drive.google.com/uc?export=view&id=1Jsmcxg-7pyLCw_KPb9Bzs2YXxSDDpGTU "Example of the TensorBoard display of the resource regularized by MorphNet.")
+![TensorBoardDisplayOfFlops](g3doc/tensorboard.png "Example of the TensorBoard display of the resource regularized by MorphNet.")
 
 Larger values of `regularization_strength` will converge to smaller effective
 FLOP count. If `regularization_strength` is large enough, the FLOP count will
