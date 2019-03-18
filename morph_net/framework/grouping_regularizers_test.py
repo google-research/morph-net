@@ -55,7 +55,7 @@ class GroupingRegularizersTest(parameterized.TestCase, tf.test.TestCase):
   def testMaxGroupingRegularizer(self):
     group_reg = grouping_regularizers.MaxGroupingRegularizer(
         [self._reg1, self._reg2])
-    with self.test_session():
+    with self.cached_session():
       self.assertAllEqual(
           [x or y for x, y in zip(self._alive_vec1, self._alive_vec2)],
           group_reg.alive_vector.eval())
@@ -70,7 +70,7 @@ class GroupingRegularizersTest(parameterized.TestCase, tf.test.TestCase):
         np.sqrt((x**2 + y**2))
         for x, y in zip(self._reg_vec1, self._reg_vec2)
     ]
-    with self.test_session():
+    with self.cached_session():
       self.assertAllEqual([x > 0.25 for x in expcted_reg_vec],
                           group_reg.alive_vector.eval())
       self.assertAllClose(expcted_reg_vec,
@@ -88,7 +88,7 @@ class GroupingRegularizersTest(parameterized.TestCase, tf.test.TestCase):
     group132 = create_reg([group13, self._reg2])
     group231 = create_reg([group23, self._reg1])
 
-    with self.test_session():
+    with self.cached_session():
       self.assertAllEqual(group123.alive_vector.eval(),
                           group132.alive_vector.eval())
       self.assertAllEqual(group123.alive_vector.eval(),
@@ -108,7 +108,7 @@ class GroupingRegularizersTest(parameterized.TestCase, tf.test.TestCase):
        [0.374165, 0.538516, 0.781024, 0.335410], [False, True, True, False]))
   def testThreeWayGroups(self, create_reg, expected_vector, expected_alive):
     group = create_reg([self._reg1, self._reg2, self._reg3])
-    with self.test_session():
+    with self.cached_session():
       self.assertAllEqual(group.alive_vector.eval(), expected_alive)
       self.assertAllClose(group.regularization_vector.eval(), expected_vector)
 

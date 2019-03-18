@@ -30,7 +30,7 @@ class GroupLassoRegularizerTest(parameterized.TestCase, tf.test.TestCase):
         [layers.conv2d, layers.conv2d_transpose],
         weights_initializer=tf.random_normal_initializer):
       self.BuildModel()
-    with self.test_session():
+    with self.cached_session():
       tf.global_variables_initializer().run()
 
   def BuildModel(self):
@@ -46,7 +46,7 @@ class GroupLassoRegularizerTest(parameterized.TestCase, tf.test.TestCase):
       ('_regular_conv_l10.5', 'conv/Conv2D', (0, 1, 2), 0.5))
   def testOp(self, op_name, reduce_dims, l1_fraction):
     op = tf.get_default_graph().get_operation_by_name(op_name)
-    with self.test_session():
+    with self.cached_session():
       weights = op.inputs[1].eval()
     l1_reg_vector = np.mean(np.abs(weights), axis=reduce_dims)
     l2_reg_vector = np.sqrt(np.mean(weights**2, axis=reduce_dims))
@@ -66,7 +66,7 @@ class GroupLassoRegularizerTest(parameterized.TestCase, tf.test.TestCase):
             weight_tensor=op.inputs[1], reduce_dims=reduce_dims,
             threshold=threshold, l1_fraction=l1_fraction))
 
-    with self.test_session():
+    with self.cached_session():
       actual_reg_vector = conv_reg.regularization_vector.eval()
       actual_alive = conv_reg.alive_vector.eval()
 
@@ -86,14 +86,14 @@ class GroupLassoRegularizerMatMulTest(parameterized.TestCase, tf.test.TestCase):
       # Build the model.
       input_data = tf.constant(0.0, shape=[1, 3])
       layers.fully_connected(input_data, 4, scope='fc')
-    with self.test_session():
+    with self.cached_session():
       tf.global_variables_initializer().run()
 
   @parameterized.named_parameters(('_fully_connected_no_l1', 0.0),
                                   ('_fully_connected_l1_0.5', 0.5))
   def testMatMulOp(self, l1_fraction):
     op = tf.get_default_graph().get_operation_by_name('fc/MatMul')
-    with self.test_session():
+    with self.cached_session():
       weights = op.inputs[1].eval()
     l1_reg_vector = np.mean(np.abs(weights), axis=0)
     l2_reg_vector = np.sqrt(np.mean(weights**2, axis=0))
@@ -111,7 +111,7 @@ class GroupLassoRegularizerMatMulTest(parameterized.TestCase, tf.test.TestCase):
         group_lasso_regularizer.GroupLassoRegularizer(
             weight_tensor=op.inputs[1], reduce_dims=(0,),
             threshold=threshold, l1_fraction=l1_fraction))
-    with self.test_session():
+    with self.cached_session():
       actual_reg_vector = matmul_reg.regularization_vector.eval()
       actual_alive = matmul_reg.alive_vector.eval()
 

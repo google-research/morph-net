@@ -1166,7 +1166,7 @@ class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):
     self.conv_op = tf.get_default_graph().get_operation_by_name(
         'conv1/Conv2D')
     actual_coeff_tensor = resource_function.flop_coeff(self.conv_op)
-    with self.test_session() as sess:
+    with self.cached_session() as sess:
       sess.run(tf.global_variables_initializer())
       actual_coeff, _ = sess.run([actual_coeff_tensor, net],
                                  feed_dict={image: np.zeros((1, 11, 13, 17))})

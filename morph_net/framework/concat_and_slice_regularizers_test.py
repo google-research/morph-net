@@ -38,7 +38,7 @@ class ConcatAndSliceRegularizersTest(tf.test.TestCase):
   def testConcatRegularizer(self):
     concat_reg = concat_and_slice_regularizers.ConcatRegularizer(
         [self._reg1, self._reg2])
-    with self.test_session():
+    with self.cached_session():
       self.assertAllEqual(self._alive_vec1 + self._alive_vec2,
                           concat_reg.alive_vector.eval())
       self.assertAllClose(self._reg_vec1 + self._reg_vec2,
@@ -47,7 +47,7 @@ class ConcatAndSliceRegularizersTest(tf.test.TestCase):
   def testSliceRegularizer(self):
     concat_reg = concat_and_slice_regularizers.SlicingReferenceRegularizer(
         lambda: self._reg1, 1, 2)
-    with self.test_session():
+    with self.cached_session():
       self.assertAllEqual(self._alive_vec1[1:3],
                           concat_reg.alive_vector.eval())
       self.assertAllClose(self._reg_vec1[1:3],

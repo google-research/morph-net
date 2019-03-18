@@ -274,7 +274,7 @@ class DepthwiseConvolutionOpHandlerTest(tf.test.TestCase):
         inputs, num_outputs=None, kernel_size=3, depth_multiplier=2,
         weights_initializer=identity_initializer, scope='depthwise_conv')
 
-    with self.test_session():
+    with self.cached_session():
       with tf.variable_scope('', reuse=tf.AUTO_REUSE):
         weights = tf.get_variable('depthwise_conv/depthwise_weights')
         biases = tf.get_variable('depthwise_conv/biases', [10],

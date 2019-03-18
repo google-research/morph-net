@@ -381,7 +381,7 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
     regularizer = handler.create_regularizer(batch_norm_op_slice)
 
     # Verify regularizer is the gamma tensor.
-    with self.test_session():
+    with self.cached_session():
       # Initialize the gamma tensor to check value equality.
       with tf.variable_scope('', reuse=tf.AUTO_REUSE):
         gamma_tensor = tf.get_variable('conv1/BatchNorm/gamma')
