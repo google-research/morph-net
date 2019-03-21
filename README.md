@@ -42,7 +42,7 @@ To use MorphNet, you must:
         has BatchNorm; use `GroupLasso` otherwise.
 
     Note: If you use BatchNorm, you must enable the scale parameters (“gamma
-    variables”), e.g. by setting `scale=True` if you are using
+    variables”), i.e., by setting `scale=True` if you are using
     `tf.keras.layers.BatchNormalization`.
 
 2.  Initialize the regularizer with a threshold and the output ops of your model
@@ -50,14 +50,15 @@ To use MorphNet, you must:
 
     MorphNet regularizer crawls your graph starting from the output ops, and
     applies regularization to some of the ops it encounters. It uses the
-    threshold to determine which output channels are unimportant and can be
-    eliminated.
+    threshold to determine which output channels can be eliminated.
 
 3.  Add the regularization term to your loss.
 
     As always, regularization loss must be scaled. We recommend to search for
     the scaling hyperparameter (*regularization strength*) along a logarithmic
-    scale spanning a few orders of magnitude around `1/(# of params)`.
+    scale spanning a few orders of magnitude around `1/(initial cost)`. For
+    example, if the seed network starts with 1e9 FLOPs, explore regularization
+    strength around 1e-9.
 
     Note: MorphNet does not currently add the regularization loss to the
     tf.GraphKeys.REGULARIZATION_LOSSES collection; this choice is subject to
@@ -84,7 +85,7 @@ To use MorphNet, you must:
 
 7.  Modify your model using the `StructureExporter` output.
 
-8.  Retrain the model from scratch, without the MorphNet regularizer.
+8.  Retrain the model from scratch without the MorphNet regularizer.
 
     Note: Use the standard values for all hyperparameters (such as the learning
     rate schedule).
@@ -99,9 +100,9 @@ round as *retraining*.
 To summarize, the key hyperparameters for MorphNet are:
 
 *   Regularization strength
-*   Regularizer threshold
+*   Alive threshold
 
-Note that the regularizer type is not a hyperparameter, since it's uniquely
+Note that the regularizer type is not a hyperparameter because it's uniquely
 determined by the metric of interest (FLOPs, latency) and the presence of
 BatchNorm.
 
@@ -120,12 +121,10 @@ models with batch norm; it requires that batch norm scale is enabled.
 
 ### Regularizer Target Costs
 
-*Flops* targets the FLOP count of the inference network.
-
-*Model Size* targets the number of weights of the network.
-
-* *Latency* optimizes for the estimated inference latency of the network, based on
-the specific hardware characteristics.
+* *Flops* targets the FLOP count of the inference network.
+* *Model Size* targets the number of weights of the network.
+* *Latency* optimizes for the estimated inference latency of the network, based
+on the specific hardware characteristics.
 
 ## Example: Adding a FLOPs Regularizer
 
