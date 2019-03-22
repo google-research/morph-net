@@ -198,7 +198,7 @@ Contact: morphnet@google.com
 
 *   Elad Eban, github: [eladeban](https://github.com/eladeban)
 *   Andrew Poon
-*   Yair Movshovitz-Attias
+*   Yair Movshovitz-Attias, github: [yairmov](https://github.com/yairmov)
 *   Max Moroz
 
 ### Contributors
