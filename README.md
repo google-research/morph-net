@@ -11,10 +11,12 @@ that target the consumption of specific resources such as FLOPs or model size.
 When the regularizer loss is added to the training loss and their sum is
 minimized via stochastic gradient descent or a similar optimizer, the learning
 problem becomes a constrained optimization of the structure of the network,
-under the constraint represented by the regularizer. The method is described in
-detail in the paper "[MorphNet: Fast & Simple Resource-Constrained Learning of
-Deep Network Structure](https://arxiv.org/abs/1711.06798)", published at
-[CVPR 2018](http://cvpr2018.thecvf.com/).
+under the constraint represented by the regularizer. The method was first
+introduced in our [CVPR 2018](http://cvpr2018.thecvf.com/), paper "[MorphNet: Fast & Simple Resource-Constrained Learning of
+Deep Network Structure](https://arxiv.org/abs/1711.06798)". A overview of the
+approach as well as new device-specific latency regularizers were prestend in
+[GTC 2019](https://gputechconf2019.smarteventscloud.com/connect/sessionDetail.ww?SESSION_ID=272314)
+[[slides]](g3doc//MorphNet_GTC2019.pdf "GTC Slides").
 
 In short, the MorphNet regularizer pushes weights down, and once they are small
 enough, the corresponding output channels are marked for removal from the
