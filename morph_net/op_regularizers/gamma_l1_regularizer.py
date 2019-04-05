@@ -20,7 +20,7 @@ class GammaL1Regularizer(generic_regularizers.OpRegularizer):
       gamma_threshold: A float scalar, the threshold above which a gamma is
         considered 'alive'.
     """
-    self._gamma = tpu_util.maybe_convert_to_cpu(gamma)
+    self._gamma = tpu_util.maybe_convert_to_variable(gamma)
     self._gamma_threshold = gamma_threshold
     abs_gamma = tf.abs(self._gamma)
     self._alive_vector = abs_gamma > gamma_threshold

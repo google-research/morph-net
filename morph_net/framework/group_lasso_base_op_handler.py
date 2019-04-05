@@ -12,6 +12,7 @@ import abc
 
 from morph_net.framework import op_handler
 from morph_net.framework import op_handler_util
+from morph_net.framework import tpu_util
 from morph_net.op_regularizers import group_lasso_regularizer
 
 
@@ -112,6 +113,7 @@ class GroupLassoBaseSourceOpHandler(op_handler.OpHandler):
     start_index = op_slice.slice.start_index
     size = op_slice.slice.size
     weights = op_slice.op.inputs[1]  # Input 1 are the weights.
+    weights = tpu_util.maybe_convert_to_variable(weights)
     reduce_dims = self._reduce_dims(op_slice.op)
     rank = len(weights.shape.as_list())
     assert rank == len(reduce_dims) + 1

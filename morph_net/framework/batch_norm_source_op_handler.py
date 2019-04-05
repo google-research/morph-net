@@ -62,9 +62,8 @@ class BatchNormSourceOpHandler(grouping_op_handler.GroupingOpHandler):
       return gamma_l1_regularizer.GammaL1Regularizer(
           gamma, self._gamma_threshold)
     else:
-      # Note: this conversion is also attempted inside GammaL1Regularizer. It
-      # only acts on tf.ResourceVariable, and returns tf.Variable, so it's safe
-      # to do it twice.
-      gamma = tpu_util.maybe_convert_to_cpu(gamma)
+      # Note: this conversion is also attempted inside GammaL1Regularizer
+      # because it may be invoked from another call site.
+      gamma = tpu_util.maybe_convert_to_variable(gamma)
       return gamma_l1_regularizer.GammaL1Regularizer(
           gamma[start_index:start_index + size], self._gamma_threshold)
