@@ -17,11 +17,28 @@ def get_variable_name(read_variable_op):
 
 
 def maybe_convert_to_variable(tensor):
-  """Convert TPU tensor to the ResourceVariable if possible."""
+  """Convert TPU variable to be usable outside a while loop.
+
+  Args:
+    tensor: A tf.Tensor.
+
+  Returns:
+    A tf.Tensor. If input tensor is an output of reading a ResourceVariable, we
+    return an equivalent tensor produced outside the while loop. Otherwise, we
+    return the original input tensor.
+  """
   op = tensor.op
   if op.type != 'ReadVariableOp':
-    # Cannot convert.
+    # No need to convert.
     return tensor
-  with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
-    shape = tensor.shape
-    return tf.get_variable(get_variable_name(op), shape=shape)
+  with tf.variable_scope(
+      # Reset the scope because variable_name contains all the scopes we need.
+      name_or_scope=tf.VariableScope(''),
+      # We are looking for a reference to an existing variable, so we want to
+      # raise an exception if variable is not found.
+      reuse=True,
+  ):
+    variable_name = get_variable_name(op)
+    tf.logging.info('Converting tensor %s --> tf.get_variable(%s)',
+                    tensor, variable_name)
+    return tf.get_variable(variable_name)
