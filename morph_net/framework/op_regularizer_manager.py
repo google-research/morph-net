@@ -9,6 +9,7 @@ from morph_net.framework import concat_and_slice_regularizers
 from morph_net.framework import constant_op_regularizer
 from morph_net.framework import grouping_regularizers
 from morph_net.framework import op_handler_util
+from morph_net.network_regularizers import cost_calculator
 import tensorflow as tf
 
 # Hardcoded limit for OpRegularizerManager to finish analyzing the network.
@@ -48,7 +49,8 @@ class OpRegularizerManager(object):
       create_grouping_regularizer=grouping_regularizers.MaxGroupingRegularizer,
       force_group=None,
       regularizer_blacklist=None,
-      iteration_limit=ITERATION_LIMIT):
+      iteration_limit=ITERATION_LIMIT,
+      allow_noop=False):
     """Creates an instance of OpRegularizerManager.
 
     Several internal data structures are initialized which are used to track ops
@@ -87,12 +89,15 @@ class OpRegularizerManager(object):
       iteration_limit: Integer iteration limit for OpRegularizerManager to
         finish analyzing the network.  If the limit is reached, it is assumed
         that OpRegularizerManager got stuck in a loop.
+      allow_noop: A boolean. If False, raises exception if no
+        supported ops are found in the graph.
 
     Raises:
       RuntimeError: If OpRegularizerManager cannot analyze the entire network
         within ITERATION_LIMIT.
       TypeError: If force_group argument is not a list.
       TypeError: If regularizer_blacklist argument is not a list.
+      ValueError: if no supported ops are found.
     """
     # Dictionary mapping op to list of OpSlice.  The op is the concatenation of
     # its OpSlice list.
@@ -186,6 +191,10 @@ class OpRegularizerManager(object):
 
     # Set scope of all ops to be ops that were analyzed.
     self._all_ops = set(self._op_slice_dict.keys())
+
+    if not (allow_noop or any(op.type in cost_calculator.SUPPORTED_OPS
+                              for op in self._all_ops)):
+      raise ValueError('Regularizer found no valid ops.')
 
   @property
   def ops(self):

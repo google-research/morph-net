@@ -1,3 +1,4 @@
+# pylint: disable=g-complex-comprehension
 """Tests for op_regularizer_manager."""
 
 from __future__ import absolute_import
@@ -40,13 +41,14 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self._default_op_handler_dict = collections.defaultdict(
         grouping_op_handler.GroupingOpHandler)
     self._default_op_handler_dict.update({
-        'FusedBatchNorm': IndexBatchNormSourceOpHandler(),
+        'FusedBatchNorm':
+            IndexBatchNormSourceOpHandler(),
         'Conv2D':
-        output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
         'ConcatV2':
-        concat_op_handler.ConcatOpHandler(),
+            concat_op_handler.ConcatOpHandler(),
         'DepthwiseConv2dNative':
-        depthwise_convolution_op_handler.DepthwiseConvolutionOpHandler(),
+            depthwise_convolution_op_handler.DepthwiseConvolutionOpHandler(),
     })
 
   def _batch_norm_scope(self):
@@ -96,10 +98,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     relu_reg = op_reg_manager.get_regularizer(_get_op(scope + '/Relu'))
     self.assertAllEqual(expected_alive[scope], relu_reg.alive_vector)
 
-  @parameterized.named_parameters(('Batch_no_par', True, False),
-                                  ('Batch_par', True, True),
-                                  ('NoBatch_no_par', False, False),
-                                  ('NoBatch_par', False, True))
+  @parameterized.named_parameters(
+      ('Batch_no_par', True, False), ('Batch_par', True, True),
+      ('NoBatch_no_par', False, False), ('NoBatch_par', False, True))
   def testConcatOpGetRegularizer(self, use_batch_norm, use_partitioner):
     sc = self._batch_norm_scope() if use_batch_norm else []
     partitioner = tf.fixed_size_partitioner(2) if use_partitioner else None
@@ -122,8 +123,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     relu_reg = op_reg_manager.get_regularizer(_get_op('conv4/Relu'))
     self.assertAllEqual(expected, relu_reg.alive_vector)
 
-  @parameterized.named_parameters(('Concat_5', True, 5),
-                                  ('Concat_7', True, 7),
+  @parameterized.named_parameters(('Concat_5', True, 5), ('Concat_7', True, 7),
                                   ('Add_6', False, 6))
   def testGetRegularizerForConcatWithNone(self, test_concat, depth):
     image = tf.constant(0.0, shape=[1, 17, 19, 3])
@@ -145,12 +145,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertAllEqual([True] * depth, alive[:depth])
     self.assertAllEqual(expected_alive['conv2'], alive[depth:])
 
-  @parameterized.named_parameters(('add', tf.add),
-                                  ('div', tf.divide),
-                                  ('mul', tf.multiply),
-                                  ('max', tf.maximum),
-                                  ('min', tf.minimum),
-                                  ('l2', tf.squared_difference))
+  @parameterized.named_parameters(
+      ('add', tf.add), ('div', tf.divide), ('mul', tf.multiply),
+      ('max', tf.maximum), ('min', tf.minimum), ('l2', tf.squared_difference))
   def testGroupingOps(self, tested_op):
     th = 0.5
     image = tf.constant(0.5, shape=[1, 17, 19, 3])
@@ -168,16 +165,16 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     conv1_reg = op_reg_manager.get_regularizer(conv1.op).regularization_vector
     conv2_reg = op_reg_manager.get_regularizer(conv2.op).regularization_vector
     with self.session():
-      self.assertAllEqual(alive, np.logical_or(conv1_reg.eval() > th,
-                                               conv2_reg.eval() > th))
+      self.assertAllEqual(
+          alive, np.logical_or(conv1_reg.eval() > th,
+                               conv2_reg.eval() > th))
 
   def testCascadedGrouping(self):
     inputs = tf.zeros([6, 8, 8, 10], name='prev')
-    with arg_scope(
-        [layers.conv2d, layers.max_pool2d],
-        kernel_size=1,
-        stride=1,
-        padding='SAME'):
+    with arg_scope([layers.conv2d, layers.max_pool2d],
+                   kernel_size=1,
+                   stride=1,
+                   padding='SAME'):
       net = layers.conv2d(inputs, 17, scope='conv/input')
 
       first = layers.conv2d(net, num_outputs=17, scope='conv/first')
@@ -190,9 +187,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     op_handler_dict['Conv2D'] = IndexConv2DSourceOpHandler()
     op_reg_manager = orm.OpRegularizerManager([out.op], op_handler_dict)
 
-    grouped_names = [
-        [op_slice.op.name for op_slice in group.op_slices]
-        for group in op_reg_manager._op_group_dict.values()]
+    grouped_names = [[op_slice.op.name
+                      for op_slice in group.op_slices]
+                     for group in op_reg_manager._op_group_dict.values()]
     expected = set([
         'conv/second/Conv2D', 'Add/second', 'conv/first/Conv2D',
         'conv/input/Conv2D', 'Add/first'
@@ -218,8 +215,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       final_op = layers.conv2d(
           tmp, num_outputs=13, kernel_size=3, scope='conv3')
 
-    manager = orm.OpRegularizerManager(
-        [final_op.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([final_op.op],
+                                       self._default_op_handler_dict)
 
     c1_reg = manager.get_regularizer(_get_op('conv1/Conv2D'))
     c2_reg = manager.get_regularizer(_get_op('conv2/Conv2D'))
@@ -265,20 +262,28 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     with arg_scope([layers.conv2d], normalizer_fn=tf.contrib.layers.batch_norm):
       with tf.variable_scope('parallel', reuse=tf.AUTO_REUSE):
         mul0 = layers.conv2d(inputs, num_outputs, kernel_size, scope='conv1')
-        mul1 = layers.conv2d(inputs, num_outputs, kernel_size,
-                             activation_fn=tf.nn.sigmoid, scope='conv2')
+        mul1 = layers.conv2d(
+            inputs,
+            num_outputs,
+            kernel_size,
+            activation_fn=tf.nn.sigmoid,
+            scope='conv2')
         prev1 = np.prod([mul0, mul1])
       with tf.variable_scope('parallel', reuse=tf.AUTO_REUSE):
         mul0_1 = layers.conv2d(prev1, num_outputs, kernel_size, scope='conv1')
-        mul1_1 = layers.conv2d(prev1, num_outputs, kernel_size,
-                               activation_fn=tf.nn.sigmoid, scope='conv2')
+        mul1_1 = layers.conv2d(
+            prev1,
+            num_outputs,
+            kernel_size,
+            activation_fn=tf.nn.sigmoid,
+            scope='conv2')
       prev2 = np.prod([mul0_1, mul1_1])
       prev3 = prev2 + 0.0
       # This hack produces the desired grouping due to variable reuse.
       # prev3 = prev2 + 0.0 * (mul0 + mul1 + mul0_1 + mul1_1)
 
-    manager = orm.OpRegularizerManager(
-        [prev3.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([prev3.op],
+                                       self._default_op_handler_dict)
 
     mul0_reg = manager.get_regularizer(_get_op('parallel/conv1/Conv2D'))
     mul1_reg = manager.get_regularizer(_get_op('parallel/conv2/Conv2D'))
@@ -299,8 +304,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       gather = tf.gather(c1, gather_index, axis=3)
 
-    manager = orm.OpRegularizerManager(
-        [gather.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([gather.op],
+                                       self._default_op_handler_dict)
 
     c1_reg = manager.get_regularizer(_get_op('conv1/Conv2D'))
     gather_reg = manager.get_regularizer(_get_op('GatherV2'))
@@ -326,8 +331,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       concat = tf.concat([c1, c2], axis=3)
       tmp = c1 + c2
 
-    manager = orm.OpRegularizerManager(
-        [concat.op, tmp.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([concat.op, tmp.op],
+                                       self._default_op_handler_dict)
 
     # Fetch OpSlice to verify grouping.
     inputs_op_slice = manager.get_op_slices(inputs.op)[0]
@@ -338,38 +343,44 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     concat_op_slice1 = manager.get_op_slices(concat.op)[1]
 
     # Verify inputs and c1 have different group.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c1_op_slice))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c1_op_slice))
 
     # Verify inputs and c2 have different group.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c2_op_slice))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c2_op_slice))
 
     # Verify c1, c2, and add have the same group.
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(c2_op_slice))
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(tmp_op_slice))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(c2_op_slice))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(tmp_op_slice))
 
     # Verify concat slices are grouped with c1, c2, and add.
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(concat_op_slice0))
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(concat_op_slice1))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice),
+        manager.get_op_group(concat_op_slice0))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice),
+        manager.get_op_group(concat_op_slice1))
 
   def testBatchNormAfterConcat(self):
     inputs = tf.zeros([2, 4, 4, 3])
     # BN before concat - one per conv.
-    with arg_scope(
-        [layers.conv2d],
-        normalizer_fn=layers.batch_norm,
-        normalizer_params={'fused': True, 'scale': True}):
+    with arg_scope([layers.conv2d],
+                   normalizer_fn=layers.batch_norm,
+                   normalizer_params={
+                       'fused': True,
+                       'scale': True
+                   }):
       left = layers.conv2d(inputs, 2, kernel_size=3, scope='left')
       right = layers.conv2d(inputs, 3, kernel_size=3, scope='right')
       concat = tf.concat([left, right], -1)
 
-    manager = orm.OpRegularizerManager(
-        [concat.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([concat.op],
+                                       self._default_op_handler_dict)
 
     # Fetch OpSlice to verify grouping.
     left_op_slice = manager.get_op_slices(left.op)[0]
@@ -378,12 +389,14 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     concat_op_slice1 = manager.get_op_slices(concat.op)[1]
 
     # Verify that left op is grouped with left part of concat.
-    self.assertEqual(manager.get_op_group(left_op_slice),
-                     manager.get_op_group(concat_op_slice0))
+    self.assertEqual(
+        manager.get_op_group(left_op_slice),
+        manager.get_op_group(concat_op_slice0))
 
     # Verify that right op is grouped with right part of concat.
-    self.assertEqual(manager.get_op_group(right_op_slice),
-                     manager.get_op_group(concat_op_slice1))
+    self.assertEqual(
+        manager.get_op_group(right_op_slice),
+        manager.get_op_group(concat_op_slice1))
 
     # BN after concat
     tf.reset_default_graph()
@@ -393,8 +406,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     concat = tf.concat([left, right], -1)
     batch_norm = layers.batch_norm(concat, fused=True, scale=True)
 
-    manager = orm.OpRegularizerManager(
-        [batch_norm.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([batch_norm.op],
+                                       self._default_op_handler_dict)
 
     # Fetch OpSlice to verify grouping.
     left_op_slice = manager.get_op_slices(left.op)[0]
@@ -405,16 +418,20 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     batch_norm_op_slice1 = manager.get_op_slices(batch_norm.op)[1]
 
     # Verify that left op is grouped with left part of concat and batch norm.
-    self.assertEqual(manager.get_op_group(left_op_slice),
-                     manager.get_op_group(concat_op_slice0))
-    self.assertEqual(manager.get_op_group(left_op_slice),
-                     manager.get_op_group(batch_norm_op_slice0))
+    self.assertEqual(
+        manager.get_op_group(left_op_slice),
+        manager.get_op_group(concat_op_slice0))
+    self.assertEqual(
+        manager.get_op_group(left_op_slice),
+        manager.get_op_group(batch_norm_op_slice0))
 
     # Verify that right op is grouped with right part of concat and batch norm.
-    self.assertEqual(manager.get_op_group(right_op_slice),
-                     manager.get_op_group(concat_op_slice1))
-    self.assertEqual(manager.get_op_group(right_op_slice),
-                     manager.get_op_group(batch_norm_op_slice1))
+    self.assertEqual(
+        manager.get_op_group(right_op_slice),
+        manager.get_op_group(concat_op_slice1))
+    self.assertEqual(
+        manager.get_op_group(right_op_slice),
+        manager.get_op_group(batch_norm_op_slice1))
 
     # Verify that original concat OpSlice is removed.
     old_concat_op_slice = orm.OpSlice(concat.op, orm.Slice(0, 7))
@@ -445,8 +462,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     concat7 = tf.concat([concat5, concat6], axis=3)
     batch_norm = layers.batch_norm(concat7)
 
-    manager = orm.OpRegularizerManager(
-        [batch_norm.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([batch_norm.op],
+                                       self._default_op_handler_dict)
 
     # Verify that batch norm gets sliced into individual channels due to
     # concatenation of all the convolutions.
@@ -476,30 +493,32 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     with self.assertRaises(RuntimeError):
       # Regularizer assignment fails because c2/c3 have size 5 while split has
       # size 10, so regularizer grouping fails.
-      orm.OpRegularizerManager(
-          [out1.op, out2.op], self._default_op_handler_dict,
-          iteration_limit=100)
+      orm.OpRegularizerManager([out1.op, out2.op],
+                               self._default_op_handler_dict,
+                               iteration_limit=100)
 
-  @parameterized.named_parameters(('DepthMultiplier_1', 8, 1),
-                                  ('DepthMultiplier_2', 8, 2),
-                                  ('DepthMultiplier_7', 8, 7),
-                                  ('DepthMultiplier_1_no_pointwise', None, 1),
-                                  ('DepthMultiplier_2_no_pointwise', None, 2),
-                                  ('DepthMultiplier_7_no_pointwise', None, 7))
-  def testSeparableConv2D_DepthMultiplier(
-      self, pointwise_outputs, depth_multiplier):
+  @parameterized.named_parameters(
+      ('DepthMultiplier_1', 8, 1), ('DepthMultiplier_2', 8, 2),
+      ('DepthMultiplier_7', 8, 7), ('DepthMultiplier_1_no_pointwise', None, 1),
+      ('DepthMultiplier_2_no_pointwise', None, 2),
+      ('DepthMultiplier_7_no_pointwise', None, 7))
+  def testSeparableConv2D_DepthMultiplier(self, pointwise_outputs,
+                                          depth_multiplier):
     with tf.contrib.framework.arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       num_outputs = 5
       c1 = layers.conv2d(
           inputs, num_outputs=num_outputs, kernel_size=3, scope='conv1')
       c2 = layers.separable_conv2d(
-          c1, num_outputs=pointwise_outputs, kernel_size=3,
-          depth_multiplier=depth_multiplier, scope='conv2')
+          c1,
+          num_outputs=pointwise_outputs,
+          kernel_size=3,
+          depth_multiplier=depth_multiplier,
+          scope='conv2')
       identity = tf.identity(c2)
 
-    manager = orm.OpRegularizerManager(
-        [identity.op], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([identity.op],
+                                       self._default_op_handler_dict)
 
     # If separable_conv2d is passed num_outputs=None, the name of the depthwise
     # convolution changes.
@@ -524,9 +543,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     relu2_op_slices = manager.get_op_slices(c2.op)
 
     # Expected input grouping has a pattern like [0, 0, 1, 1, 2, 2, ...].
-    expected_input_grouping = [j
-                               for j in range(num_outputs)
-                               for i in range(depth_multiplier)]
+    expected_input_grouping = [
+        j for j in range(num_outputs) for i in range(depth_multiplier)
+    ]
     # Expected output grouping is just linear, but with
     # num_outputs * depth_multiplier channels (e.g. [0, 1, 2, 3, ...]).
     expected_output_grouping = range(num_outputs * depth_multiplier)
@@ -600,8 +619,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       c3 = layers.conv2d(add, num_outputs=10, kernel_size=3, scope='conv3')
       out = tf.identity(c3)
 
-    manager = orm.OpRegularizerManager(
-        [out.op], self._default_op_handler_dict, SumGroupingRegularizer)
+    manager = orm.OpRegularizerManager([out.op], self._default_op_handler_dict,
+                                       SumGroupingRegularizer)
 
     # Fetch OpSlice to verify grouping.
     inputs_op_slice = manager.get_op_slices(inputs.op)[0]
@@ -612,36 +631,38 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     out_op_slice = manager.get_op_slices(out.op)[0]
 
     # Verify inputs and c1 have different group.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c1_op_slice))
-    self.assertNotEqual(manager.get_regularizer(inputs.op),
-                        manager.get_regularizer(c1.op))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c1_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(inputs.op), manager.get_regularizer(c1.op))
 
     # Verify inputs and c2 have different group.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c2_op_slice))
-    self.assertNotEqual(manager.get_regularizer(inputs.op),
-                        manager.get_regularizer(c2.op))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c2_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(inputs.op), manager.get_regularizer(c2.op))
 
     # Verify c1, c2, and add have the same group.
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(c2_op_slice))
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(add_op_slice))
-    self.assertEqual(manager.get_regularizer(c1.op),
-                     manager.get_regularizer(c2.op))
-    self.assertEqual(manager.get_regularizer(c1.op),
-                     manager.get_regularizer(add.op))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(c2_op_slice))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(add_op_slice))
+    self.assertEqual(
+        manager.get_regularizer(c1.op), manager.get_regularizer(c2.op))
+    self.assertEqual(
+        manager.get_regularizer(c1.op), manager.get_regularizer(add.op))
 
     # Verify c3 and out have the same group, which differs from c1 and c2.
-    self.assertEqual(manager.get_op_group(c3_op_slice),
-                     manager.get_op_group(out_op_slice))
-    self.assertNotEqual(manager.get_op_group(c3_op_slice),
-                        manager.get_op_group(c1_op_slice))
-    self.assertEqual(manager.get_regularizer(c3.op),
-                     manager.get_regularizer(out.op))
-    self.assertNotEqual(manager.get_regularizer(c3.op),
-                        manager.get_regularizer(c1.op))
+    self.assertEqual(
+        manager.get_op_group(c3_op_slice), manager.get_op_group(out_op_slice))
+    self.assertNotEqual(
+        manager.get_op_group(c3_op_slice), manager.get_op_group(c1_op_slice))
+    self.assertEqual(
+        manager.get_regularizer(c3.op), manager.get_regularizer(out.op))
+    self.assertNotEqual(
+        manager.get_regularizer(c3.op), manager.get_regularizer(c1.op))
 
   def testInit_Concat(self):
     with tf.contrib.framework.arg_scope(self._batch_norm_scope()):
@@ -651,8 +672,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       concat = tf.concat([c1, c2], axis=3)
       out = tf.identity(concat)
 
-    manager = orm.OpRegularizerManager(
-        [out.op], self._default_op_handler_dict, SumGroupingRegularizer)
+    manager = orm.OpRegularizerManager([out.op], self._default_op_handler_dict,
+                                       SumGroupingRegularizer)
 
     # Fetch OpSlice to verify grouping.
     inputs_op_slice = manager.get_op_slices(inputs.op)[0]
@@ -662,30 +683,32 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     out_op_slice1 = manager.get_op_slices(out.op)[1]
 
     # Verify inputs and c1 have different group and OpRegularizer.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c1_op_slice))
-    self.assertNotEqual(manager.get_regularizer(inputs.op),
-                        manager.get_regularizer(c1.op))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c1_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(inputs.op), manager.get_regularizer(c1.op))
 
     # Verify inputs and c2 have different group and OpRegularizer.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c2_op_slice))
-    self.assertNotEqual(manager.get_regularizer(inputs.op),
-                        manager.get_regularizer(c2.op))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c2_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(inputs.op), manager.get_regularizer(c2.op))
 
     # Verify c1 and c2 have different group and OpRegularizer.
-    self.assertNotEqual(manager.get_op_group(c1_op_slice),
-                        manager.get_op_group(c2_op_slice))
-    self.assertNotEqual(manager.get_regularizer(c1.op),
-                        manager.get_regularizer(c2.op))
+    self.assertNotEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(c2_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(c1.op), manager.get_regularizer(c2.op))
 
     # Verify c1 is grouped with first slice of out.
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(out_op_slice0))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(out_op_slice0))
 
     # Verify c2 is grouped with second slice of out.
-    self.assertEqual(manager.get_op_group(c2_op_slice),
-                     manager.get_op_group(out_op_slice1))
+    self.assertEqual(
+        manager.get_op_group(c2_op_slice), manager.get_op_group(out_op_slice1))
 
     # Verify out regularization_vector is the concat of c1 and c2
     # regularizertion_vector.
@@ -707,8 +730,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       concat = tf.concat([c1, c2], axis=3)
       c4 = layers.conv2d(concat, num_outputs=10, kernel_size=3, scope='conv4')
 
-    manager = orm.OpRegularizerManager(
-        [out.op, c4.op], self._default_op_handler_dict, SumGroupingRegularizer)
+    manager = orm.OpRegularizerManager([out.op, c4.op],
+                                       self._default_op_handler_dict,
+                                       SumGroupingRegularizer)
 
     # Fetch OpSlice to verify grouping.
     inputs_op_slice = manager.get_op_slices(inputs.op)[0]
@@ -722,42 +746,46 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     c4_op_slice = manager.get_op_slices(c4.op)[0]
 
     # Verify inputs and c1 have different group.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c1_op_slice))
-    self.assertNotEqual(manager.get_regularizer(inputs.op),
-                        manager.get_regularizer(c1.op))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c1_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(inputs.op), manager.get_regularizer(c1.op))
 
     # Verify inputs and c2 have different group.
-    self.assertNotEqual(manager.get_op_group(inputs_op_slice),
-                        manager.get_op_group(c2_op_slice))
-    self.assertNotEqual(manager.get_regularizer(inputs.op),
-                        manager.get_regularizer(c2.op))
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c2_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(inputs.op), manager.get_regularizer(c2.op))
 
     # Verify c1, c2, and add have the same group.
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(c2_op_slice))
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(add_op_slice))
-    self.assertEqual(manager.get_regularizer(c1.op),
-                     manager.get_regularizer(c2.op))
-    self.assertEqual(manager.get_regularizer(c1.op),
-                     manager.get_regularizer(add.op))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(c2_op_slice))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(add_op_slice))
+    self.assertEqual(
+        manager.get_regularizer(c1.op), manager.get_regularizer(c2.op))
+    self.assertEqual(
+        manager.get_regularizer(c1.op), manager.get_regularizer(add.op))
 
     # Verify c3 and out have the same group, which differs from c1 and c2.
-    self.assertEqual(manager.get_op_group(c3_op_slice),
-                     manager.get_op_group(out_op_slice))
-    self.assertNotEqual(manager.get_op_group(c3_op_slice),
-                        manager.get_op_group(c1_op_slice))
-    self.assertEqual(manager.get_regularizer(c3.op),
-                     manager.get_regularizer(out.op))
-    self.assertNotEqual(manager.get_regularizer(c3.op),
-                        manager.get_regularizer(c1.op))
+    self.assertEqual(
+        manager.get_op_group(c3_op_slice), manager.get_op_group(out_op_slice))
+    self.assertNotEqual(
+        manager.get_op_group(c3_op_slice), manager.get_op_group(c1_op_slice))
+    self.assertEqual(
+        manager.get_regularizer(c3.op), manager.get_regularizer(out.op))
+    self.assertNotEqual(
+        manager.get_regularizer(c3.op), manager.get_regularizer(c1.op))
 
     # Verify concat slices are grouped with c1, c2, and add.
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(concat_op_slice0))
-    self.assertEqual(manager.get_op_group(c1_op_slice),
-                     manager.get_op_group(concat_op_slice1))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice),
+        manager.get_op_group(concat_op_slice0))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice),
+        manager.get_op_group(concat_op_slice1))
 
     # Verify concat regularization_vector is the concat of c1 and c2
     # regularizertion_vector.
@@ -769,10 +797,10 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
         manager.get_regularizer(concat.op).regularization_vector[10:20])
 
     # Verify c4 has a different group than c1, c2, and add.
-    self.assertNotEqual(manager.get_op_group(c1_op_slice),
-                        manager.get_op_group(c4_op_slice))
-    self.assertNotEqual(manager.get_regularizer(c1.op),
-                        manager.get_regularizer(c4.op))
+    self.assertNotEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(c4_op_slice))
+    self.assertNotEqual(
+        manager.get_regularizer(c1.op), manager.get_regularizer(c4.op))
 
   def testInit_AddConcat_AllOps(self):
     with tf.contrib.framework.arg_scope(self._batch_norm_scope()):
@@ -785,8 +813,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       concat = tf.concat([c1, c2], axis=3)
       c4 = layers.conv2d(concat, num_outputs=10, kernel_size=3, scope='conv4')
 
-    manager = orm.OpRegularizerManager(
-        [out.op], self._default_op_handler_dict, SumGroupingRegularizer)
+    manager = orm.OpRegularizerManager([out.op], self._default_op_handler_dict,
+                                       SumGroupingRegularizer)
 
     # Op c4 is not in the DFS path of out.  Verify that OpRegularizerManager
     # does not process c4.
@@ -801,8 +829,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       c3 = layers.conv2d(c2, num_outputs=10, kernel_size=3, scope='conv3')
 
     # Initialize OpRegularizerManager with no force-grouping.
-    manager = orm.OpRegularizerManager(
-        [c3.op], self._default_op_handler_dict, SumGroupingRegularizer)
+    manager = orm.OpRegularizerManager([c3.op], self._default_op_handler_dict,
+                                       SumGroupingRegularizer)
 
     # Verify that c2 is not grouped with c3.
     c2_op_slices = manager.get_op_slices(c2.op)
@@ -815,9 +843,10 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertNotIn(c3_op_slice, c2_group.op_slices)
 
     # Force-group c2 and c3.
-    manager = orm.OpRegularizerManager(
-        [c3.op], self._default_op_handler_dict, SumGroupingRegularizer,
-        force_group=['conv2|conv3'])
+    manager = orm.OpRegularizerManager([c3.op],
+                                       self._default_op_handler_dict,
+                                       SumGroupingRegularizer,
+                                       force_group=['conv2|conv3'])
 
     # Verify that c2 is grouped with c3.
     c2_op_slices = manager.get_op_slices(c2.op)
@@ -841,8 +870,10 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertRaisesRegexp(
         ValueError,
         r'Cannot force-group ops with more than 1 OpSlice: \[u?\'concat\'\]',
-        orm.OpRegularizerManager, [c3.op], self._default_op_handler_dict,
-        SumGroupingRegularizer, force_group=['conv3|concat'])
+        orm.OpRegularizerManager, [c3.op],
+        self._default_op_handler_dict,
+        SumGroupingRegularizer,
+        force_group=['conv3|concat'])
 
   def testInit_ForceGroup_SizeMismatch(self):
     with tf.contrib.framework.arg_scope(self._batch_norm_scope()):
@@ -856,8 +887,10 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertRaisesRegexp(
         ValueError,
         r'Cannot force-group ops with different sizes: \[.*\]',
-        orm.OpRegularizerManager, [c3.op], self._default_op_handler_dict,
-        SumGroupingRegularizer, force_group=['conv2|conv3'])
+        orm.OpRegularizerManager, [c3.op],
+        self._default_op_handler_dict,
+        SumGroupingRegularizer,
+        force_group=['conv2|conv3'])
 
   def testInit_ForceGroup_NotList(self):
     inputs = tf.zeros([2, 4, 4, 3])
@@ -866,8 +899,10 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertRaisesRegexp(
         TypeError,
         r'force_group must be a list of regex.',
-        orm.OpRegularizerManager, [inputs.op], self._default_op_handler_dict,
-        SumGroupingRegularizer, force_group='conv')
+        orm.OpRegularizerManager, [inputs.op],
+        self._default_op_handler_dict,
+        SumGroupingRegularizer,
+        force_group='conv')
 
   def testInit_Blacklist(self):
     with tf.contrib.framework.arg_scope(self._batch_norm_scope()):
@@ -877,14 +912,15 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       c3 = layers.conv2d(c2, num_outputs=5, kernel_size=3, scope='conv3')
 
     # Verify c2 has a regularizer.
-    manager = orm.OpRegularizerManager(
-        [c3.op], self._default_op_handler_dict, SumGroupingRegularizer)
+    manager = orm.OpRegularizerManager([c3.op], self._default_op_handler_dict,
+                                       SumGroupingRegularizer)
     self.assertIsNotNone(manager.get_regularizer(c2.op))
 
     # Verify c2 has None regularizer after blacklisting.
-    manager = orm.OpRegularizerManager(
-        [c3.op], self._default_op_handler_dict, SumGroupingRegularizer,
-        regularizer_blacklist=['conv2'])
+    manager = orm.OpRegularizerManager([c3.op],
+                                       self._default_op_handler_dict,
+                                       SumGroupingRegularizer,
+                                       regularizer_blacklist=['conv2'])
     self.assertIsNone(manager.get_regularizer(c2.op))
 
   def testInit_BlacklistGroup(self):
@@ -896,14 +932,15 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       c3 = layers.conv2d(add, num_outputs=10, kernel_size=3, scope='conv3')
 
     # Verify c2 has a regularizer.
-    manager = orm.OpRegularizerManager(
-        [c3.op], self._default_op_handler_dict, SumGroupingRegularizer)
+    manager = orm.OpRegularizerManager([c3.op], self._default_op_handler_dict,
+                                       SumGroupingRegularizer)
     self.assertIsNotNone(manager.get_regularizer(c2.op))
 
     # Verify c2 has None regularizer after blacklisting c1 which is grouped.
-    manager = orm.OpRegularizerManager(
-        [c3.op], self._default_op_handler_dict, SumGroupingRegularizer,
-        regularizer_blacklist=['conv1'])
+    manager = orm.OpRegularizerManager([c3.op],
+                                       self._default_op_handler_dict,
+                                       SumGroupingRegularizer,
+                                       regularizer_blacklist=['conv1'])
     self.assertIsNone(manager.get_regularizer(c2.op))
 
   def testInit_BlacklistGroup_NoMatch(self):
@@ -918,8 +955,10 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertRaisesWithLiteralMatch(
         ValueError,
         'Blacklist regex never used: \'oops\'.',
-        orm.OpRegularizerManager, [c3.op], self._default_op_handler_dict,
-        SumGroupingRegularizer, regularizer_blacklist=['oops'])
+        orm.OpRegularizerManager, [c3.op],
+        self._default_op_handler_dict,
+        SumGroupingRegularizer,
+        regularizer_blacklist=['oops'])
 
   def testInit_BlacklistGroup_NotList(self):
     inputs = tf.zeros([2, 4, 4, 3])
@@ -929,8 +968,10 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertRaisesRegexp(
         TypeError,
         r'regularizer_blacklist must be a list of regex.',
-        orm.OpRegularizerManager, [inputs.op], self._default_op_handler_dict,
-        SumGroupingRegularizer, regularizer_blacklist='conv')
+        orm.OpRegularizerManager, [inputs.op],
+        self._default_op_handler_dict,
+        SumGroupingRegularizer,
+        regularizer_blacklist='conv')
 
   def testInit_IterationLimit(self):
     inputs = tf.zeros([2, 4, 4, 3])
@@ -939,15 +980,19 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertRaisesRegexp(
         RuntimeError,
         r'OpRegularizerManager could not handle ops:',
-        orm.OpRegularizerManager, [inputs.op], self._default_op_handler_dict,
-        SumGroupingRegularizer, iteration_limit=0)
+        orm.OpRegularizerManager, [inputs.op],
+        self._default_op_handler_dict,
+        SumGroupingRegularizer,
+        iteration_limit=0)
 
   def testGetRegularizer(self):
     op1 = tf.zeros([2, 4, 4, 3])
     op2 = tf.zeros([2, 4, 4, 3])
     op3 = tf.zeros([2, 4, 4, 10])
 
-    manager = orm.OpRegularizerManager([], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([],
+                                       self._default_op_handler_dict,
+                                       allow_noop=True)
     manager.slice_op(op3.op, [1, 2, 3, 4])
 
     # op2 has 1 OpSlice and op3 has 4 OpSlice of size [1, 2, 3, 4].
@@ -977,8 +1022,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
                         manager.get_regularizer(op2.op).regularization_vector)
 
     # Verify OpRegularizer for op with multiple OpSlice.
-    self.assertAllEqual(list(range(3, 13)),
-                        manager.get_regularizer(op3.op).regularization_vector)
+    self.assertAllEqual(
+        list(range(3, 13)),
+        manager.get_regularizer(op3.op).regularization_vector)
 
     # Verify OpRegularzier for op with multiple OpSlice but not all slices have
     # a regularizer.
@@ -991,7 +1037,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 3])
     identity = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
 
     # Create OpSlice for each identity op.
     op_slice = manager.get_op_slices(identity.op)[0]
@@ -1007,7 +1053,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 3])
     identity = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
 
     # Create OpSlice for each identity op.
     op_slice = manager.get_op_slices(identity.op)[0]
@@ -1030,7 +1076,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity7 = tf.identity(inputs)
     identity8 = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
 
     # Create OpSlice for each identity op.
     op_slice1 = manager.get_op_slices(identity1.op)[0]
@@ -1053,38 +1099,33 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     op_group8 = manager.create_op_group_for_op_slice(op_slice8)
 
     # Group all OpGroup together by grouping their OpSlice.
-    manager.group_op_slices([op_slice1, op_slice2, op_slice3, op_slice4,
-                             op_slice5, op_slice6, op_slice7, op_slice8])
+    manager.group_op_slices([
+        op_slice1, op_slice2, op_slice3, op_slice4, op_slice5, op_slice6,
+        op_slice7, op_slice8
+    ])
 
-    expected_group = orm.OpGroup(
-        op_groups=[op_group1, op_group2, op_group3, op_group4, op_group5,
-                   op_group6, op_group7, op_group8])
+    expected_group = orm.OpGroup(op_groups=[
+        op_group1, op_group2, op_group3, op_group4, op_group5, op_group6,
+        op_group7, op_group8
+    ])
 
     # Check all OpSlice are in one big group.
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice1).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice2).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice3).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice4).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice5).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice6).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice7).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice8).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice1).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice2).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice3).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice4).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice5).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice6).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice7).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice8).op_slices)
 
   def testGroupOpSlices_TransitiveGrouping(self):
     inputs = tf.zeros([2, 4, 4, 3])
@@ -1097,7 +1138,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity7 = tf.identity(inputs)
     identity8 = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
 
     # Create OpSlice for each identity op.
     op_slice1 = manager.get_op_slices(identity1.op)[0]
@@ -1126,35 +1167,28 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     # group.
     manager.group_op_slices([op_slice3, op_slice6])
 
-    expected_group = orm.OpGroup(
-        op_groups=[op_group1, op_group2, op_group3, op_group4, op_group5,
-                   op_group6, op_group7, op_group8])
+    expected_group = orm.OpGroup(op_groups=[
+        op_group1, op_group2, op_group3, op_group4, op_group5, op_group6,
+        op_group7, op_group8
+    ])
 
     # Check all OpSlice are in one big group.
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice1).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice2).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice3).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice4).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice5).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice6).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice7).op_slices)
-    self.assertListEqual(
-        expected_group.op_slices,
-        manager.get_op_group(op_slice8).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice1).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice2).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice3).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice4).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice5).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice6).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice7).op_slices)
+    self.assertListEqual(expected_group.op_slices,
+                         manager.get_op_group(op_slice8).op_slices)
 
   def testSliceOp_SingleSlice(self):
     inputs = tf.zeros([2, 4, 4, 3])
@@ -1167,7 +1201,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity7 = tf.identity(inputs)
     identity8 = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([],
+                                       self._default_op_handler_dict,
+                                       allow_noop=True)
 
     # Create OpSlice for each identity op.
     op_slice1 = manager.get_op_slices(identity1.op)[0]
@@ -1220,7 +1256,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 3])
     identity1 = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([],
+                                       self._default_op_handler_dict,
+                                       allow_noop=True)
 
     # Only slice identity1 op which is ungrouped.
     manager.slice_op(identity1.op, [1, 2])
@@ -1241,7 +1279,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity2 = tf.identity(inputs)
     identity3 = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([],
+                                       self._default_op_handler_dict,
+                                       allow_noop=True)
 
     # First op has sizes [4, 3, 7, 6].
     op_slice1_0_4 = orm.OpSlice(identity1.op, orm.Slice(0, 4))
@@ -1264,12 +1304,14 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     op_slice3_18_20 = orm.OpSlice(identity3.op, orm.Slice(18, 2))
 
     manager._op_slice_dict = {
-        identity1.op: [op_slice1_0_4, op_slice1_4_7, op_slice1_7_14,
-                       op_slice1_14_20],
+        identity1.op: [
+            op_slice1_0_4, op_slice1_4_7, op_slice1_7_14, op_slice1_14_20
+        ],
         identity2.op: [op_slice2_0_3, op_slice2_3_10, op_slice2_10_20],
-        identity3.op: [op_slice3_0_2, op_slice3_2_4, op_slice3_4_6,
-                       op_slice3_6_8, op_slice3_8_11, op_slice3_11_18,
-                       op_slice3_18_20],
+        identity3.op: [
+            op_slice3_0_2, op_slice3_2_4, op_slice3_4_6, op_slice3_6_8,
+            op_slice3_8_11, op_slice3_11_18, op_slice3_18_20
+        ],
     }
 
     # Only the [3, 7] slices of the ops are grouped.  Only the first op is a
@@ -1293,12 +1335,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     expected_sizes2 = [1, 2, 3, 4, 10]
     expected_sizes3 = [2, 2, 2, 2, 1, 2, 3, 4, 2]
 
-    self.assertListEqual(
-        expected_sizes1, [s.slice.size for s in op_slices1])
-    self.assertListEqual(
-        expected_sizes2, [s.slice.size for s in op_slices2])
-    self.assertListEqual(
-        expected_sizes3, [s.slice.size for s in op_slices3])
+    self.assertListEqual(expected_sizes1, [s.slice.size for s in op_slices1])
+    self.assertListEqual(expected_sizes2, [s.slice.size for s in op_slices2])
+    self.assertListEqual(expected_sizes3, [s.slice.size for s in op_slices3])
 
     # Verify new slices are grouped.
     op_slice1_4_5 = orm.OpSlice(identity1.op, orm.Slice(4, 1))
@@ -1321,33 +1360,33 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     expected_group3 = [op_slice1_7_10, op_slice2_3_6, op_slice3_11_14]
     expected_group4 = [op_slice1_10_14, op_slice2_6_10, op_slice3_14_18]
 
-    self.assertListEqual(
-        expected_group1, manager.get_op_group(op_slice1_4_5).op_slices)
-    self.assertListEqual(
-        expected_group1, manager.get_op_group(op_slice2_0_1).op_slices)
-    self.assertListEqual(
-        expected_group1, manager.get_op_group(op_slice3_8_9).op_slices)
+    self.assertListEqual(expected_group1,
+                         manager.get_op_group(op_slice1_4_5).op_slices)
+    self.assertListEqual(expected_group1,
+                         manager.get_op_group(op_slice2_0_1).op_slices)
+    self.assertListEqual(expected_group1,
+                         manager.get_op_group(op_slice3_8_9).op_slices)
 
-    self.assertListEqual(
-        expected_group2, manager.get_op_group(op_slice1_5_7).op_slices)
-    self.assertListEqual(
-        expected_group2, manager.get_op_group(op_slice2_1_3).op_slices)
-    self.assertListEqual(
-        expected_group2, manager.get_op_group(op_slice3_9_11).op_slices)
+    self.assertListEqual(expected_group2,
+                         manager.get_op_group(op_slice1_5_7).op_slices)
+    self.assertListEqual(expected_group2,
+                         manager.get_op_group(op_slice2_1_3).op_slices)
+    self.assertListEqual(expected_group2,
+                         manager.get_op_group(op_slice3_9_11).op_slices)
 
-    self.assertListEqual(
-        expected_group3, manager.get_op_group(op_slice1_7_10).op_slices)
-    self.assertListEqual(
-        expected_group3, manager.get_op_group(op_slice2_3_6).op_slices)
-    self.assertListEqual(
-        expected_group3, manager.get_op_group(op_slice3_11_14).op_slices)
+    self.assertListEqual(expected_group3,
+                         manager.get_op_group(op_slice1_7_10).op_slices)
+    self.assertListEqual(expected_group3,
+                         manager.get_op_group(op_slice2_3_6).op_slices)
+    self.assertListEqual(expected_group3,
+                         manager.get_op_group(op_slice3_11_14).op_slices)
 
-    self.assertListEqual(
-        expected_group4, manager.get_op_group(op_slice1_10_14).op_slices)
-    self.assertListEqual(
-        expected_group4, manager.get_op_group(op_slice2_6_10).op_slices)
-    self.assertListEqual(
-        expected_group4, manager.get_op_group(op_slice3_14_18).op_slices)
+    self.assertListEqual(expected_group4,
+                         manager.get_op_group(op_slice1_10_14).op_slices)
+    self.assertListEqual(expected_group4,
+                         manager.get_op_group(op_slice2_6_10).op_slices)
+    self.assertListEqual(expected_group4,
+                         manager.get_op_group(op_slice3_14_18).op_slices)
 
   def testProcessOps(self):
     inputs = tf.zeros([2, 4, 4, 3])
@@ -1424,7 +1463,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity = tf.identity(inputs)
     batch_norm = layers.batch_norm(identity)
 
-    manager = orm.OpRegularizerManager([], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([],
+                                       self._default_op_handler_dict,
+                                       allow_noop=True)
 
     self.assertFalse(manager.is_source_op(identity.op))
     self.assertTrue(manager.is_source_op(batch_norm.op))
@@ -1434,7 +1475,9 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity = tf.identity(inputs)
     layers.conv2d(identity, 5, 3, scope='conv1')
 
-    manager = orm.OpRegularizerManager([], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([],
+                                       self._default_op_handler_dict,
+                                       allow_noop=True)
 
     self.assertTrue(manager.is_passthrough(identity.op))
     # TODO(a1): Verify OutputNonPassthrough OpHandler returns False.
@@ -1444,7 +1487,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity = tf.identity(inputs)
 
     # Create OpRegularizerManager with OpSlice mapping.
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
     op_slice = orm.OpSlice(identity.op, orm.Slice(0, 3))
     manager._op_slice_dict[identity.op] = [op_slice]
 
@@ -1458,7 +1501,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     identity = tf.identity(inputs)
 
     # Create OpRegularizerManager with empty OpSlice dictionary.
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
     manager._op_slice_dict = {}
 
     op_slices = manager.get_op_slices(identity.op)
@@ -1476,7 +1519,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     split_op = split[0].op
 
     # Create OpRegularizerManager with empty OpSlice dictionary.
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
     manager._op_slice_dict = {}
 
     op_slices = manager.get_op_slices(split_op)
@@ -1492,7 +1535,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     constant = tf.constant(123)
 
     # Create OpRegularizerManager with empty OpSlice dictionary.
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
     manager._op_slice_dict = {}
 
     op_slices = manager.get_op_slices(constant.op)
@@ -1508,7 +1551,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     op_slice2 = orm.OpSlice(identity.op, orm.Slice(2, 6))
     op_slice3 = orm.OpSlice(identity.op, orm.Slice(8, 2))
 
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
     manager._op_slice_dict[identity.op] = [op_slice1, op_slice2, op_slice3]
 
     # Original op has slice sizes [2, 6, 2].  The middle op is being sliced into
@@ -1542,7 +1585,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 10])
     identity = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
 
     sizes = [1, 2, 3, 4]
     is_source = [True, False, True, False]
@@ -1573,7 +1616,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 10])
     identity = tf.identity(inputs)
 
-    manager = orm.OpRegularizerManager([])
+    manager = orm.OpRegularizerManager([], allow_noop=True)
 
     # Create OpSlices with size [3, 7].
     identity_slice1 = orm.OpSlice(identity.op, orm.Slice(0, 3))
@@ -1581,8 +1624,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Create OpGroup where only first group has source OpSlice.
     manager.create_op_group_for_op_slice(identity_slice1)
-    manager.create_op_group_for_op_slice(identity_slice2,
-                                         is_source=False)
+    manager.create_op_group_for_op_slice(identity_slice2, is_source=False)
 
     # First slice of size 3 is sliced into [1, 2], so these are sources.  Second
     # slice of size 7 is sliced into [3, 4], which are not sources.
@@ -1604,14 +1646,17 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       concat = tf.concat([c1, c2], axis=3)
       layers.conv2d(concat, num_outputs=10, kernel_size=3, scope='conv4')
 
-    manager = orm.OpRegularizerManager([], self._default_op_handler_dict)
+    manager = orm.OpRegularizerManager([],
+                                       self._default_op_handler_dict,
+                                       allow_noop=True)
     manager._dfs_for_source_ops([out.op])
 
     # Verify source ops were found.
     expected_queue = collections.deque([
         _get_op('conv3/BatchNorm/FusedBatchNorm'),
         _get_op('conv2/BatchNorm/FusedBatchNorm'),
-        _get_op('conv1/BatchNorm/FusedBatchNorm')])
+        _get_op('conv1/BatchNorm/FusedBatchNorm')
+    ])
     self.assertEqual(expected_queue, manager._op_deque)
 
     # Verify extra branch was not included.
@@ -1697,24 +1742,24 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     # Merge group5, group6, group7, and group8 into group 11.
     op_group11 = orm.OpGroup(
         op_groups=[op_group5, op_group6, op_group7, op_group8])
-    self.assertListEqual(
-        [op_slice5, op_slice6, op_slice7, op_slice8], op_group11.op_slices)
+    self.assertListEqual([op_slice5, op_slice6, op_slice7, op_slice8],
+                         op_group11.op_slices)
     self.assertListEqual([op_slice6, op_slice7], op_group11.source_op_slices)
     self.assertEqual(10, op_group11._index)  # OpGroup is zero-indexed.
 
     # Merge group9 and group10 into group12.
     op_group12 = orm.OpGroup(op_groups=[op_group9, op_group10])
-    self.assertListEqual(
-        [op_slice1, op_slice2, op_slice3, op_slice4], op_group12.op_slices)
+    self.assertListEqual([op_slice1, op_slice2, op_slice3, op_slice4],
+                         op_group12.op_slices)
     self.assertListEqual([op_slice3], op_group12.source_op_slices)
     self.assertEqual(11, op_group12._index)  # OpGroup is zero-indexed.
 
     # Merge group11 and group12 into group13.
     op_group13 = orm.OpGroup(op_groups=[op_group11, op_group12])
-    self.assertListEqual(
-        [op_slice5, op_slice6, op_slice7, op_slice8, op_slice1, op_slice2,
-         op_slice3, op_slice4],
-        op_group13.op_slices)
+    self.assertListEqual([
+        op_slice5, op_slice6, op_slice7, op_slice8, op_slice1, op_slice2,
+        op_slice3, op_slice4
+    ], op_group13.op_slices)
     self.assertListEqual([op_slice6, op_slice7, op_slice3],
                          op_group13.source_op_slices)
     self.assertEqual(12, op_group13._index)  # OpGroup is zero-indexed.
@@ -1726,13 +1771,12 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     manager = orm.OpRegularizerManager(
         [identity1.op, identity2.op],
-        op_handler_dict=self._default_op_handler_dict)
+        op_handler_dict=self._default_op_handler_dict, allow_noop=True)
     op_slices1 = manager.get_op_slices(identity1.op)
     op_slices2 = manager.get_op_slices(identity2.op)
     all_slices = op_slices1 + op_slices2
 
-    self.assertEqual('[Identity (0, 3), Identity_1 (0, 3)]',
-                     str(all_slices))
+    self.assertEqual('[Identity (0, 3), Identity_1 (0, 3)]', str(all_slices))
 
 
 class IndexOpRegularizer(generic_regularizers.OpRegularizer):
@@ -1830,8 +1874,8 @@ class StubBatchNormSourceOpHandler(
     return _stub_create_regularizer(op_slice)
 
 
-class IndexConv2DSourceOpHandler(
-    conv2d_source_op_handler.Conv2DSourceOpHandler):
+class IndexConv2DSourceOpHandler(conv2d_source_op_handler.Conv2DSourceOpHandler
+                                ):
   """An OpHandler that creates OpRegularizer using IndexOpRegularizer.
 
   A wrapper around Conv2DSourceOpHandler that overrides the create_regularizer
@@ -1859,8 +1903,8 @@ class StubConv2DSourceOpHandler(conv2d_source_op_handler.Conv2DSourceOpHandler):
     return _stub_create_regularizer(op_slice)
 
 
-class RandomConv2DSourceOpHandler(
-    conv2d_source_op_handler.Conv2DSourceOpHandler):
+class RandomConv2DSourceOpHandler(conv2d_source_op_handler.Conv2DSourceOpHandler
+                                 ):
   """An OpHandler that creates OpRegularizer using random values.
 
   A wrapper around Conv2DSourceOpHandler that overrides the create_regularizer
@@ -1873,9 +1917,9 @@ class RandomConv2DSourceOpHandler(
                              regularization_vector > self._threshold)
 
 
-def _stub_create_regularizer(
-    op_slice, reg_dict=add_concat_model_stub.REG_STUB,
-    alive_dict=add_concat_model_stub.ALIVE_STUB):
+def _stub_create_regularizer(op_slice,
+                             reg_dict=add_concat_model_stub.REG_STUB,
+                             alive_dict=add_concat_model_stub.ALIVE_STUB):
   """Create a StubOpRegularizer for a given OpSlice.
 
   Args:
@@ -1891,9 +1935,8 @@ def _stub_create_regularizer(
   size = op_slice.slice.size
   for key in add_concat_model_stub.REG_STUB:
     if op.name.startswith(key):
-      return StubOpRegularizer(
-          reg_dict[key][start_index:start_index + size],
-          alive_dict[key][start_index:start_index + size])
+      return StubOpRegularizer(reg_dict[key][start_index:start_index + size],
+                               alive_dict[key][start_index:start_index + size])
   raise ValueError('No regularizer for %s' % op.name)
 
 

@@ -80,7 +80,7 @@ class CostCalculator(object):
 
     # If at least one supported op is present, type would be tensor, not float.
     if isinstance(total, float):
-      # Tests rely on this function not raising exception in this case.
+      # Summaries rely on this case being handled without an exception.
       tf.logging.warning('No supported ops found.')
     return total
 

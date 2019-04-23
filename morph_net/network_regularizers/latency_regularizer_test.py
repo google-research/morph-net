@@ -208,10 +208,8 @@ class LatencyRegularizerTest(parameterized.TestCase, tf.test.TestCase):
       ('_V100', 'V100'))
   def testInceptionV2(self, hardware):
     image = tf.zeros([1, 224, 224, 3])
-    net, _ = inception.inception_v2_base(image)
+    _, _ = inception.inception_v2_base(image)
     g = tf.get_default_graph()
-    self.regularizer = latency_regularizer.GammaLatencyRegularizer(
-        [net.op], gamma_threshold=0.5, hardware=hardware)
 
     # Compute-bound convolution.
     op = g.get_operation_by_name(
