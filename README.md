@@ -1,7 +1,5 @@
 # MorphNet: Fast & Simple Resource-Constrained Learning of Deep Network Structure
 
-[TOC]
-
 ## What is MorphNet?
 
 MorphNet is a method for learning deep network structure during training. The
