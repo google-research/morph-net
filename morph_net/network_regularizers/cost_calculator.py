@@ -141,7 +141,10 @@ def _count_alive(tensor, opreg):
     return tf.reduce_sum(tf.cast(opreg.alive_vector, tf.float32))
   shape = tensor.shape.as_list()
   if shape:
-    return tf.constant(float(tensor.shape.as_list()[-1]), tf.float32)
+    num_outputs = tensor.shape.as_list()[-1]
+    if num_outputs is not None:
+      return tf.constant(num_outputs, tf.float32)
+  tf.logging.info('Unknown channel count in tensor %s', tensor)
   return tf.constant(0, tf.float32)
 
 
