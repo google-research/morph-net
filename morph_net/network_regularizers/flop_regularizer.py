@@ -126,7 +126,8 @@ class GroupLassoFlopsRegularizer(generic_regularizers.NetworkRegularizer):
       regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
       decorator_parameters=None,
       force_group=None,
-      regularizer_blacklist=None):
+      regularizer_blacklist=None,
+      convert_to_variable=True):
     """Creates a GroupLassoFlopsRegularizer object.
 
     Args:
@@ -147,14 +148,17 @@ class GroupLassoFlopsRegularizer(generic_regularizers.NetworkRegularizer):
         detail.
       regularizer_blacklist: List of regex for ops that should not be
         regularized. See op_regularizer_manager for more detail.
+      convert_to_variable: If `True` convert to variable in the
+        `GroupLassoBaseOpHandler`. If you're graph creates variables outside of
+        `tf.get_variable`, set to `False`.
     """
     conv2d_handler = conv2d_source_op_handler.Conv2DSourceOpHandler(
-        threshold, l1_fraction)
+        threshold, l1_fraction, convert_to_variable)
     conv2d_transpose_handler = (
         conv2d_transpose_source_op_handler.Conv2DTransposeSourceOpHandler(
-            threshold, l1_fraction))
+            threshold, l1_fraction, convert_to_variable))
     matmul_handler = matmul_source_op_handler.MatMulSourceOpHandler(
-        threshold, l1_fraction)
+        threshold, l1_fraction, convert_to_variable)
     if regularizer_decorator:
       conv2d_handler = op_handler_decorator.OpHandlerDecorator(
           conv2d_handler, regularizer_decorator, decorator_parameters)
@@ -188,6 +192,8 @@ class GroupLassoFlopsRegularizer(generic_regularizers.NetworkRegularizer):
             leaf_op_handler.LeafOpHandler(),
         'Transpose':
             output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+        'StridedSlice':
+            leaf_op_handler.LeafOpHandler(),
     })
 
     self._manager = orm.OpRegularizerManager(
