@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="morph_net",
-    version="0.2",
+    version="0.2.1",
     author="Google LLC",
     author_email="morphnet@google.com",
     description="A library for learning deep network structure during training",
