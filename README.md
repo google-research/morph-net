@@ -18,7 +18,7 @@ approach as well as new device-specific latency regularizers were prestend in
 [GTC 2019](https://gputechconf2019.smarteventscloud.com/connect/sessionDetail.ww?SESSION_ID=272314)
 
 
-[[slides](g3doc//MorphNet_GTC2019.pdf "GTC Slides"), recording: [YouTube](https://youtu.be/UvTXhTvJ_wM), [CTC on-demand](https://on-demand.gputechconf.com/gtc/2019/video/_/S9645/)].
+[[slides](g3doc//MorphNet_GTC2019.pdf "GTC Slides"), recording: [YouTube](https://youtu.be/UvTXhTvJ_wM), [GTC on-demand](https://on-demand.gputechconf.com/gtc/2019/video/_/S9645/)].
 
 In short, the MorphNet regularizer pushes weights down, and once they are small
 enough, the corresponding output channels are marked for removal from the
