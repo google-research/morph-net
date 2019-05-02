@@ -33,6 +33,10 @@ def get_gamma_op_handler_dict():
               leaf_op_handler.LeafOpHandler(),
           'Reshape':
               leaf_op_handler.LeafOpHandler(),
+          'SpaceToDepth':
+              leaf_op_handler.LeafOpHandler(),
+          'Shape':
+              leaf_op_handler.LeafOpHandler(),
           'Transpose':
               output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
           'ExpandDims':
