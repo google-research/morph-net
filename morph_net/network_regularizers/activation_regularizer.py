@@ -5,19 +5,14 @@ from __future__ import division
 # [internal] enable type annotations
 from __future__ import print_function
 
-import collections
 from morph_net.framework import batch_norm_source_op_handler
-from morph_net.framework import concat_op_handler
 from morph_net.framework import conv2d_source_op_handler
 from morph_net.framework import conv2d_transpose_source_op_handler
-from morph_net.framework import depthwise_convolution_op_handler
 from morph_net.framework import generic_regularizers
-from morph_net.framework import grouping_op_handler
-from morph_net.framework import leaf_op_handler
 from morph_net.framework import matmul_source_op_handler
 from morph_net.framework import op_handler_decorator
+from morph_net.framework import op_handlers
 from morph_net.framework import op_regularizer_manager as orm
-from morph_net.framework import output_non_passthrough_op_handler
 from morph_net.network_regularizers import cost_calculator
 from morph_net.network_regularizers import resource_function
 from typing import Type
@@ -59,33 +54,10 @@ class GammaActivationRegularizer(generic_regularizers.NetworkRegularizer):
     if regularizer_decorator:
       source_op_handler = op_handler_decorator.OpHandlerDecorator(
           source_op_handler, regularizer_decorator, decorator_parameters)
-    op_handler_dict = collections.defaultdict(
-        grouping_op_handler.GroupingOpHandler)
+    op_handler_dict = op_handlers.get_gamma_op_handler_dict()
     op_handler_dict.update({
-        'FusedBatchNorm':
-            source_op_handler,
-        'FusedBatchNormV2':
-            source_op_handler,
-        'Conv2D':
-            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
-        'ConcatV2':
-            concat_op_handler.ConcatOpHandler(),
-        'DepthToSpace':
-            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
-        'DepthwiseConv2dNative':
-            depthwise_convolution_op_handler.DepthwiseConvolutionOpHandler(),
-        'MatMul':
-            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
-        'TensorArrayGatherV3':
-            leaf_op_handler.LeafOpHandler(),
-        'RandomUniform':
-            leaf_op_handler.LeafOpHandler(),
-        'Reshape':
-            leaf_op_handler.LeafOpHandler(),
-        'Transpose':
-            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
-        'ExpandDims':
-            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+        'FusedBatchNorm': source_op_handler,
+        'FusedBatchNormV2': source_op_handler,
     })
 
     self._manager = orm.OpRegularizerManager(
@@ -163,31 +135,11 @@ class GroupLassoActivationRegularizer(generic_regularizers.NetworkRegularizer):
       matmul_handler = op_handler_decorator.OpHandlerDecorator(
           matmul_handler, regularizer_decorator, decorator_parameters)
 
-    op_handler_dict = collections.defaultdict(
-        grouping_op_handler.GroupingOpHandler)
+    op_handler_dict = op_handlers.get_group_lasso_op_handler_dict()
     op_handler_dict.update({
-        'Conv2D':
-            conv2d_handler,
-        'Conv2DBackpropInput':
-            conv2d_transpose_handler,
-        'ConcatV2':
-            concat_op_handler.ConcatOpHandler(),
-        'DepthToSpace':
-            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
-        'DepthwiseConv2dNative':
-            depthwise_convolution_op_handler.DepthwiseConvolutionOpHandler(),
-        'MatMul':
-            matmul_handler,
-        'RandomUniform':
-            leaf_op_handler.LeafOpHandler(),
-        'Reshape':
-            leaf_op_handler.LeafOpHandler(),
-        'Shape':
-            leaf_op_handler.LeafOpHandler(),
-        'TensorArrayGatherV3':
-            leaf_op_handler.LeafOpHandler(),
-        'Transpose':
-            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+        'Conv2D': conv2d_handler,
+        'Conv2DBackpropInput': conv2d_transpose_handler,
+        'MatMul': matmul_handler,
     })
 
     self._manager = orm.OpRegularizerManager(
