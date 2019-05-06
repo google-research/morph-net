@@ -16,6 +16,10 @@ _SUPPORTED_OPS = ['Conv2D']
 _ALIVE_FILENAME = 'alive'
 
 
+def format_structure(structure: Dict[Text, int]) -> Text:
+  return json.dumps(structure, indent=2, sort_keys=True, default=str)
+
+
 def compute_alive_counts(
     alive_vectors: Dict[Text, Sequence[bool]]) -> Dict[Text, int]:
   """Computes alive counts.
@@ -110,9 +114,7 @@ class StructureExporter(object):
     Args:
       f: a file object where alive counts are saved.
     """
-    f.write(
-        json.dumps(
-            self.get_alive_counts(), indent=2, sort_keys=True, default=str))
+    f.write(format_structure(self.get_alive_counts()))
 
   def create_file_and_save_alive_counts(self, train_dir: Text,
                                         global_step: tf.Tensor) -> None:
