@@ -43,15 +43,19 @@ def _get_base_op_hander_dicts():
 
 
 def get_gamma_op_handler_dict():
+  """Returns the base op_hander_dict for gamma based regularizers."""
   op_handler_dict = _get_base_op_hander_dicts()
   op_handler_dict.update({
       'Conv2D':
           output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
       'MatMul':
           output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+      'Conv2DBackpropInput':
+          output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
   })
   return op_handler_dict
 
 
 def get_group_lasso_op_handler_dict():
+  """Returns the base op_hander_dict for group-lasso based regularizers."""
   return _get_base_op_hander_dicts()
