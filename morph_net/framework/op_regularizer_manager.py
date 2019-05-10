@@ -329,11 +329,15 @@ class OpRegularizerManager(object):
       return
 
     # If sizes cannot be aligned with original sizes, raise exception.
-    aligned_op_slice_sizes = op_handler_util.get_aligned_sizes(
-        [old_op_slice_sizes, sizes])
+    try:
+      aligned_op_slice_sizes = op_handler_util.get_aligned_sizes(
+          [old_op_slice_sizes, sizes])
+    except ValueError as e:
+      raise ValueError('Error with op: %s: %s' % (op.name, e.args[0]))
+
     if sizes != aligned_op_slice_sizes:
-      raise ValueError(
-          'Cannot slice op from sizes %s to %s' % (old_op_slice_sizes, sizes))
+      raise ValueError('Cannot slice op %s from sizes %s to %s' %
+                       (op.name, old_op_slice_sizes, sizes))
 
     # Iterate through slices to find old slices that need to be resliced.
     old_slice_index = 0
