@@ -20,6 +20,8 @@ OP_TYPES_WITH_WEIGHTS = {
 def get_input_ops(op, op_reg_manager):
   """Returns input ops for a given op.
 
+  Filters constants and weight tensors.
+
   Args:
     op: tf.Operation to get inputs of.
     op_reg_manager: OpRegularizerManager to keep track of the grouping.
@@ -410,8 +412,10 @@ def _get_source_op_slices(op_slices, op_reg_manager):
   op_groups = [op_reg_manager.get_op_group(op_slice)
                for op_slice in op_slices
                if op_reg_manager.get_op_group(op_slice) is not None]
+  # pylint: disable=g-complex-comprehension
   return list(set([source_op_slice for op_group in op_groups
                    for source_op_slice in op_group.source_op_slices]))
+  # pylint: enable=g-complex-comprehension
 
 
 def _get_input_source_ops_to_omit(input_op_slices, op_slice,
