@@ -1,6 +1,16 @@
 # MorphNet: Fast & Simple Resource-Constrained Learning of Deep Network Structure
 
-[TOC]
+## Table of Contents
+- [What is MorphNet?](#what-is-morphnet)
+- [Usage](#usage)
+    - [Regularizer Types](#regularizer-types)
+    - [Regularizer Algorithms](#regularizer-algorithms)
+    - [Regularizer Target Costs](#regularizer-target-costs)
+- [Example](#example-adding-a-flops-regularizer)
+- [Extracting the Architecture](#extracting-the-architecture-learned-by-morphnet)
+- [Miscellaneous](#misc)
+    - [Maintainers](#maintainers)
+    - [Contributors](#contributors)
 
 ## What is MorphNet?
 
@@ -110,7 +120,7 @@ Note that the regularizer type is not a hyperparameter because it's uniquely
 determined by the metric of interest (FLOPs, latency) and the presence of
 BatchNorm.
 
-## Regularizer Types
+### Regularizer Types
 
 Regularizer classes can be found under `network_regularizers/` directory. They
 are named by the algorithm they use and the target cost they attempt to
@@ -173,7 +183,7 @@ at its initial value and the network structure will not vary. The
 on the price-performance curve. The `gamma_threshold` parameter is used for
 determining when an activation is alive.
 
-### Extracting the Architecture Learned by MorphNet
+## Extracting the Architecture Learned by MorphNet
 
 During training, you should save a JSON file that contains the learned structure
 of the network, that is the count of activations in a given layer kept alive (as
