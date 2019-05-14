@@ -84,11 +84,8 @@ class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
     with self.cached_session():
       return self.gamma_flop_reg.get_regularization_term(conv).eval()
 
-  @parameterized.named_parameters(
-      ('_fused', True),
-      ('_fused_by_connectivity', True))
-  def testCost(self, fused):
-    self.BuildWithBatchNorm(fused)
+  def testCost(self,):
+    self.BuildWithBatchNorm(fused=True)
     # Conv1 has 7 gammas above 0.45, and NUM_CHANNELS inputs (from the image).
     conv = self.GetConv('conv1')
     self.assertEqual(_coeff(conv) * 7 * NUM_CHANNELS, self.GetCost([conv]))
