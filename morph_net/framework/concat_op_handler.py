@@ -4,8 +4,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from morph_net.framework import grouping_op_handler
 from morph_net.framework import op_handler
 from morph_net.framework import op_handler_util
+
+
+# The axis arg of tf.concat is a constant tensor stored in the last element of
+# op.inputs. This function access the value of that tensor.
+def _get_concat_op_axis(op):
+  return op.inputs[-1].op.get_attr('value').int_val[0]
 
 
 class ConcatOpHandler(op_handler.OpHandler):
@@ -26,6 +33,17 @@ class ConcatOpHandler(op_handler.OpHandler):
       op: tf.Operation to assign grouping to.
       op_reg_manager: OpRegularizerManager to keep track of the grouping.
     """
+    concat_axis = _get_concat_op_axis(op)
+    # Need to figure out the rank to know if axis is last.
+    rank = len(op.inputs[0].shape)  # Rank of the first input.
+
+    if concat_axis != -1 and concat_axis != rank - 1:
+      # Concat is actually grouping inputs!
+      handler = grouping_op_handler.GroupingOpHandler()
+      handler.assign_grouping(op, op_reg_manager)
+      return
+
+    # If concat is of the last dimension, this is a `standard` concat.
     # TODO(a1): Consider refactoring this duplicated logic.
     # Check if all input ops have groups, or tell the manager to process them.
     input_ops = op_handler_util.get_input_ops(op, op_reg_manager)

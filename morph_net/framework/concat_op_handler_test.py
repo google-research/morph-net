@@ -10,6 +10,7 @@ from morph_net.framework import op_regularizer_manager as orm
 import tensorflow as tf
 
 layers = tf.contrib.layers
+arg_scope = tf.contrib.framework.arg_scope
 
 
 class ConcatOpHandlerTest(tf.test.TestCase):
@@ -755,6 +756,158 @@ class ConcatOpHandlerTest(tf.test.TestCase):
         (expected_input_op_slices, expected_output_op_slices),
         handler._get_input_output_op_slices(input_ops, output_ops,
                                             self.mock_op_reg_manager))
+
+
+class GroupingConcatOpHandlerTest(tf.test.TestCase):
+
+  def _get_scope(self):
+    params = {
+        'trainable': True,
+        'normalizer_fn': layers.batch_norm,
+        'normalizer_params': {
+            'scale': True,
+        },
+    }
+
+    with arg_scope([layers.conv2d], **params) as sc:
+      return sc
+
+  def setUp(self):
+    tf.reset_default_graph()
+
+    # This tests 3 Conv2D ops being concatenated.
+    inputs = tf.zeros([2, 4, 4, 3])
+    with tf.contrib.framework.arg_scope(self._get_scope()):
+      c1 = layers.conv2d(inputs, num_outputs=6, kernel_size=3, scope='conv1')
+      c2 = layers.conv2d(inputs, num_outputs=6, kernel_size=3, scope='conv2')
+      c3 = layers.conv2d(inputs, num_outputs=6, kernel_size=3, scope='conv3')
+      net = tf.concat([c1, c2, c3], axis=2)
+      layers.batch_norm(net)
+
+    g = tf.get_default_graph()
+
+    # Declare OpSlice and OpGroup for ops of interest.
+    self.concat_op = g.get_operation_by_name('concat')
+    self.concat_op_slice = orm.OpSlice(self.concat_op, orm.Slice(0, 6))
+    self.concat_op_group = orm.OpGroup(
+        self.concat_op_slice,
+        omit_source_op_slices=[self.concat_op_slice])
+
+    self.relu1_op = g.get_operation_by_name('conv1/Relu')
+    self.relu1_op_slice = orm.OpSlice(self.relu1_op, orm.Slice(0, 6))
+    self.relu1_op_group = orm.OpGroup(
+        self.relu1_op_slice, omit_source_op_slices=[self.relu1_op_slice])
+
+    self.relu2_op = g.get_operation_by_name('conv2/Relu')
+    self.relu2_op_slice = orm.OpSlice(self.relu2_op, orm.Slice(0, 6))
+    self.relu2_op_group = orm.OpGroup(
+        self.relu2_op_slice, omit_source_op_slices=[self.relu2_op_slice])
+
+    self.relu3_op = g.get_operation_by_name('conv3/Relu')
+    self.relu3_op_slice = orm.OpSlice(self.relu3_op, orm.Slice(0, 6))
+    self.relu3_op_group = orm.OpGroup(
+        self.relu3_op_slice, omit_source_op_slices=[self.relu3_op_slice])
+
+    self.batch_norm_op = g.get_operation_by_name('BatchNorm/FusedBatchNorm')
+    self.batch_norm_op_slice = orm.OpSlice(self.batch_norm_op, orm.Slice(0, 6))
+    self.batch_norm_op_group = orm.OpGroup(
+        self.batch_norm_op_slice,
+        omit_source_op_slices=[self.batch_norm_op_slice])
+
+    self.concat_group = orm.OpGroup(
+        op_slice=None,
+        op_groups=[
+            self.batch_norm_op_group, self.concat_op_group, self.relu1_op_group,
+            self.relu2_op_group, self.relu3_op_group
+        ])
+
+    # Create mock OpRegularizerManager with custom mapping of OpSlice and
+    # OpGroup.
+    self.mock_op_reg_manager = mock.create_autospec(orm.OpRegularizerManager)
+
+    def get_op_slices(op):
+      return self.op_slice_dict.get(op, [])
+
+    def get_op_group(op_slice):
+      return self.op_group_dict.get(op_slice)
+
+    self.mock_op_reg_manager.get_op_slices.side_effect = get_op_slices
+    self.mock_op_reg_manager.get_op_group.side_effect = get_op_group
+    self.mock_op_reg_manager.is_source_op.return_value = False
+    self.mock_op_reg_manager.is_passthrough.return_value = True
+    self.mock_op_reg_manager.ops = [
+        self.concat_op, self.relu1_op, self.relu2_op, self.relu3_op,
+        self.batch_norm_op]
+
+  def test_AssignGroupingOfGroupingConcatNoSlicing(self):
+    # In this test, the output op (batch norm) has size 6 and is not sliced.
+    # and that input Conv2Ds are all of size 6, and are grouped.
+
+    # Map ops to slices.  Batch norm op is composed of multiple slices.
+    self.op_slice_dict = {
+        self.relu1_op: [self.relu1_op_slice],
+        self.relu2_op: [self.relu2_op_slice],
+        self.relu3_op: [self.relu3_op_slice],
+        self.concat_op: [self.concat_op_slice],
+        self.batch_norm_op: [self.batch_norm_op_slice],
+    }
+
+    # Map each slice to a group.
+    self.op_group_dict = {
+        self.relu1_op_slice: self.relu1_op_group,
+        self.relu2_op_slice: self.relu2_op_group,
+        self.relu3_op_slice: self.relu3_op_group,
+        self.batch_norm_op_slice: self.batch_norm_op_group
+    }
+
+    # Call handler to assign grouping.
+    handler = concat_op_handler.ConcatOpHandler()
+    handler.assign_grouping(self.concat_op, self.mock_op_reg_manager)
+
+    # Verify manager looks up OpSlice for ops of interest.
+    self.mock_op_reg_manager.get_op_slices.assert_has_calls(
+        # Checking for ops to process.
+        [mock.call(self.relu1_op),
+         mock.call(self.relu2_op),
+         mock.call(self.relu3_op),
+         mock.call(self.batch_norm_op),
+         # Initial slice data.
+         mock.call(self.concat_op),
+         mock.call(self.relu1_op),
+         mock.call(self.relu2_op),
+         mock.call(self.relu3_op),
+         mock.call(self.batch_norm_op),
+         # Reslicing.
+         mock.call(self.relu1_op),
+         mock.call(self.relu2_op),
+         mock.call(self.relu3_op),
+         mock.call(self.concat_op),
+         mock.call(self.batch_norm_op),
+         # Refreshing slice data.
+         mock.call(self.relu1_op),
+         mock.call(self.relu2_op),
+         mock.call(self.relu3_op),
+         mock.call(self.batch_norm_op),
+         # Group concat op.
+         mock.call(self.concat_op)])
+
+    # Verify manager does not slices the concat op.
+    self.mock_op_reg_manager.slice_op.assert_not_called()
+
+    # Verify manager groups the new slices.
+    self.mock_op_reg_manager.group_op_slices.assert_called_once_with([
+        self.concat_op_slice, self.relu1_op_slice, self.relu2_op_slice,
+        self.relu3_op_slice, self.batch_norm_op_slice
+    ])
+
+  def testGetConcatOpAxis(self):
+    x = tf.zeros([7, 12, 12, 3])
+    self.assertEqual(
+        concat_op_handler._get_concat_op_axis(tf.concat([x, x], 3).op), 3)
+    self.assertEqual(
+        concat_op_handler._get_concat_op_axis(tf.concat([x, x, x], 1).op), 1)
+    self.assertEqual(
+        concat_op_handler._get_concat_op_axis(tf.concat([x, x, x], 2).op), 2)
 
 
 if __name__ == '__main__':

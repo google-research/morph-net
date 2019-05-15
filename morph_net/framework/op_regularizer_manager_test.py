@@ -15,6 +15,7 @@ from morph_net.framework import grouping_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.framework import output_non_passthrough_op_handler
 from morph_net.testing import add_concat_model_stub
+from morph_net.testing import grouping_concat_model_stub
 import numpy as np
 import tensorflow as tf
 
@@ -78,18 +79,19 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     # scope: A String with the scope to test.
     sc = self._batch_norm_scope() if use_batch_norm else []
     partitioner = tf.fixed_size_partitioner(2) if use_partitioner else None
+    model_stub = add_concat_model_stub
     with arg_scope(sc):
       with tf.variable_scope(tf.get_variable_scope(), partitioner=partitioner):
         final_op = add_concat_model_stub.build_model()
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler()
+    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
     if not use_batch_norm:
-      op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler()
+      op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(model_stub)
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
 
-    expected_alive = add_concat_model_stub.expected_alive()
+    expected_alive = model_stub.expected_alive()
     conv_reg = op_reg_manager.get_regularizer(_get_op(scope + '/Conv2D'))
     self.assertAllEqual(expected_alive[scope], conv_reg.alive_vector)
 
@@ -103,24 +105,68 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
   def testConcatOpGetRegularizer(self, use_batch_norm, use_partitioner):
     sc = self._batch_norm_scope() if use_batch_norm else []
     partitioner = tf.fixed_size_partitioner(2) if use_partitioner else None
+    model_stub = add_concat_model_stub
     with arg_scope(sc):
       with tf.variable_scope(tf.get_variable_scope(), partitioner=partitioner):
         final_op = add_concat_model_stub.build_model()
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler()
+    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
     if not use_batch_norm:
-      op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler()
+      op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(model_stub)
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
 
-    expected_alive = add_concat_model_stub.expected_alive()
+    expected_alive = model_stub.expected_alive()
     expected = np.logical_or(expected_alive['conv4'], expected_alive['concat'])
     conv_reg = op_reg_manager.get_regularizer(_get_op('conv4/Conv2D'))
     self.assertAllEqual(expected, conv_reg.alive_vector)
 
     relu_reg = op_reg_manager.get_regularizer(_get_op('conv4/Relu'))
     self.assertAllEqual(expected, relu_reg.alive_vector)
+
+  @parameterized.named_parameters(
+      ('_conv1', 'conv1/Conv2D', 'conv1'),
+      ('_conv2', 'conv2/Conv2D', 'conv2'),
+      ('_conv3', 'conv3/Conv2D', 'conv3'),
+      ('_conv4', 'conv4/Conv2D', 'conv4'),
+  )
+  def testGroupConcatOpGetRegularizerValues(self, op_name, short_name):
+    model_stub = grouping_concat_model_stub
+    with arg_scope(self._batch_norm_scope()):
+      with tf.variable_scope(tf.get_variable_scope()):
+        final_op = model_stub.build_model()
+
+    # Instantiate OpRegularizerManager.
+    op_handler_dict = self._default_op_handler_dict
+    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
+
+    op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
+
+    expected_alive = model_stub.expected_alive()
+    expected_reg = model_stub.expected_regularization()
+
+    reg = op_reg_manager.get_regularizer(_get_op(op_name))
+    self.assertAllEqual(expected_alive[short_name], reg.alive_vector)
+    self.assertAllClose(expected_reg[short_name], reg.regularization_vector)
+
+  def testGroupConcatOpGetRegularizerObjects(self):
+    model_stub = grouping_concat_model_stub
+    with arg_scope(self._batch_norm_scope()):
+      with tf.variable_scope(tf.get_variable_scope()):
+        final_op = model_stub.build_model()
+
+    # Instantiate OpRegularizerManager.
+    op_handler_dict = self._default_op_handler_dict
+    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
+
+    op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
+    self.assertEqual(
+        op_reg_manager.get_regularizer(_get_op('conv1/Conv2D')),
+        op_reg_manager.get_regularizer(_get_op('conv2/Conv2D')))
+    self.assertEqual(
+        op_reg_manager.get_regularizer(_get_op('conv3/Conv2D')),
+        op_reg_manager.get_regularizer(_get_op('conv4/Conv2D')))
 
   @parameterized.named_parameters(('Concat_5', True, 5),
                                   ('Concat_7', True, 7),
@@ -137,7 +183,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler()
+    op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(add_concat_model_stub)
     op_reg_manager = orm.OpRegularizerManager([output.op], op_handler_dict)
 
     expected_alive = add_concat_model_stub.expected_alive()
@@ -356,6 +402,39 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
                      manager.get_op_group(concat_op_slice0))
     self.assertEqual(manager.get_op_group(c1_op_slice),
                      manager.get_op_group(concat_op_slice1))
+
+  def testGroupingConcat(self):
+    with tf.contrib.framework.arg_scope(self._batch_norm_scope()):
+      inputs = tf.zeros([2, 4, 4, 3])
+      c1 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv1')
+      c2 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv2')
+      concat = tf.concat([c1, c2], axis=2)
+
+    manager = orm.OpRegularizerManager([concat.op],
+                                       self._default_op_handler_dict)
+
+    # Fetch OpSlice to verify grouping.
+    inputs_op_slice = manager.get_op_slices(inputs.op)[0]
+    c1_op_slice = manager.get_op_slices(c1.op)[0]
+    c2_op_slice = manager.get_op_slices(c2.op)[0]
+    concat_op_slice = manager.get_op_slices(concat.op)[0]
+
+    # Verify inputs and c1 have different group.
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c1_op_slice))
+
+    # Verify inputs and c2 have different group.
+    self.assertNotEqual(
+        manager.get_op_group(inputs_op_slice),
+        manager.get_op_group(c2_op_slice))
+
+    # Verify c1, c2, and concat have the same group.
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice), manager.get_op_group(c2_op_slice))
+    self.assertEqual(
+        manager.get_op_group(c1_op_slice),
+        manager.get_op_group(concat_op_slice))
 
   def testBatchNormAfterConcat(self):
     inputs = tf.zeros([2, 4, 4, 3])
@@ -1823,11 +1902,11 @@ class StubBatchNormSourceOpHandler(
   create_regularizer method to use stub values for testing.
   """
 
-  def __init__(self):
-    pass
+  def __init__(self, model_stub):
+    self._model_stub = model_stub
 
   def create_regularizer(self, op_slice):
-    return _stub_create_regularizer(op_slice)
+    return _stub_create_regularizer(op_slice, self._model_stub)
 
 
 class IndexConv2DSourceOpHandler(
@@ -1852,11 +1931,12 @@ class StubConv2DSourceOpHandler(conv2d_source_op_handler.Conv2DSourceOpHandler):
   method to use stub values for testing.
   """
 
-  def __init__(self):
-    pass
+  def __init__(self, model_stub):
+    super(StubConv2DSourceOpHandler, self).__init__(0.1)
+    self._model_stub = model_stub
 
   def create_regularizer(self, op_slice):
-    return _stub_create_regularizer(op_slice)
+    return _stub_create_regularizer(op_slice, self._model_stub)
 
 
 class RandomConv2DSourceOpHandler(
@@ -1873,15 +1953,12 @@ class RandomConv2DSourceOpHandler(
                              regularization_vector > self._threshold)
 
 
-def _stub_create_regularizer(
-    op_slice, reg_dict=add_concat_model_stub.REG_STUB,
-    alive_dict=add_concat_model_stub.ALIVE_STUB):
+def _stub_create_regularizer(op_slice, model_stub):
   """Create a StubOpRegularizer for a given OpSlice.
 
   Args:
     op_slice: A op_regularizer_manager.OpSlice.
-    reg_dict: Dictionary of op name to regularization vector.
-    alive_dict: Dictionary of op name to alive vector.
+    model_stub: Module name where REG_STUB and ALIVE_STUB will be found.
 
   Returns:
     StubOpRegularizer with stubbed regularization and alive vectors.
@@ -1889,11 +1966,11 @@ def _stub_create_regularizer(
   op = op_slice.op
   start_index = op_slice.slice.start_index
   size = op_slice.slice.size
-  for key in add_concat_model_stub.REG_STUB:
+  for key in model_stub.REG_STUB:
     if op.name.startswith(key):
       return StubOpRegularizer(
-          reg_dict[key][start_index:start_index + size],
-          alive_dict[key][start_index:start_index + size])
+          model_stub.REG_STUB[key][start_index:start_index + size],
+          model_stub.ALIVE_STUB[key][start_index:start_index + size])
   raise ValueError('No regularizer for %s' % op.name)
 
 
