@@ -136,9 +136,9 @@ class StructureExporter(object):
       # Probably already exists. If not, we'll see the error in the next line.
       pass
     with tf.gfile.Open(os.path.join(directory, current_filename), 'w') as f:
-      self.save_alive_counts(f)
+      self.save_alive_counts(f)  # pytype: disable=wrong-arg-types
     with tf.gfile.Open(os.path.join(directory, _ALIVE_FILENAME), 'w') as f:
-      self.save_alive_counts(f)
+      self.save_alive_counts(f)  # pytype: disable=wrong-arg-types
 
 
 # TODO(p1): maybe check that we still end up with unique names after prefix
