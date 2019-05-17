@@ -49,18 +49,26 @@ class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
     #
     # (the model has two "outputs", conv3 and conv4).
     #
+
+    # op.name: 'Const'
     image = tf.constant(0.0, shape=[1, 17, 19, NUM_CHANNELS])
-    conv1 = slim.layers.conv2d(image, 13, [7, 5], padding='SAME', scope='conv1')
-    conv2 = slim.layers.conv2d(image, 23, [1, 1], padding='SAME', scope='conv2')
-    concat = tf.concat([conv1, conv2], 3)
+    # op.name: 'conv1/Conv2D'
+    self.conv1 = slim.layers.conv2d(
+        image, 13, [7, 5], padding='SAME', scope='conv1')
+    self.conv2 = slim.layers.conv2d(
+        image, 23, [1, 1], padding='SAME', scope='conv2')
+    self.concat = tf.concat([self.conv1, self.conv2], 3)
     self.conv3 = slim.layers.conv2d(
-        concat, 29, [3, 3], stride=2, padding='SAME', scope='conv3')
+        self.concat, 29, [3, 3], stride=2, padding='SAME', scope='conv3')
     self.conv4 = slim.layers.conv2d(
-        concat, 31, [1, 1], stride=1, padding='SAME', scope='conv4')
+        self.concat, 31, [1, 1], stride=1, padding='SAME', scope='conv4')
     self.name_to_var = {v.op.name: v for v in tf.global_variables()}
 
+  def AddRegularizer(self, input_boundary=None):
     self.gamma_flop_reg = flop_regularizer.GammaFlopsRegularizer(
-        [self.conv3.op, self.conv4.op], gamma_threshold=0.45)
+        [self.conv3.op, self.conv4.op],
+        gamma_threshold=0.45,
+        input_boundary=input_boundary)
 
   def GetConv(self, name):
     return tf.get_default_graph().get_operation_by_name(name + '/Conv2D')
@@ -84,8 +92,18 @@ class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
     with self.cached_session():
       return self.gamma_flop_reg.get_regularization_term(conv).eval()
 
-  def testCost(self,):
+  def GetSourceOps(self):
+    op_regularizer_manager = self.gamma_flop_reg.op_regularizer_manager
+    return [
+        op.name
+        for op in op_regularizer_manager.ops
+        if op_regularizer_manager.is_source_op(op)
+    ]
+
+  def testCost(self):
     self.BuildWithBatchNorm(fused=True)
+    self.AddRegularizer(input_boundary=None)
+
     # Conv1 has 7 gammas above 0.45, and NUM_CHANNELS inputs (from the image).
     conv = self.GetConv('conv1')
     self.assertEqual(_coeff(conv) * 7 * NUM_CHANNELS, self.GetCost([conv]))
@@ -107,8 +125,40 @@ class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
     self.assertEqual(
         self.GetCost(convs[:1]) + self.GetCost(convs[1:]), self.GetCost(convs))
 
+  def testInputBoundaryNone(self):
+    self.BuildWithBatchNorm(fused=True)
+    self.AddRegularizer(input_boundary=None)
+    self.assertCountEqual(self.GetSourceOps(), [
+        'conv1/BatchNorm/FusedBatchNorm', 'conv2/BatchNorm/FusedBatchNorm',
+        'conv3/BatchNorm/FusedBatchNorm', 'conv4/BatchNorm/FusedBatchNorm'
+    ])
+
+  def testInputBoundaryConv3(self):
+    # Only block one path, can still reach all other convolutions.
+    self.BuildWithBatchNorm(fused=True)
+    self.AddRegularizer(input_boundary=[self.conv3.op])
+    self.assertCountEqual(self.GetSourceOps(), [
+        'conv1/BatchNorm/FusedBatchNorm', 'conv2/BatchNorm/FusedBatchNorm',
+        'conv4/BatchNorm/FusedBatchNorm'
+    ])
+
+  def testInputBoundaryConv3And4(self):
+    # Block both paths, can no longer reach Concat and earlier convolutions.
+    self.BuildWithBatchNorm(fused=True)
+    self.AddRegularizer(input_boundary=[self.conv3.op, self.conv4.op])
+    self.assertCountEqual(self.GetSourceOps(), [])
+
+  def testInputBoundaryConcat(self):
+    # Block concat, can only see conv3 and conv4.
+    self.BuildWithBatchNorm(fused=True)
+    self.AddRegularizer(input_boundary=[self.concat.op])
+    self.assertCountEqual(
+        self.GetSourceOps(),
+        ['conv3/BatchNorm/FusedBatchNorm', 'conv4/BatchNorm/FusedBatchNorm'])
+
   def testLossDecorated(self):
     self.BuildWithBatchNorm(True)
+    self.AddRegularizer()
     # Create network regularizer with DummyDecorator op regularization.
     self.gamma_flop_reg = flop_regularizer.GammaFlopsRegularizer(
         [self.conv3.op, self.conv4.op],

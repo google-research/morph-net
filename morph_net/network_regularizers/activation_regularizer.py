@@ -27,6 +27,7 @@ class GammaActivationRegularizer(generic_regularizers.NetworkRegularizer):
       gamma_threshold,
       regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
       decorator_parameters=None,
+      input_boundary=None,
       force_group=None,
       regularizer_blacklist=None):
     """Creates a GammaActivationRegularizer object.
@@ -42,6 +43,8 @@ class GammaActivationRegularizer(generic_regularizers.NetworkRegularizer):
       decorator_parameters: A dictionary of parameters to pass to the decorator
         factory. To be used only with decorators that requires parameters,
         otherwise use None.
+      input_boundary: A list of ops that represent the input boundary of the
+        subgraph being regularized (input boundary is not regularized).
       force_group: List of regex for ops that should be force-grouped.  Each
         regex corresponds to a separate group.  Use '|' operator to specify
         multiple patterns in a single regex. See op_regularizer_manager for more
@@ -63,6 +66,7 @@ class GammaActivationRegularizer(generic_regularizers.NetworkRegularizer):
     self._manager = orm.OpRegularizerManager(
         ops,
         op_handler_dict,
+        input_boundary=input_boundary,
         force_group=force_group,
         regularizer_blacklist=regularizer_blacklist)
     self._calculator = cost_calculator.CostCalculator(
@@ -97,6 +101,7 @@ class GroupLassoActivationRegularizer(generic_regularizers.NetworkRegularizer):
       l1_fraction=0,
       regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
       decorator_parameters=None,
+      input_boundary=None,
       force_group=None,
       regularizer_blacklist=None):
     """Creates a GroupLassoActivationRegularizer object.
@@ -113,6 +118,8 @@ class GroupLassoActivationRegularizer(generic_regularizers.NetworkRegularizer):
       decorator_parameters: A dictionary of parameters to pass to the decorator
         factory. To be used only with decorators that requires parameters,
         otherwise use None.
+      input_boundary: A list of ops that represent the input boundary of the
+        subgraph being regularized (input boundary is not regularized).
       force_group: List of regex for ops that should be force-grouped.  Each
         regex corresponds to a separate group.  Use '|' operator to specify
         multiple patterns in a single regex. See op_regularizer_manager for more
@@ -145,6 +152,7 @@ class GroupLassoActivationRegularizer(generic_regularizers.NetworkRegularizer):
     self._manager = orm.OpRegularizerManager(
         ops,
         op_handler_dict,
+        input_boundary=input_boundary,
         force_group=force_group,
         regularizer_blacklist=regularizer_blacklist)
     self._calculator = cost_calculator.CostCalculator(

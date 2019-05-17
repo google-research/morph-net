@@ -130,10 +130,14 @@ models with batch norm; it requires that batch norm scale is enabled.
 * *Latency* optimizes for the estimated inference latency of the network, based
 on the specific hardware characteristics.
 
-## Example: Adding a FLOPs Regularizer
+## Examples
+
+### Adding a FLOPs Regularizer
 
 The example below demonstrates how to use MorphNet to reduce the number of FLOPs
-in your model.
+in your model. In this example, the regularizer will traverse the graph
+starting with `logits`, and will not go past any op whose name matches the regex
+`/images.*`; this allows to specify the subgraph for MorphNet to optimize.
 
 ```python
 from morph_net.network_regularizers import flop_regularizer
@@ -142,7 +146,7 @@ from morph_net.tools import structure_exporter
 logits = build_model()
 
 network_regularizer = flop_regularizer.GammaFlopsRegularizer(
-    [logits.op], gamma_threshold=1e-3)
+    [logits.op], input_boundary=[images, labels], gamma_threshold=1e-3)
 regularization_strength = 1e-10
 regularizer_loss = (network_regularizer.get_regularization_term() * regularization_strength)
 

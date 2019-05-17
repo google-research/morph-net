@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
+
 from morph_net.framework import concat_and_slice_regularizers
 from morph_net.framework import constant_op_regularizer
 from morph_net.framework import grouping_regularizers
@@ -48,6 +49,7 @@ class OpRegularizerManager(object):
       create_grouping_regularizer=grouping_regularizers.MaxGroupingRegularizer,
       force_group=None,
       regularizer_blacklist=None,
+      input_boundary=None,
       iteration_limit=ITERATION_LIMIT):
     """Creates an instance of OpRegularizerManager.
 
@@ -84,6 +86,8 @@ class OpRegularizerManager(object):
         multiple patterns in a single regex.
       regularizer_blacklist: List of regex for ops that should not be
         regularized.
+      input_boundary: A list of ops that represent the input boundary of the
+        subgraph being regularized (input boundary is not regularized).
       iteration_limit: Integer iteration limit for OpRegularizerManager to
         finish analyzing the network.  If the limit is reached, it is assumed
         that OpRegularizerManager got stuck in a loop.
@@ -115,7 +119,7 @@ class OpRegularizerManager(object):
 
     # Start DFS from outputs to find all source ops.
     tf.logging.info('OpRegularizerManager starting analysis from: %s.', ops)
-    self._dfs_for_source_ops(ops)
+    self._dfs_for_source_ops(ops, input_boundary)
     tf.logging.info('OpRegularizerManager found %d ops and %d sources.',
                     len(self._all_ops), len(self._op_deque))
 
@@ -581,18 +585,25 @@ class OpRegularizerManager(object):
       size_index += 1
     return is_source
 
-  def _dfs_for_source_ops(self, ops):
+  def _dfs_for_source_ops(self, ops, input_boundary=None):
     """Performs DFS from ops and finds source ops to process.
 
     Args:
-      ops: List of tf.Operation.
+      ops: A list of tf.Operation's.
+      input_boundary: A list of ops where traversal should terminate.
     """
+    if input_boundary:
+      input_boundary = set(input_boundary)
+    else:
+      input_boundary = set()
     to_visit = list(ops)
     visited = set()
     while to_visit:
       # Get next op and mark as visited.
       op = to_visit.pop()
       visited.add(op)
+      if op in input_boundary:
+        continue
       self._all_ops.add(op)
 
       # Check if op is a source by querying OpHandler.
