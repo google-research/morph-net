@@ -5,6 +5,8 @@ from __future__ import division
 from __future__ import print_function
 from morph_net.framework import op_handler_util
 from morph_net.network_regularizers import cost_calculator
+
+import numpy as np
 import tensorflow as tf
 
 # Data sheet for K80:
@@ -54,15 +56,17 @@ def flop_coeff(op):
   have one multiplication and one addition for each convolution weight and
   pixel. This function returns C.
 
+  Supported operations names are listed in cost_calculator.FLOP_OPS.
+
   Args:
-    op: A tf.Operation of type 'Conv2D' or 'MatMul'.
+    op: A tf.Operation of supported types.
 
   Returns:
     A float, the coefficient that when multiplied by the input depth and by the
     output depth gives the number of flops needed to compute the convolution.
 
   Raises:
-    ValueError: conv_op is not a tf.Operation of type Conv2D.
+    ValueError: conv_op is not a supported tf.Operation.
   """
   if not is_flop_op(op):
     return 0.0
@@ -72,24 +76,35 @@ def flop_coeff(op):
     return 2.0
   # Looking at the output shape makes it easy to automatically take into
   # account strides and the type of padding.
-  if op.type == 'Conv2D' or op.type == 'DepthwiseConv2dNative':
-    shape = op.outputs[0].shape.dims
-    tensor_shape = tf.shape(op.outputs[0])
+  def kernel_num_elements(tensor):
+    """Returns the number of elements of a kernel.
+
+    Args:
+      tensor: The weight tensor.
+
+    Returns:
+      Number of elements of the kernel (either float or tf.float).
+    """
+    num_elements = np.prod(tensor.shape.dims[1:-1]).value
+    if num_elements:
+      return num_elements
+    return tf.to_float(tf.reduce_prod(tf.shape(tensor)[1:-1]))
+
+  if op.type in ('Conv2D', 'DepthwiseConv2dNative', 'Conv3D'):
+    num_elements = kernel_num_elements(op.outputs[0])
   elif op.type == 'Conv2DBackpropInput':
     # For a transposed convolution, the input and the output are swapped (as
     # far as shapes are concerned). In other words, for a given filter shape
     # and stride, if Conv2D maps from shapeX to shapeY, Conv2DBackpropInput
     # maps from shapeY to shapeX. Therefore wherever we use the output shape
     # for Conv2D, we use the input shape for Conv2DBackpropInput.
-    input_tensor = _get_input(op)
-    shape = input_tensor.shape.dims
-    tensor_shape = tf.shape(input_tensor)
-
+    num_elements = kernel_num_elements(cost_calculator.get_input_activation(op))
+  else:
+    # Can only happen if elements are added to FLOP_OPS and not taken care of.
+    assert False, '%s in cost_calculator.FLOP_OPS but not handled' % op.type
   # Handle dynamic shaping while keeping old code path to not break
   # other clients.
-  size = shape[1] * shape[2]
-  size = size.value or tf.to_float(tensor_shape[1] * tensor_shape[2])
-  return 2.0 * size * _get_conv_filter_size(op)
+  return 2.0 * num_elements * _get_conv_filter_size(op)
 
 
 def num_weights_coeff(op):
@@ -107,7 +122,7 @@ def num_weights_coeff(op):
   """
   if not is_flop_op(op):
     return 0.0
-  return (_get_conv_filter_size(op) if op.type in cost_calculator.CONV2D_OPS
+  return (_get_conv_filter_size(op) if op.type in cost_calculator.CONV_OPS
           else 1.0)
 
 
@@ -420,37 +435,12 @@ def is_flop_op(op):
 
 
 def _get_conv_filter_size(conv_op):
-  assert conv_op.type in cost_calculator.CONV2D_OPS
+  # Works for 2D and 3D convs where sizes of weight matrix are:
+  # 4D or 5D tensors: [kernel_size[:], inputs, outputs]
+  assert conv_op.type in cost_calculator.CONV_OPS
   conv_weights = conv_op.inputs[1]
-  filter_shape = conv_weights.shape.as_list()[:2]
-  return filter_shape[0] * filter_shape[1]
-
-
-def _get_input(op):
-  """Returns the input to that op that represents the activations.
-
-  Specifically, return the activation tensor rather than the weight tensor.
-
-  Args:
-    op: A tf.Operation object with type in _SUPPORTED_OPS.
-
-  Returns:
-    A tf.Tensor representing the input activations.
-
-  Raises:
-    ValueError: MatMul is used with transposition (unsupported).
-  """
-  assert op.type in cost_calculator.SUPPORTED_OPS, (
-      'Op type %s is not supported.' % op.type)
-  if op.type == 'Conv2D' or op.type == 'DepthwiseConv2dNative':
-    return op.inputs[0]
-  if op.type == 'Conv2DBackpropInput':
-    return op.inputs[2]
-  if op.type == 'MatMul':
-    if op.get_attr('transpose_a') or op.get_attr('transpose_b'):
-      raise ValueError('MatMul with transposition is not yet supported.')
-    return op.inputs[0]
-  return op.inputs[0]
+  filter_shape = conv_weights.shape.as_list()[:-2]
+  return np.prod(filter_shape)
 
 
 def _calculate_bilinear_regularization(

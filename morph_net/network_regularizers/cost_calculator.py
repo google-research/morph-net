@@ -8,7 +8,9 @@ import tensorflow as tf
 
 
 CONV2D_OPS = ('Conv2D', 'Conv2DBackpropInput', 'DepthwiseConv2dNative')
-FLOP_OPS = CONV2D_OPS + ('MatMul',)
+CONV3D_OPS = ('Conv3D',)
+CONV_OPS = CONV2D_OPS + CONV3D_OPS
+FLOP_OPS = CONV_OPS + ('MatMul',)
 SUPPORTED_OPS = FLOP_OPS + (
     'Add', 'AddN', 'ConcatV2', 'FusedBatchNorm', 'Mul', 'Relu', 'Relu6', 'Sum')
 
@@ -60,7 +62,7 @@ class CostCalculator(object):
         continue
 
       # Get regularization and alive terms for input and output.
-      input_tensor = _get_input(op)
+      input_tensor = get_input_activation(op)
       if op.type == 'ConcatV2':
         # For concat, the input and output regularization are identical but the
         # input is composed of multiple concatenated regularizers.  Thus, just
@@ -110,8 +112,8 @@ class CostCalculator(object):
     return self._get_cost_or_regularization_term(True, ops)
 
 
-def _get_input(op):
-  """Returns the input to that op that represents the activations.
+def get_input_activation(op):
+  """Returns the input to `op` that represents the activations.
 
   (as opposed to e.g. weights.)
 
@@ -122,10 +124,12 @@ def _get_input(op):
     A tf.Tensor representing the input activations.
 
   Raises:
+    ValueError: op type not supported.).
     ValueError: MatMul is used with transposition (unsupported).
   """
-  assert op.type in SUPPORTED_OPS, 'Op type %s is not supported.' % op.type
-  if op.type == 'Conv2D' or op.type == 'DepthwiseConv2dNative':
+  if op.type not in SUPPORTED_OPS:
+    raise ValueError('Op type %s is not supported.' % op.type)
+  if op.type in ('Conv3D', 'Conv2D', 'DepthwiseConv2dNative'):
     return op.inputs[0]
   if op.type == 'Conv2DBackpropInput':
     return op.inputs[2]

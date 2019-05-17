@@ -34,13 +34,18 @@ class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):
     layers.separable_conv2d(
         net, None, [3, 2], depth_multiplier=1, padding='SAME', scope='dw1')
 
-    self.conv_op = tf.get_default_graph().get_operation_by_name('conv1/Conv2D')
-    self.convt_op = tf.get_default_graph().get_operation_by_name(
+    self.video_shape = (1, 11, 9, 13, 17)
+    self.video = tf.placeholder(tf.float32, shape=[1, None, None, None, 17])
+    net = layers.conv3d(
+        self.video, 19, [7, 3, 5], stride=2, padding='SAME', scope='vconv1')
+    g = tf.get_default_graph()
+    self.conv_op = g.get_operation_by_name('conv1/Conv2D')
+    self.convt_op = g.get_operation_by_name(
         'convt2/conv2d_transpose')
-    self.matmul_op = tf.get_default_graph().get_operation_by_name(
-        'FC/MatMul')
-    self.dw_op = tf.get_default_graph().get_operation_by_name(
-        'dw1/depthwise')
+    self.matmul_op = g.get_operation_by_name('FC/MatMul')
+    self.dw_op = g.get_operation_by_name('dw1/depthwise')
+    self.conv3d_op = g.get_operation_by_name(
+        'vconv1/Conv3D')
 
   @parameterized.named_parameters(
       ('_BatchSize1_AliveIn17_AliveOut19', 1, 17, 19),
@@ -1149,7 +1154,7 @@ class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):
       _ = resource_function.latency_function_factory(None, 11)
 
   def testConvFlopsCoeff(self):
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     image = tf.constant(0.0, shape=[1, 11, 13, 17])
     layers.conv2d(image, 19, [7, 5], stride=2, padding='SAME', scope='conv1')
     conv_op = tf.get_default_graph().get_operation_by_name('conv1/Conv2D')
@@ -1159,7 +1164,7 @@ class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):
     self.assertNearRelatively(expected_coeff, actual_coeff)
 
   def testConvFlopsCoeffUnknownShape(self):
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     image = tf.placeholder(tf.float32, shape=[1, None, None, 17])
     net = layers.conv2d(
         image, 19, [7, 5], stride=2, padding='SAME', scope='conv1')
@@ -1176,7 +1181,7 @@ class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):
     self.assertNearRelatively(expected_coeff, actual_coeff)
 
   def testConvTransposeFlopsCoeff(self):
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     image = tf.constant(0.0, shape=[1, 11, 13, 17])
     layers.conv2d_transpose(
         image, 29, [7, 5], stride=2, padding='SAME', scope='convt2')
@@ -1204,7 +1209,7 @@ class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):
     self.assertNearRelatively(1.0, actual_coeff)
 
   def testDepthwiseConvFlopsCoeff(self):
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     image = tf.constant(0.0, shape=[1, 11, 13, 17])
     net = layers.conv2d(
         image, 10, [7, 5], stride=2, padding='SAME', scope='conv2')
@@ -1216,6 +1221,19 @@ class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):
     # coefficient.
     expected_coeff = _flops(dw_op) / (10.0)
     actual_coeff = resource_function.flop_coeff(dw_op)
+    self.assertNearRelatively(expected_coeff, actual_coeff)
+
+  def test_conv3d_flops_coeff(self):
+    tf.compat.v1.reset_default_graph()
+    input_depth = 17
+    output_depth = 10
+    video = tf.zeros([1, 15, 12, 13, input_depth])
+    _ = layers.conv3d(
+        video, output_depth, [7, 5, 3], stride=2, padding='SAME', scope='conv')
+    conv_op = tf.get_default_graph().get_operation_by_name('conv/Conv3D')
+    # Divide by the input depth and the output depth to get the coefficient.
+    expected_coeff = _flops(conv_op) / (input_depth * output_depth)
+    actual_coeff = resource_function.flop_coeff(conv_op)
     self.assertNearRelatively(expected_coeff, actual_coeff)
 
 

@@ -5,12 +5,13 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
+from absl.testing import parameterized
 from morph_net.framework import batch_norm_source_op_handler
 from morph_net.framework import concat_op_handler
 from morph_net.framework import grouping_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.framework import output_non_passthrough_op_handler
-from morph_net.network_regularizers import cost_calculator
+from morph_net.network_regularizers import cost_calculator as cc
 from morph_net.network_regularizers import resource_function
 from morph_net.testing import add_concat_model_stub
 import tensorflow as tf
@@ -19,7 +20,7 @@ arg_scope = tf.contrib.framework.arg_scope
 layers = tf.contrib.layers
 
 
-class NetworkRegularizerTest(tf.test.TestCase):
+class CostCalculatorTest(parameterized.TestCase, tf.test.TestCase):
 
   def _batch_norm_scope(self):
     params = {
@@ -70,8 +71,7 @@ class NetworkRegularizerTest(tf.test.TestCase):
 
     # Create OpRegularizerManager and NetworkRegularizer for test.
     manager = orm.OpRegularizerManager([output_op], op_handler_dict)
-    calculator = cost_calculator.CostCalculator(
-        manager, resource_function.flop_function)
+    calculator = cc.CostCalculator(manager, resource_function.flop_function)
 
     # Calculate expected FLOP cost.
     expected_alive_conv1 = sum(add_concat_model_stub.expected_alive()['conv1'])
@@ -92,6 +92,32 @@ class NetworkRegularizerTest(tf.test.TestCase):
       queue.enqueue((non_image_tensor, image)).run()
       self.assertEqual(expected_cost,
                        calculator.get_cost([conv1_op]).eval())
+      # for 0/1 assigments cost and reg_term are equal:
+      self.assertEqual(expected_cost,
+                       calculator.get_regularization_term([conv1_op]).eval())
+
+  @parameterized.named_parameters(
+      ('_conv2d', 4, lambda x: layers.conv2d(x, 16, 3), 'Conv2D'),
+      ('_convt', 4, lambda x: layers.conv2d_transpose(x, 16, 3),
+       'conv2d_transpose'),
+      ('_conv2s', 4, lambda x: layers.separable_conv2d(x, None, 3),
+       'depthwise'),
+      ('_conv3d', 5, lambda x: layers.conv3d(x, 16, 3), 'Conv3D'))
+  def test_get_input_activation2(self, rank, fn, op_name):
+    g = tf.get_default_graph()
+    inputs = tf.zeros([6] * rank)
+    with arg_scope([
+        layers.conv2d, layers.conv2d_transpose, layers.separable_conv2d,
+        layers.conv3d
+    ],
+                   scope='test_layer'):
+      _ = fn(inputs)
+    for op in g.get_operations():
+      print(op.name)
+    self.assertEqual(
+        inputs,
+        cc.get_input_activation(
+            g.get_operation_by_name('test_layer/' + op_name)))
 
 
 if __name__ == '__main__':
