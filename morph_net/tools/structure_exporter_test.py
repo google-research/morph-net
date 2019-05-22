@@ -9,10 +9,10 @@ import os
 
 from absl import flags
 from absl.testing import parameterized
+
 from morph_net.framework import generic_regularizers
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.tools import structure_exporter as se
-
 import tensorflow as tf
 
 
@@ -110,13 +110,13 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
 
   def test_compute_alive_count(self):
     self.assertAllEqual(
-        se.compute_alive_counts({'a': [True, False, False]}), {'a': 1})
+        se._compute_alive_counts({'a': [True, False, False]}), {'a': 1})
     self.assertAllEqual(
-        se.compute_alive_counts({'b': [False, False]}), {'b': 0})
+        se._compute_alive_counts({'b': [False, False]}), {'b': 0})
     self.assertAllEqual(
-        se.compute_alive_counts(self.tensor_value_1), self.expected_alive_1)
+        se._compute_alive_counts(self.tensor_value_1), self.expected_alive_1)
     self.assertAllEqual(
-        se.compute_alive_counts(self.tensor_value_2), self.expected_alive_2)
+        se._compute_alive_counts(self.tensor_value_2), self.expected_alive_2)
 
   def test_save_alive_counts(self):
     filename = 'alive007'

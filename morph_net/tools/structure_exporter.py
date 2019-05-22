@@ -1,4 +1,10 @@
-"""Helper module for calculating and saving learned structures."""
+"""Module for calculating and saving learned structures.
+
+When training with a network regularizer, the emerging structure of the
+network is encoded in the `alive_vector`s and `regularization_vector`s of the
+`OpRegularizerManager`.
+"""
+
 from __future__ import absolute_import
 from __future__ import division
 # [internal] enable type annotations
@@ -13,27 +19,7 @@ from typing import Text, Sequence, Dict, Optional, IO, Iterable, Callable
 
 _SUPPORTED_OPS = ['Conv2D', 'Conv2DBackpropInput']
 _ALIVE_FILENAME = 'alive'
-
-
-def format_structure(structure: Dict[Text, int]) -> Text:
-  return json.dumps(structure, indent=2, sort_keys=True, default=str)
-
-
-def compute_alive_counts(
-    alive_vectors: Dict[Text, Sequence[bool]]) -> Dict[Text, int]:
-  """Computes alive counts.
-
-  Args:
-    alive_vectors: A mapping from op_name to a vector where each element
-    indicates whether the corresponding output activation is alive.
-
-  Returns:
-    Mapping from op_name to the number of its alive output activations.
-  """
-  return {
-      op_name: int(np.sum(alive_vector))
-      for op_name, alive_vector in alive_vectors.items()
-  }
+_REG_FILENAME = 'regularization'
 
 
 class StructureExporter(object):
@@ -79,12 +65,13 @@ class StructureExporter(object):
       if op.type not in _SUPPORTED_OPS:
         continue
 
-      opreg = op_regularizer_manager.get_regularizer(op)
-      if not opreg:
+      op_regularizer = op_regularizer_manager.get_regularizer(op)
+      if not op_regularizer:
         tf.logging.warning('No regularizer found for: %s', op.name)
         continue
 
-      self._tensors[rename_fn(op.name)] = tf.cast(opreg.alive_vector, tf.int32)
+      self._tensors[rename_fn(op.name)] = tf.cast(op_regularizer.alive_vector,
+                                                  tf.int32)
 
   @property
   def tensors(self):
@@ -130,7 +117,7 @@ class StructureExporter(object):
 
     if self._alive_vectors is None:
       raise RuntimeError('Tensor values not populated.')
-    return compute_alive_counts(self._alive_vectors)
+    return _compute_alive_counts(self._alive_vectors)
 
   def save_alive_counts(self, f: IO[bytes]) -> None:
     """Saves live counts to a file.
@@ -194,3 +181,24 @@ def get_remove_common_prefix_fn(iterable: Iterable[Text]
   if not all(k.startswith(prefix) for k in iterable):
     return lambda x: x
   return lambda item: item[len(prefix):]
+
+
+def _compute_alive_counts(
+    alive_vectors: Dict[Text, Sequence[bool]]) -> Dict[Text, int]:
+  """Computes alive counts.
+
+  Args:
+    alive_vectors: A mapping from op_name to a vector where each element
+      indicates whether the corresponding output activation is alive.
+
+  Returns:
+    Mapping from op_name to the number of its alive output activations.
+  """
+  return {
+      op_name: int(np.sum(alive_vector))
+      for op_name, alive_vector in alive_vectors.items()
+  }
+
+
+def format_structure(structure: Dict[Text, int]) -> Text:
+  return json.dumps(structure, indent=2, sort_keys=True, default=str)
