@@ -4,15 +4,20 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import collections
 import json
 import os
 
 from absl import flags
 from absl.testing import parameterized
-from morph_net.framework import generic_regularizers
-from morph_net.framework import op_regularizer_manager as orm
-from morph_net.tools import structure_exporter as se
 
+from morph_net.framework import batch_norm_source_op_handler
+from morph_net.framework import concat_op_handler
+from morph_net.framework import generic_regularizers
+from morph_net.framework import grouping_op_handler
+from morph_net.framework import op_regularizer_manager as orm
+from morph_net.framework import output_non_passthrough_op_handler
+from morph_net.tools import structure_exporter as se
 import tensorflow as tf
 
 
@@ -110,13 +115,13 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
 
   def test_compute_alive_count(self):
     self.assertAllEqual(
-        se.compute_alive_counts({'a': [True, False, False]}), {'a': 1})
+        se._compute_alive_counts({'a': [True, False, False]}), {'a': 1})
     self.assertAllEqual(
-        se.compute_alive_counts({'b': [False, False]}), {'b': 0})
+        se._compute_alive_counts({'b': [False, False]}), {'b': 0})
     self.assertAllEqual(
-        se.compute_alive_counts(self.tensor_value_1), self.expected_alive_1)
+        se._compute_alive_counts(self.tensor_value_1), self.expected_alive_1)
     self.assertAllEqual(
-        se.compute_alive_counts(self.tensor_value_2), self.expected_alive_2)
+        se._compute_alive_counts(self.tensor_value_2), self.expected_alive_2)
 
   def test_save_alive_counts(self):
     filename = 'alive007'
@@ -164,6 +169,125 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
     rename_op = se.get_remove_common_prefix_fn(iterable)
     self.assertEqual(expected_result, list(map(rename_op, iterable)))
 
+
+arg_scope = tf.contrib.framework.arg_scope
+conv2d_transpose = tf.contrib.layers.conv2d_transpose
+conv2d = tf.contrib.layers.conv2d
+FLAGS = flags.FLAGS
+
+
+def assign_to_gamma(scope, value):
+  name_to_var = {v.op.name: v for v in tf.global_variables()}
+  gamma = name_to_var[scope + '/BatchNorm/gamma']
+  gamma.assign(value).eval()
+
+
+def jsons_exist_in_tempdir():
+  for f in tf.gfile.ListDirectory(FLAGS.test_tmpdir):
+    if f.startswith('alive') or f.startswith('reg'):
+      return True
+  return False
+
+
+class StructureExporterOpTest(tf.test.TestCase):
+
+  def empty_test_dir(self):
+    for f in tf.gfile.ListDirectory(FLAGS.test_tmpdir):
+      if f.startswith('alive') or f.startswith('reg'):
+        print('found f', f)
+        tf.gfile.Remove(os.path.join(FLAGS.test_tmpdir, f))
+
+  def setUp(self):
+    super(StructureExporterOpTest, self).setUp()
+    self.empty_test_dir()
+    params = {
+        'trainable': True,
+        'normalizer_fn': tf.contrib.layers.batch_norm,
+        'normalizer_params': {
+            'scale': True
+        },
+        'padding': 'SAME'
+    }
+
+    image = tf.zeros([3, 10, 10, 3])
+    with arg_scope([conv2d, conv2d_transpose], **params):
+      conv1 = conv2d(image, 5, 3, scope='conv1')
+      conv2 = conv2d(image, 5, 3, scope='conv2')
+      add = conv1 + conv2
+      conv3 = conv2d(add, 4, 1, scope='conv3')
+      convt = conv2d_transpose(conv3, 3, 2, scope='convt')
+    # Create OpHandler dict for test.
+    op_handler_dict = collections.defaultdict(
+        grouping_op_handler.GroupingOpHandler)
+    op_handler_dict.update({
+        'FusedBatchNorm':
+            batch_norm_source_op_handler.BatchNormSourceOpHandler(0.1),
+        'Conv2D':
+            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+        'Conv2DBackpropInput':
+            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+        'ConcatV2':
+            concat_op_handler.ConcatOpHandler(),
+    })
+
+    # Create OpRegularizerManager and NetworkRegularizer for test.
+    opreg_manager = orm.OpRegularizerManager(
+        [convt.op], op_handler_dict)
+    self.exporter = se.StructureExporterOp(
+        directory=FLAGS.test_tmpdir,
+        save=True,
+        opreg_manager=opreg_manager)
+
+  def test_simple_export(self):
+    export_op = self.exporter.export()
+    with self.cached_session():
+      tf.global_variables_initializer().run()
+      assign_to_gamma('conv1', [0, 1.5, 1, 0, 1])
+      assign_to_gamma('conv2', [1, 1, .1, 0, 1])
+      assign_to_gamma('conv3', [0, .8, 1, .25])
+      assign_to_gamma('convt', [3, .3, .03])
+      export_op.run()
+    regularizers = self._read_file(reg=True)
+    grouped_conv1_conv2_reg = [1, 1.5, 1, 0, 1]
+    self.assertAllClose(grouped_conv1_conv2_reg, regularizers['conv1/Conv2D'])
+    self.assertAllClose(grouped_conv1_conv2_reg, regularizers['conv2/Conv2D'])
+    self.assertAllClose([0, .8, 1, .25], regularizers['conv3/Conv2D'])
+    self.assertAllClose([3, .3, .03], regularizers['convt/conv2d_transpose'])
+
+    alive = self._read_file(reg=False)
+    self.assertAllEqual(4, alive['conv1/Conv2D'])
+    self.assertAllEqual(4, alive['conv2/Conv2D'])
+    self.assertAllEqual(3, alive['conv3/Conv2D'])
+    self.assertAllEqual(2, alive['convt/conv2d_transpose'])
+
+  def test_export_every_n(self):
+    export_op = self.exporter.export_state_every_n(
+        4, se.ExportInfo.alive)
+    with self.cached_session():
+      tf.initialize_all_variables().run()
+      # Initially no jsons.
+      self.assertFalse(jsons_exist_in_tempdir())
+      export_op.run()
+      # 0th iteration: jsons are saved, verified and deleted.
+      self.assertTrue(jsons_exist_in_tempdir())
+      self.empty_test_dir()
+      for _ in range(3):
+        # Itertion 1, 2, 3: jsons are not saved.
+        export_op.run()
+        self.assertFalse(jsons_exist_in_tempdir())
+      # 4th iteration: saved again.
+      export_op.run()
+      self.assertTrue(jsons_exist_in_tempdir())
+      self.empty_test_dir()
+      # 5th: not saved.
+      export_op.run()
+      self.assertFalse(jsons_exist_in_tempdir())
+
+  def _read_file(self, reg):
+    filename = se._REG_FILENAME if reg else se._ALIVE_FILENAME
+    with tf.gfile.Open(os.path.join(FLAGS.test_tmpdir, filename)) as f:
+      data = f.read()
+      return json.loads(data)
 
 if __name__ == '__main__':
   tf.test.main()
