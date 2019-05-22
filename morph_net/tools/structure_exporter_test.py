@@ -5,148 +5,147 @@ from __future__ import division
 from __future__ import print_function
 
 import json
+import os
 
+from absl import flags
 from absl.testing import parameterized
-from morph_net.network_regularizers import flop_regularizer
+from morph_net.framework import generic_regularizers
+from morph_net.framework import op_regularizer_manager as orm
 from morph_net.tools import structure_exporter as se
-import numpy as np
 
 import tensorflow as tf
 
+
+FLAGS = flags.FLAGS
 layers = tf.contrib.layers
 
-LAYERS = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
 
-ALIVE = {
-    'X/conv1/Conv2D': [False, True, True, True, True, False, True],
-    'X/conv2/Conv2D': [True, False, True, False, False],
-    'X/conv3/Conv2D': [False, False, True, True],
-    'X/concat/Conv2D': [
-        False, True, True, False, True, False, True, True, False, True, False,
-        False
-    ],
-    'X/conv4/Conv2D': [
-        False, True, True, True, True, False, True, False, False, True, False,
-        False
-    ],
-    'X/conv5/Conv2D': [False, True, False]
-}
-
-# Map (remove_prefix) -> (expected_counts)
-EXPECTED_COUNTS = {
-    False: {
-        'X/conv1/Conv2D': 5,
-        'X/conv2/Conv2D': 2,
-        'X/conv3/Conv2D': 2,
-        'X/conv4/Conv2D': 7,
-        'X/conv5/Conv2D': 1,
-    },
-    True: {
-        'conv1/Conv2D': 5,
-        'conv2/Conv2D': 2,
-        'conv3/Conv2D': 2,
-        'conv4/Conv2D': 7,
-        'conv5/Conv2D': 1,
-    },
-}
+def _alive_from_file(filename):
+  with tf.gfile.Open(os.path.join(FLAGS.test_tmpdir, filename)) as f:
+    return json.loads(f.read())
 
 
-def _build_model():
-  image = tf.constant(0.0, shape=[1, 17, 19, 3])
-  conv1 = layers.conv2d(image, 7, [7, 5], padding='SAME', scope='X/conv1')
-  conv2 = layers.conv2d(image, 5, [1, 1], padding='SAME', scope='X/conv2')
-  concat = tf.concat([conv1, conv2], 3)
-  conv3 = layers.conv2d(concat, 4, [1, 1], padding='SAME', scope='X/conv3')
-  conv4 = layers.conv2d(conv3, 12, [3, 3], padding='SAME', scope='X/conv4')
-  conv5 = layers.conv2d(
-      concat + conv4, 3, [3, 3], stride=2, padding='SAME', scope='X/conv5')
-  return conv5.op
+class FakeOpReg(generic_regularizers.OpRegularizer):
+
+  def __init__(self, alive):
+    self.alive = alive
+
+  @property
+  def alive_vector(self):
+    return self.alive
+
+  @property
+  def regularization_vector(self):
+    assert False
+    return 0
 
 
-class MockFile(object):
+class FakeORM(orm.OpRegularizerManager):
 
   def __init__(self):
-    self.s = ''
+    image = tf.constant(0.0, shape=[1, 17, 19, 3])
+    layers.conv2d(image, 3, 2, scope='X/c1')
+    layers.conv2d(image, 4, 3, scope='X/c2')
+    layers.conv2d_transpose(image, 5, 1, scope='X/c3')
+    self.regularizer = {
+        'X/c1/Conv2D': FakeOpReg([True, False, True]),
+        'X/c2/Conv2D': FakeOpReg([True, False, True, False]),
+        'X/c3/conv2d_transpose': FakeOpReg([True, True, False, True, False])
+    }
+    self.ops = [
+        tf.get_default_graph().get_operation_by_name(op_name)
+        for op_name in self.regularizer
+    ]
 
-  def write(self, s):
-    self.s += s
+  def ops(self):
+    return self.ops
 
-  def read(self):
-    return self.s
+  def get_regularizer(self, op):
+    return self.regularizer[op.name]
 
 
 class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
 
   def setUp(self):
     super(TestStructureExporter, self).setUp()
-    tf.set_random_seed(12)
-    np.random.seed(665544)
-
-  def _batch_norm_scope(self):
-    params = {
-        'trainable': True,
-        'normalizer_fn': layers.batch_norm,
-        'normalizer_params': {
-            'scale': True
-        }
+    self.exporter = se.StructureExporter(
+        op_regularizer_manager=FakeORM(), remove_common_prefix=False)
+    self.tensor_value_1 = {
+        'X/c1/Conv2D': [True] * 3,
+        'X/c2/Conv2D': [False] * 4,
+        'X/c3/conv2d_transpose': [True] * 5
+    }
+    self.expected_alive_1 = {
+        'X/c1/Conv2D': 3,
+        'X/c2/Conv2D': 0,
+        'X/c3/conv2d_transpose': 5
     }
 
-    with tf.contrib.framework.arg_scope([layers.conv2d], **params) as sc:
-      return sc
+    self.tensor_value_2 = {
+        'X/c1/Conv2D': [True, False, False],
+        'X/c2/Conv2D': [True] * 4,
+        'X/c3/conv2d_transpose': [False, False, False, False, True]
+    }
+    self.expected_alive_2 = {
+        'X/c1/Conv2D': 1,
+        'X/c2/Conv2D': 4,
+        'X/c3/conv2d_transpose': 1
+    }
 
-  @parameterized.named_parameters(
-      ('Batch', True,),
-      ('NoBatch', False),
-      ('Batch_removeprefix_export', True, True, True),
-      ('NoBatch_removeprefix_export', False, True, True),
-  )
-  def testStructureExporter(self,
-                            use_batch_norm,
-                            remove_common_prefix=False,
-                            export=False):
-    """Tests the export of alive counts.
+  def test_tensors(self):
+    expected = {
+        'X/c1/Conv2D': [1, 0, 1],
+        'X/c2/Conv2D': [1, 0, 1, 0],
+        'X/c3/conv2d_transpose': [1, 1, 0, 1, 0]
+    }
+    self.assertAllEqual(sorted(self.exporter.tensors), sorted(expected))
+    for name in self.exporter.tensors:
+      self.assertAllEqual(self.exporter.tensors[name], expected[name])
 
-    Args:
-      use_batch_norm: A Boolean. Inidcates if batch norm should be used.
-      remove_common_prefix: A Boolean, passed to StructureExporter ctor.
-      export: A Boolean. Indicates if the result should be exported to test dir.
-    """
-    sc = self._batch_norm_scope() if use_batch_norm else []
-    with tf.contrib.framework.arg_scope(sc):
-      with tf.variable_scope(tf.get_variable_scope()):
-        final_op = _build_model()
-    variables = {v.name: v for v in tf.trainable_variables()}
-    update_vars = []
-    if use_batch_norm:
-      network_regularizer = flop_regularizer.GammaFlopsRegularizer(
-          [final_op], gamma_threshold=1e-6)
-      for layer in LAYERS:
-        force_alive = ALIVE['X/{}/Conv2D'.format(layer)]
-        gamma = variables['X/{}/BatchNorm/gamma:0'.format(layer)]
-        update_vars.append(gamma.assign(force_alive * gamma))
-    else:
-      network_regularizer = flop_regularizer.GroupLassoFlopsRegularizer(
-          [final_op], threshold=1e-6)
-      print(variables)
-      for layer in LAYERS:
-        force_alive = ALIVE['X/{}/Conv2D'.format(layer)]
-        weights = variables['X/{}/weights:0'.format(layer)]
-        update_vars.append(weights.assign(force_alive * weights))
-    structure_exporter = se.StructureExporter(
-        network_regularizer.op_regularizer_manager, remove_common_prefix)
-    with self.cached_session() as sess:
-      tf.global_variables_initializer().run()
-      sess.run(update_vars)
-      structure_exporter.populate_tensor_values(
-          sess.run(structure_exporter.tensors))
-    expected = EXPECTED_COUNTS[remove_common_prefix]
-    self.assertEqual(
-        expected,
-        structure_exporter.get_alive_counts())
-    if export:
-      f = MockFile()
-      structure_exporter.save_alive_counts(f)
-      self.assertEqual(expected, json.loads(f.read()))
+  def test_populate_tensor_values(self):
+    self.exporter.populate_tensor_values(self.tensor_value_1)
+    self.assertAllEqual(self.exporter.get_alive_counts(), self.expected_alive_1)
+    self.exporter.populate_tensor_values(self.tensor_value_2)
+    self.assertAllEqual(self.exporter.get_alive_counts(), self.expected_alive_2)
+
+  def test_compute_alive_count(self):
+    self.assertAllEqual(
+        se.compute_alive_counts({'a': [True, False, False]}), {'a': 1})
+    self.assertAllEqual(
+        se.compute_alive_counts({'b': [False, False]}), {'b': 0})
+    self.assertAllEqual(
+        se.compute_alive_counts(self.tensor_value_1), self.expected_alive_1)
+    self.assertAllEqual(
+        se.compute_alive_counts(self.tensor_value_2), self.expected_alive_2)
+
+  def test_save_alive_counts(self):
+    filename = 'alive007'
+    self.exporter.populate_tensor_values(self.tensor_value_1)
+    with tf.gfile.Open(os.path.join(FLAGS.test_tmpdir, filename), 'w') as f:
+      self.exporter.save_alive_counts(f)
+    self.assertAllEqual(_alive_from_file(filename), self.expected_alive_1)
+
+  def test_create_file_and_save_alive_counts(self):
+    base_dir = os.path.join(FLAGS.test_tmpdir, 'ee')
+
+    self.exporter.populate_tensor_values(self.tensor_value_1)
+    self.exporter.create_file_and_save_alive_counts(base_dir, 19)
+    self.assertAllEqual(
+        _alive_from_file('ee/learned_structure/alive_19'),
+        self.expected_alive_1)
+    self.assertAllEqual(
+        _alive_from_file('ee/learned_structure/alive'), self.expected_alive_1)
+
+    self.exporter.populate_tensor_values(self.tensor_value_2)
+    self.exporter.create_file_and_save_alive_counts(base_dir, 1009)
+    self.assertAllEqual(
+        _alive_from_file('ee/learned_structure/alive_1009'),
+        self.expected_alive_2)
+    self.assertAllEqual(
+        _alive_from_file('ee/learned_structure/alive_19'),
+        self.expected_alive_1)
+    self.assertAllEqual(
+        _alive_from_file('ee/learned_structure/alive'), self.expected_alive_2)
 
   @parameterized.parameters(
       ([], []),
@@ -162,7 +161,7 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
       (['abc/x/', 'abc/y/', 'abc/z/'], ['x/', 'y/', 'z/']),
   )
   def test_find_common_prefix_size(self, iterable, expected_result):
-    rename_op = se.get_remove_common_prefix_op(iterable)
+    rename_op = se.get_remove_common_prefix_fn(iterable)
     self.assertEqual(expected_result, list(map(rename_op, iterable)))
 
 

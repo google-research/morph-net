@@ -1,5 +1,4 @@
-"""Helper module for calculating the live activation counts."""
-
+"""Helper module for calculating and saving learned structures."""
 from __future__ import absolute_import
 from __future__ import division
 # [internal] enable type annotations
@@ -12,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 from typing import Text, Sequence, Dict, Optional, IO, Iterable, Callable
 
-_SUPPORTED_OPS = ['Conv2D']
+_SUPPORTED_OPS = ['Conv2D', 'Conv2DBackpropInput']
 _ALIVE_FILENAME = 'alive'
 
 
@@ -25,8 +24,8 @@ def compute_alive_counts(
   """Computes alive counts.
 
   Args:
-    alive_vectors: A mapping from op_name to a vector where each element says
-      whether the corresponding output activation is alive.
+    alive_vectors: A mapping from op_name to a vector where each element
+    indicates whether the corresponding output activation is alive.
 
   Returns:
     Mapping from op_name to the number of its alive output activations.
@@ -41,8 +40,21 @@ class StructureExporter(object):
   """Reports statistics about the current state of regularization.
 
   Obtains live activation counts for supported ops: a map from each op name
-  to its count of alive activations (filters). Optionally, thresholds the counts
-  so that very low counts are reported as 0. Currently, only supports Conv2D.
+  to its count of alive activations (filters).
+
+  Usage:
+    1. Build model.
+      `logits = build_model(parmas)`
+    2. Create network regularizer.
+      `network_regularizer = flop_regularizer.GammaFlopsRegularizer([logits.op])
+    3. Create StructureExporter:
+      `exporter = StructureExporter(net_reg.op_regularizer_manager)`
+    4. Gather tensors to eval:
+      `tensor_to_eval_dict = exporter.tensors`
+    5. Within a `tf.Session()` eval and populate tensors:
+      `exporter.populate_tensor_values(tensor_to_eval_dict.eval())`
+    6. Export structure:
+      `exporter.save_alive_counts(tf.gfile.Open(...))`
   """
 
   def __init__(self,
@@ -57,38 +69,51 @@ class StructureExporter(object):
         with the same prefix (up to and including the first '/'), and if so,
         skip that prefix in exported data.
     """
-    self._op_regularizer_manager = op_regularizer_manager
-    self._alive_tensors = {}  # type: Dict[Text, tf.Tensor]
+    # TODO(p1): Consider deleting unused `remove_common_prefix` b/133261798.
+    self._tensors = {}  # type: Dict[Text, tf.Tensor]
     self._alive_vectors = None  # type: Optional[Dict[Text, Sequence[bool]]]
+    rename_fn = get_remove_common_prefix_fn(
+        self._tensors) if remove_common_prefix else lambda x: x
 
-    for op in self._op_regularizer_manager.ops:
+    for op in op_regularizer_manager.ops:
       if op.type not in _SUPPORTED_OPS:
         continue
-      opreg = self._op_regularizer_manager.get_regularizer(op)
-      if opreg:
-        # TODO(p1): use bool here (no cast), and then convert later?
-        self._alive_tensors[op.name] = tf.cast(opreg.alive_vector, tf.int32)
-      else:
-        tf.logging.warning('No regularizer found for: %s', op.name)
 
-    if remove_common_prefix:
-      rename_op = get_remove_common_prefix_op(self._alive_tensors)
-      self._alive_tensors = {
-          rename_op(k): v for k, v in self._alive_tensors.items()
-      }
+      opreg = op_regularizer_manager.get_regularizer(op)
+      if not opreg:
+        tf.logging.warning('No regularizer found for: %s', op.name)
+        continue
+
+      self._tensors[rename_fn(op.name)] = tf.cast(opreg.alive_vector, tf.int32)
 
   @property
   def tensors(self):
-    """The list of tensors required to compute statistics.
+    """A dictionary between op names and alive vectors.
+
+    Alive vectors are `tf.Tensor`s of type tf.int32.
 
     Returns:
       Dict: op name -> alive vector tensor
     """
-    return self._alive_tensors
+    # TODO(p1): Rename tensors to something better. tensors is a dict!
+    return self._tensors
 
   def populate_tensor_values(self, values: Dict[Text, Sequence[bool]]) -> None:
-    # TODO(p1): make this a hierarchy with 'alive_vectors' key at the top
-    assert sorted(values) == sorted(self.tensors)
+    """Records alive values for ops regularized by op_regularizer_manager.
+
+    The given mapping must match op names from `self.tensor`.
+
+    Args:
+      values: A dict mapping op names to a boolean alive status.
+
+    Raises:
+      ValueError: If keys of input do not match keys of `self.tensor`.
+    """
+    # TODO(p1): Rename values to something better. values is a dict!
+    if sorted(values) != sorted(self.tensors):
+      raise ValueError(
+          '`values` and `self.tensors` must have the same keys but are %s and %s'
+          % (sorted(values), sorted(self.tensors)))
     self._alive_vectors = values
 
   def get_alive_counts(self) -> Dict[Text, int]:
@@ -105,7 +130,6 @@ class StructureExporter(object):
 
     if self._alive_vectors is None:
       raise RuntimeError('Tensor values not populated.')
-    # TODO(p1): consider warning if same values are used twice?
     return compute_alive_counts(self._alive_vectors)
 
   def save_alive_counts(self, f: IO[bytes]) -> None:
@@ -116,22 +140,24 @@ class StructureExporter(object):
     """
     f.write(format_structure(self.get_alive_counts()))
 
-  def create_file_and_save_alive_counts(self, train_dir: Text,
-                                        global_step: tf.Tensor) -> None:
-    """Creates a file and saves live counts to it.
+  def create_file_and_save_alive_counts(self, base_dir: Text,
+                                        global_step: int) -> None:
+    """Creates and updates files with alive counts.
 
-    Creates the directory {train_dir}/learned_structure/ and saves the current
-    alive counts to {path}/{_ALIVE_FILENAME}_{global_step} and overwrites
-    {path}/{_ALIVE_FILENAME}.
+    Creates the directory `{base_dir}/learned_structure/` and saves the current
+    alive counts to:
+      `{base_dir}/learned_structure/{_ALIVE_FILENAME}_{global_step}`
+    and overwrites:
+      `{base_dir}/learned_structure/{_ALIVE_FILENAME}`.
 
     Args:
-      train_dir: where to export the alive counts.
+      base_dir: where to export the alive counts.
       global_step: current value of global step, used as a suffix in filename.
     """
     current_filename = '%s_%s' % (_ALIVE_FILENAME, global_step)
-    directory = os.path.join(train_dir, 'learned_structure')
+    directory = os.path.join(base_dir, 'learned_structure')
     try:
-      tf.gfile.MkDir(directory)
+      tf.gfile.MakeDirs(directory)
     except tf.errors.OpError:
       # Probably already exists. If not, we'll see the error in the next line.
       pass
@@ -143,8 +169,8 @@ class StructureExporter(object):
 
 # TODO(p1): maybe check that we still end up with unique names after prefix
 # removal, and do nothing if that's not the case?
-def get_remove_common_prefix_op(
-    iterable: Iterable[Text]) -> Callable[[Text], Text]:
+def get_remove_common_prefix_fn(iterable: Iterable[Text]
+                               ) -> Callable[[Text], Text]:
   """Obtains a function that removes common prefix.
 
   Determines if all items in iterable start with the same substring (up to and
