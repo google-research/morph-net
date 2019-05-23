@@ -49,12 +49,14 @@ To use MorphNet, you must:
     variables”), i.e., by setting `scale=True` if you are using
     `tf.keras.layers.BatchNormalization`.
 
-2.  Initialize the regularizer with a threshold and the output ops of your model
-    (e.g., logits for classification).
+2.  Initialize the regularizer with a threshold and the output boundary ops and
+    (optionally) the input boundary ops of your model.
 
-    MorphNet regularizer crawls your graph starting from the output ops, and
-    applies regularization to some of the ops it encounters. It uses the
-    threshold to determine which output channels can be eliminated.
+    MorphNet regularizer crawls your graph starting from the output boundary,
+    and applies regularization to some of the ops it encounters. When it
+    encounters any of the input boundary ops, it does not crawl past them (the
+    ops in the input boundary are not regularized). The threshold determines
+    which output channels can be eliminated.
 
 3.  Add the regularization term to your loss.
 
@@ -143,10 +145,14 @@ starting with `logits`, and will not go past any op whose name matches the regex
 from morph_net.network_regularizers import flop_regularizer
 from morph_net.tools import structure_exporter
 
-logits = build_model()
+inputs, labels = preprocessor()
+logits = build_model(inputs, labels, ...)
 
 network_regularizer = flop_regularizer.GammaFlopsRegularizer(
-    [logits.op], input_boundary=[images, labels], gamma_threshold=1e-3)
+    output_boundary=[logits.op],
+    input_boundary=[inputs.op, labels.op],
+    gamma_threshold=1e-3
+)
 regularization_strength = 1e-10
 regularizer_loss = (network_regularizer.get_regularization_term() * regularization_strength)
 
@@ -203,9 +209,9 @@ Contact: morphnet@google.com
 ### Maintainers
 
 *   Elad Eban, github: [eladeban](https://github.com/eladeban)
-*   Andrew Poon
+*   Andrew Poon, github: [ayp-google](https://github.com/ayp-google)
 *   Yair Movshovitz-Attias, github: [yairmov](https://github.com/yairmov)
-*   Max Moroz
+*   Max Moroz, github: [pkch](https://github.com/pkch)
 
 ### Contributors
 
