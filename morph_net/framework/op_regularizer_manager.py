@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 from __future__ import division
-# [internal] enable type annotations
 from __future__ import print_function
 
 import collections
@@ -12,8 +11,6 @@ from morph_net.framework import constant_op_regularizer
 from morph_net.framework import grouping_regularizers
 from morph_net.framework import op_handler_util
 import tensorflow as tf
-
-from typing import List
 
 # Hardcoded limit for OpRegularizerManager to finish analyzing the network.
 ITERATION_LIMIT = 1000000
@@ -47,22 +44,21 @@ class OpRegularizerManager(object):
 
   def __init__(
       self,
-      output_boundary: List[tf.Operation],
+      ops,
       op_handler_dict=None,
       create_grouping_regularizer=grouping_regularizers.MaxGroupingRegularizer,
       force_group=None,
       regularizer_blacklist=None,
-      input_boundary: List[tf.Operation] = None,
+      input_boundary=None,
       iteration_limit=ITERATION_LIMIT):
     """Creates an instance of OpRegularizerManager.
 
     Several internal data structures are initialized which are used to track ops
-    and their grouping.  A DFS is performed starting from `output_boundary` and
-    following data dependencies that do not involve ops in `input_boundary`. The
-    source ops found in this DFS are placed into a queue for processing. The
-    OpRegularizerManager then loops over ops in the queue, using the associated
-    OpHandler to determine the grouping of the op.  Once all ops have been
-    grouped, regularizers for the groups can be created.
+    and their grouping.  A DFS is performed on ops to find all source ops which
+    are placed into a queue for processing.  The OpRegularizerManager then loops
+    over ops in the queue, using the associated OpHandler to determine the
+    grouping of the op.  Once all ops have been grouped, regularizers for the
+    groups can be created.
 
     If a group has multiple sources of regularization, the
     create_grouping_regularizer function is used to create an OpRegularizer that
@@ -78,7 +74,10 @@ class OpRegularizerManager(object):
     OpRegularizerManager will instead create a None regularizer for the group.
 
     Args:
-      output_boundary: A list of ops to start regularization from.
+      ops: List of tf.Operation.  An OpRegularizer will be created for all
+        operations in ops, as well as all operations which are dependencies.
+        Typically, ops would contain a single tf.Operation, which is the output
+        of the network.
       op_handler_dict: Dictionary mapping tf.Operation type to OpHandler.
       create_grouping_regularizer: Function that creates an OpRegularizer given
         a list of OpRegularizer.
@@ -87,7 +86,8 @@ class OpRegularizerManager(object):
         multiple patterns in a single regex.
       regularizer_blacklist: List of regex for ops that should not be
         regularized.
-      input_boundary: A list of ops that should be excluded from regularization.
+      input_boundary: A list of ops that represent the input boundary of the
+        subgraph being regularized (input boundary is not regularized).
       iteration_limit: Integer iteration limit for OpRegularizerManager to
         finish analyzing the network.  If the limit is reached, it is assumed
         that OpRegularizerManager got stuck in a loop.
@@ -118,9 +118,8 @@ class OpRegularizerManager(object):
     self._all_ops = set()
 
     # Start DFS from outputs to find all source ops.
-    tf.logging.info('OpRegularizerManager starting analysis from: %s.',
-                    output_boundary)
-    self._dfs_for_source_ops(output_boundary, input_boundary)
+    tf.logging.info('OpRegularizerManager starting analysis from: %s.', ops)
+    self._dfs_for_source_ops(ops, input_boundary)
     tf.logging.info('OpRegularizerManager found %d ops and %d sources.',
                     len(self._all_ops), len(self._op_deque))
 
@@ -586,20 +585,18 @@ class OpRegularizerManager(object):
       size_index += 1
     return is_source
 
-  def _dfs_for_source_ops(self, output_boundary, input_boundary=None):
+  def _dfs_for_source_ops(self, ops, input_boundary=None):
     """Performs DFS from ops and finds source ops to process.
 
     Args:
-      output_boundary: An OpRegularizer will be created for all these
-        operations, and recursively for all ops they depend on via data
-        dependency that does not involve ops from input_boundary.
+      ops: A list of tf.Operation's.
       input_boundary: A list of ops where traversal should terminate.
     """
     if input_boundary:
       input_boundary = set(input_boundary)
     else:
       input_boundary = set()
-    to_visit = list(output_boundary)
+    to_visit = list(ops)
     visited = set()
     while to_visit:
       # Get next op and mark as visited.
