@@ -127,7 +127,7 @@ class GroupLassoFlopsRegularizer(generic_regularizers.NetworkRegularizer):
       regularizer_blacklist: List of regex for ops that should not be
         regularized. See op_regularizer_manager for more detail.
       convert_to_variable: If `True` convert to variable in the
-        `GroupLassoBaseOpHandler`. If you're graph creates variables outside of
+        `GroupLassoBaseOpHandler`. If your graph creates variables outside of
         `tf.get_variable`, set to `False`.
     """
     conv2d_handler = conv2d_source_op_handler.Conv2DSourceOpHandler(
