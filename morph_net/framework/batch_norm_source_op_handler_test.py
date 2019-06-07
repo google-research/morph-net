@@ -371,7 +371,9 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
     # Verify regularizer is the gamma tensor.
     g = tf.get_default_graph()
     gamma_tensor = g.get_tensor_by_name('conv1/BatchNorm/gamma/read:0')
-    self.assertEqual(gamma_tensor, regularizer._gamma)
+    # Check that gamma_tensor is tf.identity(regularizer._gamma).
+    self.assertEqual(regularizer._gamma.op.type, 'Identity')
+    self.assertEqual(regularizer._gamma.op.inputs[0], gamma_tensor)
 
   def testCreateRegularizer_Sliced(self):
     # Call handler to create regularizer.

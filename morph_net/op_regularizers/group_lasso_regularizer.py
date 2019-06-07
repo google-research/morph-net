@@ -39,7 +39,7 @@ class GroupLassoRegularizer(generic_regularizers.OpRegularizer):
       l1_fraction: A float, controls the balance between L1 and L2 grouping (see
         above).
     """
-    weight_tensor = tpu_util.maybe_convert_to_variable(weight_tensor)
+    weight_tensor = tpu_util.cross_device(weight_tensor)
     if l1_fraction < 0.0 or l1_fraction > 1.0:
       raise ValueError(
           'l1_fraction should be in [0.0, 1.0], not %e.' % l1_fraction)

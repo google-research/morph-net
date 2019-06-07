@@ -117,7 +117,7 @@ class GroupLassoBaseSourceOpHandler(op_handler.OpHandler):
     size = op_slice.slice.size
     weights = op_slice.op.inputs[1]  # Input 1 are the weights.
     if self._convert_to_variable:
-      weights = tpu_util.maybe_convert_to_variable(weights)
+      weights = tpu_util.cross_device(weights)
     reduce_dims = self._reduce_dims(op_slice.op)
     rank = len(weights.shape.as_list())
     assert rank == len(reduce_dims) + 1

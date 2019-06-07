@@ -64,6 +64,6 @@ class BatchNormSourceOpHandler(grouping_op_handler.GroupingOpHandler):
     else:
       # Note: this conversion is also attempted inside GammaL1Regularizer
       # because it may be invoked from another call site.
-      gamma = tpu_util.maybe_convert_to_variable(gamma)
+      gamma = tpu_util.cross_device(gamma)
       return gamma_l1_regularizer.GammaL1Regularizer(
           gamma[start_index:start_index + size], self._gamma_threshold)
