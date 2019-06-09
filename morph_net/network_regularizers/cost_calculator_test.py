@@ -61,12 +61,12 @@ class CostCalculatorTest(parameterized.TestCase, tf.test.TestCase):
     op_handler_dict = collections.defaultdict(
         grouping_op_handler.GroupingOpHandler)
     op_handler_dict.update({
-        'FusedBatchNorm':
-        batch_norm_source_op_handler.BatchNormSourceOpHandler(0.1),
+        'FusedBatchNormV3':
+            batch_norm_source_op_handler.BatchNormSourceOpHandler(0.1),
         'Conv2D':
-        output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
         'ConcatV2':
-        concat_op_handler.ConcatOpHandler(),
+            concat_op_handler.ConcatOpHandler(),
     })
 
     # Create OpRegularizerManager and NetworkRegularizer for test.

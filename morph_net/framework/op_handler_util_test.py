@@ -46,7 +46,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
 
     # Declare OpSlice and OpGroup for ops in the first test network.
     self.batch_norm_op = g.get_operation_by_name(
-        'conv1/BatchNorm/FusedBatchNorm')
+        'conv1/BatchNorm/FusedBatchNormV3')
     self.batch_norm_op_slice = orm.OpSlice(self.batch_norm_op, None)
     self.batch_norm_op_group = orm.OpGroup(self.batch_norm_op_slice)
 
@@ -86,7 +86,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
         self.relu4_op_slice, omit_source_op_slices=[self.relu4_op_slice])
 
     self.unfused_batch_norm_op = g.get_operation_by_name(
-        'BatchNorm/FusedBatchNorm')
+        'BatchNorm/FusedBatchNormV3')
     self.unfused_batch_norm_op_slice = orm.OpSlice(
         self.unfused_batch_norm_op, orm.Slice(0, 18))
 
@@ -676,7 +676,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
 
     g = tf.get_default_graph()
 
-    # Verify that FusedBatchNorm has gamma as inputs[1].
+    # Verify that FusedBatchNormV3 has gamma as inputs[1].
     self.assertEqual('conv1/BatchNorm/gamma/read:0',
                      self.batch_norm_op.inputs[1].name)
 
