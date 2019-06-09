@@ -41,13 +41,14 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self._default_op_handler_dict = collections.defaultdict(
         grouping_op_handler.GroupingOpHandler)
     self._default_op_handler_dict.update({
-        'FusedBatchNorm': IndexBatchNormSourceOpHandler(),
+        'FusedBatchNormV3':
+            IndexBatchNormSourceOpHandler(),
         'Conv2D':
-        output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
+            output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
         'ConcatV2':
-        concat_op_handler.ConcatOpHandler(),
+            concat_op_handler.ConcatOpHandler(),
         'DepthwiseConv2dNative':
-        depthwise_convolution_op_handler.DepthwiseConvolutionOpHandler(),
+            depthwise_convolution_op_handler.DepthwiseConvolutionOpHandler(),
     })
 
   def _batch_norm_scope(self):
@@ -86,7 +87,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
+    op_handler_dict['FusedBatchNormV3'] = StubBatchNormSourceOpHandler(
+        model_stub)
     if not use_batch_norm:
       op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(model_stub)
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
@@ -112,7 +114,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
+    op_handler_dict['FusedBatchNormV3'] = StubBatchNormSourceOpHandler(
+        model_stub)
     if not use_batch_norm:
       op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(model_stub)
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
@@ -139,7 +142,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
+    op_handler_dict['FusedBatchNormV3'] = StubBatchNormSourceOpHandler(
+        model_stub)
 
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
 
@@ -158,7 +162,8 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['FusedBatchNorm'] = StubBatchNormSourceOpHandler(model_stub)
+    op_handler_dict['FusedBatchNormV3'] = StubBatchNormSourceOpHandler(
+        model_stub)
 
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
     self.assertEqual(
@@ -1688,14 +1693,15 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Verify source ops were found.
     expected_queue = collections.deque([
-        _get_op('conv3/BatchNorm/FusedBatchNorm'),
-        _get_op('conv2/BatchNorm/FusedBatchNorm'),
-        _get_op('conv1/BatchNorm/FusedBatchNorm')])
+        _get_op('conv3/BatchNorm/FusedBatchNormV3'),
+        _get_op('conv2/BatchNorm/FusedBatchNormV3'),
+        _get_op('conv1/BatchNorm/FusedBatchNormV3')
+    ])
     self.assertEqual(expected_queue, manager._op_deque)
 
     # Verify extra branch was not included.
     self.assertNotIn(
-        _get_op('conv4/BatchNorm/FusedBatchNorm'), manager._op_deque)
+        _get_op('conv4/BatchNorm/FusedBatchNormV3'), manager._op_deque)
 
   def testOpGroup_NewSourceGroup(self):
     inputs = tf.zeros([2, 4, 4, 3])

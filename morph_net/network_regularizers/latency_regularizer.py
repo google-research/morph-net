@@ -69,6 +69,7 @@ class GammaLatencyRegularizer(generic_regularizers.NetworkRegularizer):
     op_handler_dict.update({
         'FusedBatchNorm': source_op_handler,
         'FusedBatchNormV2': source_op_handler,
+        'FusedBatchNormV3': source_op_handler,
     })
 
     self._manager = orm.OpRegularizerManager(

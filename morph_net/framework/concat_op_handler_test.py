@@ -61,7 +61,7 @@ class ConcatOpHandlerTest(tf.test.TestCase):
 
     self.axis_op = g.get_operation_by_name('concat/axis')
 
-    self.batch_norm_op = g.get_operation_by_name('BatchNorm/FusedBatchNorm')
+    self.batch_norm_op = g.get_operation_by_name('BatchNorm/FusedBatchNormV3')
     self.batch_norm_op_slice = orm.OpSlice(self.batch_norm_op, orm.Slice(0, 18))
     self.batch_norm_op_group = orm.OpGroup(
         self.batch_norm_op_slice,
@@ -808,7 +808,7 @@ class GroupingConcatOpHandlerTest(tf.test.TestCase):
     self.relu3_op_group = orm.OpGroup(
         self.relu3_op_slice, omit_source_op_slices=[self.relu3_op_slice])
 
-    self.batch_norm_op = g.get_operation_by_name('BatchNorm/FusedBatchNorm')
+    self.batch_norm_op = g.get_operation_by_name('BatchNorm/FusedBatchNormV3')
     self.batch_norm_op_slice = orm.OpSlice(self.batch_norm_op, orm.Slice(0, 6))
     self.batch_norm_op_group = orm.OpGroup(
         self.batch_norm_op_slice,
