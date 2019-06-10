@@ -129,8 +129,8 @@ class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
     self.BuildWithBatchNorm(fused=True)
     self.AddRegularizer(input_boundary=None)
     self.assertCountEqual(self.GetSourceOps(), [
-        'conv1/BatchNorm/FusedBatchNorm', 'conv2/BatchNorm/FusedBatchNorm',
-        'conv3/BatchNorm/FusedBatchNorm', 'conv4/BatchNorm/FusedBatchNorm'
+        'conv1/BatchNorm/FusedBatchNormV3', 'conv2/BatchNorm/FusedBatchNormV3',
+        'conv3/BatchNorm/FusedBatchNormV3', 'conv4/BatchNorm/FusedBatchNormV3'
     ])
 
   def testInputBoundaryConv3(self):
@@ -138,8 +138,8 @@ class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
     self.BuildWithBatchNorm(fused=True)
     self.AddRegularizer(input_boundary=[self.conv3.op])
     self.assertCountEqual(self.GetSourceOps(), [
-        'conv1/BatchNorm/FusedBatchNorm', 'conv2/BatchNorm/FusedBatchNorm',
-        'conv4/BatchNorm/FusedBatchNorm'
+        'conv1/BatchNorm/FusedBatchNormV3', 'conv2/BatchNorm/FusedBatchNormV3',
+        'conv4/BatchNorm/FusedBatchNormV3'
     ])
 
   def testInputBoundaryConv3And4(self):
@@ -152,9 +152,9 @@ class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
     # Block concat, can only see conv3 and conv4.
     self.BuildWithBatchNorm(fused=True)
     self.AddRegularizer(input_boundary=[self.concat.op])
-    self.assertCountEqual(
-        self.GetSourceOps(),
-        ['conv3/BatchNorm/FusedBatchNorm', 'conv4/BatchNorm/FusedBatchNorm'])
+    self.assertCountEqual(self.GetSourceOps(), [
+        'conv3/BatchNorm/FusedBatchNormV3', 'conv4/BatchNorm/FusedBatchNormV3'
+    ])
 
   def testLossDecorated(self):
     self.BuildWithBatchNorm(True)

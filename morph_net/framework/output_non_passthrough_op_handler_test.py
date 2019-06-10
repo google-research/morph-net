@@ -60,7 +60,7 @@ class OutputNonPassthroughOpHandlerTest(tf.test.TestCase):
         self.relu2_op_slice, omit_source_op_slices=[self.relu2_op_slice])
 
     self.batch_norm_op = g.get_operation_by_name(
-        'conv2/BatchNorm/FusedBatchNorm')
+        'conv2/BatchNorm/FusedBatchNormV3')
     self.batch_norm_op_slice = orm.OpSlice(self.batch_norm_op, orm.Slice(0, 6))
     self.batch_norm_op_group = orm.OpGroup(self.batch_norm_op_slice)
 

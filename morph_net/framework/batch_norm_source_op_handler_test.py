@@ -41,7 +41,7 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
 
     # Declare OpSlice and OpGroup for ops that are created in the test network.
     self.batch_norm_op = g.get_operation_by_name(
-        'conv1/BatchNorm/FusedBatchNorm')
+        'conv1/BatchNorm/FusedBatchNormV3')
     self.batch_norm_op_slice = orm.OpSlice(self.batch_norm_op, orm.Slice(0, 5))
     self.batch_norm_op_group = orm.OpGroup(self.batch_norm_op_slice)
 

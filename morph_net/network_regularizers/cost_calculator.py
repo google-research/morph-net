@@ -11,8 +11,9 @@ CONV2D_OPS = ('Conv2D', 'Conv2DBackpropInput', 'DepthwiseConv2dNative')
 CONV3D_OPS = ('Conv3D',)
 CONV_OPS = CONV2D_OPS + CONV3D_OPS
 FLOP_OPS = CONV_OPS + ('MatMul',)
-SUPPORTED_OPS = FLOP_OPS + (
-    'Add', 'AddN', 'ConcatV2', 'FusedBatchNorm', 'Mul', 'Relu', 'Relu6', 'Sum')
+SUPPORTED_OPS = FLOP_OPS + ('Add', 'AddN', 'ConcatV2', 'FusedBatchNorm',
+                            'FusedBatchNormV2', 'FusedBatchNormV3', 'Mul',
+                            'Relu', 'Relu6', 'Sum')
 
 
 class CostCalculator(object):
