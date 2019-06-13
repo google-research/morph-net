@@ -70,7 +70,8 @@ class StructureExporter(object):
         tf.logging.warning('No regularizer found for: %s', op.name)
         continue
 
-      self._tensors[rename_fn(op.name)] = op_regularizer.alive_vector
+      self._tensors[rename_fn(op.name)] = tf.cast(op_regularizer.alive_vector,
+                                                  tf.int32)
 
   @property
   def tensors(self):
