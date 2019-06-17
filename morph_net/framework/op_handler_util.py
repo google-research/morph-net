@@ -9,7 +9,7 @@ import re
 OP_TYPES_WITH_MULTIPLE_OUTPUTS = ('SplitV',)
 
 # Dictionary mapping op type to input index of weights.
-OP_TYPES_WITH_WEIGHTS = {
+WEIGHTS_INDEX_DICT = {
     'Conv2D': 1,
     'Conv2DBackpropInput': 1,
     'DepthwiseConv2dNative': 1,
@@ -17,7 +17,7 @@ OP_TYPES_WITH_WEIGHTS = {
 }
 
 
-def get_input_ops(op, op_reg_manager):
+def get_input_ops(op, op_reg_manager, whitelist_indices=None):
   """Returns input ops for a given op.
 
   Filters constants and weight tensors.
@@ -25,6 +25,7 @@ def get_input_ops(op, op_reg_manager):
   Args:
     op: tf.Operation to get inputs of.
     op_reg_manager: OpRegularizerManager to keep track of the grouping.
+    whitelist_indices: Optional, indices of op.inputs that should be considered.
 
   Returns:
     List of tf.Operation that are the inputs to op.
@@ -32,14 +33,22 @@ def get_input_ops(op, op_reg_manager):
   # Ignore scalar or 1-D constant inputs.
   def is_const(tensor):
     return tensor.op.type == 'Const'
+  def is_weight_tensor(i, op_type):
+    return i == WEIGHTS_INDEX_DICT.get(op_type, -666)  # If op_type not in dict.
 
   # If op has a weight tensor as an input, remove it.
   inputs = list(op.inputs)
-  if op.type in OP_TYPES_WITH_WEIGHTS:
-    inputs.pop(OP_TYPES_WITH_WEIGHTS[op.type])
 
-  return [i.op for i in inputs
-          if not is_const(i) and i.op in op_reg_manager.ops]
+  whitelist_indices = whitelist_indices or range(len(inputs))
+  filted_input_ops = []
+  for i, tensor in enumerate(inputs):
+    if (i not in whitelist_indices
+        or is_weight_tensor(i, op.type)
+        or is_const(tensor)
+        or tensor.op not in op_reg_manager.ops):
+      continue
+    filted_input_ops.append(tensor.op)
+  return filted_input_ops
 
 
 def get_output_ops(op, op_reg_manager):

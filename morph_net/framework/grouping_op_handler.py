@@ -14,6 +14,17 @@ from morph_net.framework import op_handler_util
 class GroupingOpHandler(op_handler.OpHandler):
   """OpHandler implementation for grouping operations."""
 
+  def __init__(self, grouping_indices=None):
+    """Creates a GroupingOpHandler.
+
+    Args:
+      grouping_indices: A list of indices which define which of the inputs the
+        handler should group. The goal is to allow the handler to ignore indices
+        which hold tensors that should not be grouped, e.g. The kernel size of a
+        convolution should not be grouped with the input tensor.
+    """
+    self._grouping_indices = grouping_indices
+
   @property
   def is_source_op(self):
     return False
@@ -30,7 +41,8 @@ class GroupingOpHandler(op_handler.OpHandler):
       op_reg_manager: OpRegularizerManager to keep track of the grouping.
     """
     # Check if all input ops have groups, or tell the manager to process them.
-    input_ops = op_handler_util.get_input_ops(op, op_reg_manager)
+    input_ops = op_handler_util.get_input_ops(op, op_reg_manager,
+                                              self._grouping_indices)
     input_ops_without_group = op_handler_util.get_ops_without_groups(
         input_ops, op_reg_manager)
 

@@ -1894,7 +1894,7 @@ class IndexBatchNormSourceOpHandler(
   """
 
   def __init__(self):
-    pass
+    super(IndexBatchNormSourceOpHandler, self).__init__(0.0)
 
   def create_regularizer(self, op_slice):
     return IndexOpRegularizer(op_slice, None)
@@ -1909,6 +1909,7 @@ class StubBatchNormSourceOpHandler(
   """
 
   def __init__(self, model_stub):
+    super(StubBatchNormSourceOpHandler, self).__init__(0.0)
     self._model_stub = model_stub
 
   def create_regularizer(self, op_slice):

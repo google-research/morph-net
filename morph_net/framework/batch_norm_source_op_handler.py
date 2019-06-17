@@ -21,6 +21,7 @@ class BatchNormSourceOpHandler(grouping_op_handler.GroupingOpHandler):
       gamma_threshold: Float scalar, the threshold above which a gamma is
         considered alive.
     """
+    super(BatchNormSourceOpHandler, self).__init__()
     self._gamma_threshold = gamma_threshold
 
   @property

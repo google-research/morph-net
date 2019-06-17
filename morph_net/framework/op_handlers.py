@@ -13,9 +13,14 @@ from morph_net.framework import grouping_op_handler
 from morph_net.framework import leaf_op_handler
 from morph_net.framework import output_non_passthrough_op_handler
 
+RESIZE_OP_NAMES = [
+    'ResizeArea', 'ResizeBicubic', 'ResizeBilinear', 'ResizeNearestNeighbor'
+]
+
 
 def _get_base_op_hander_dicts():
-  return collections.defaultdict(
+  """Returns the base op_hander_dict for all regularizers."""
+  base_dict = collections.defaultdict(
       grouping_op_handler.GroupingOpHandler, {
           'ConcatV2':
               concat_op_handler.ConcatOpHandler(),
@@ -40,6 +45,10 @@ def _get_base_op_hander_dicts():
           'Transpose':
               output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
       })
+  for resize_method in RESIZE_OP_NAMES:
+    # Resize* ops, second input might be a tensor which will result in an error.
+    base_dict[resize_method] = grouping_op_handler.GroupingOpHandler([0])
+  return base_dict
 
 
 def get_gamma_op_handler_dict():

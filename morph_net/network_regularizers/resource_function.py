@@ -186,7 +186,7 @@ def memory_function(op, is_regularization, num_alive_inputs, num_alive_outputs,
   input_tensors = []
   output_tensors = []
   bilinear_tensors = []
-  weight_tensor_index = op_handler_util.OP_TYPES_WITH_WEIGHTS.get(op.type)
+  weight_tensor_index = op_handler_util.WEIGHTS_INDEX_DICT.get(op.type)
   for i, tensor in enumerate(op.inputs):
     if weight_tensor_index is not None and i == weight_tensor_index:
       bilinear_tensors.append(tensor)

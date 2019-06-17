@@ -681,27 +681,27 @@ class OpHandlerUtilTest(tf.test.TestCase):
                      self.batch_norm_op.inputs[1].name)
 
     # Verify that Conv2D has weights at expected index.
-    index = op_handler_util.OP_TYPES_WITH_WEIGHTS[self.conv_op.type]
+    index = op_handler_util.WEIGHTS_INDEX_DICT[self.conv_op.type]
     self.assertEqual('conv1/weights/read:0',
                      self.conv_op.inputs[index].name)
 
     # Verify that Conv2DBackpropInput has weights at expected index.
     conv_transpose_op = g.get_operation_by_name(
         'conv_transpose/conv2d_transpose')
-    index = op_handler_util.OP_TYPES_WITH_WEIGHTS[conv_transpose_op.type]
+    index = op_handler_util.WEIGHTS_INDEX_DICT[conv_transpose_op.type]
     self.assertEqual('conv_transpose/weights/read:0',
                      conv_transpose_op.inputs[index].name)
 
     # Verify that DepthwiseConv2dNative has weights at expected index.
     depthwise_conv_op = g.get_operation_by_name(
         'dwise_conv/separable_conv2d/depthwise')
-    index = op_handler_util.OP_TYPES_WITH_WEIGHTS[depthwise_conv_op.type]
+    index = op_handler_util.WEIGHTS_INDEX_DICT[depthwise_conv_op.type]
     self.assertEqual('dwise_conv/depthwise_weights/read:0',
                      depthwise_conv_op.inputs[index].name)
 
     # Verify that MatMul has weights at expected index.
     matmul_op = g.get_operation_by_name('fc/MatMul')
-    index = op_handler_util.OP_TYPES_WITH_WEIGHTS[matmul_op.type]
+    index = op_handler_util.WEIGHTS_INDEX_DICT[matmul_op.type]
     self.assertEqual('fc/weights/read:0',
                      matmul_op.inputs[index].name)
 
