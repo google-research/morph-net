@@ -207,7 +207,7 @@ class LatencyRegularizerTest(parameterized.TestCase, tf.test.TestCase):
       ('_P100', 'P100'),
       ('_V100', 'V100'))
   def testInceptionV2(self, hardware):
-    image = tf.zeros([1, 224, 224, 3])
+    image = tf.zeros([1, 112, 112, 3])
     net, _ = inception.inception_v2_base(image)
     g = tf.get_default_graph()
     self.regularizer = latency_regularizer.GammaLatencyRegularizer(
@@ -217,7 +217,7 @@ class LatencyRegularizerTest(parameterized.TestCase, tf.test.TestCase):
     op = g.get_operation_by_name(
         'InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3/Conv2D')
     # FLOP cost = 2 * NHWRSCK
-    expected_cost = (2 * 28 * 28 * 3 * 3 * 96 * 96
+    expected_cost = (2 * 14 * 14 * 3 * 3 * 96 * 96
                      / resource_function.PEAK_COMPUTE[hardware])
     self.assertAllClose(expected_cost, self.get_cost([op]))
 
@@ -227,7 +227,9 @@ class LatencyRegularizerTest(parameterized.TestCase, tf.test.TestCase):
     # Memory cost = input_tensor + weight_tensor + output_tensor
     #             = NHWC + RSCK + NHWK
     # Note that this is a pointwise convolution with kernel 1x1.
-    expected_cost = ((112 * 112 * 24 + 24 * 64 + 112 * 112 * 64) * 4
+    for i in op.inputs:
+      print(i)
+    expected_cost = ((56 * 56 * 24 + 24 * 64 + 56 * 56 * 64) * 4
                      / resource_function.MEMORY_BANDWIDTH[hardware])
     self.assertAllClose(expected_cost, self.get_cost([op]))
 
