@@ -42,14 +42,19 @@ def get_variable_name(read_variable_op):
 
 
 def maybe_convert_to_variable(tensor):
-  """Convert TPU variable to be usable outside a while loop.
+  """Read value of a tensor from a variable when possible.
+
+  This function is intended to make tensors from inside the TPU while loop
+  available on the CPU by reading it from the variable to which the tensor was
+  written earlier. Note that the read may not reflect any writes that happened
+  in the same session.run(), unless control dependencies are added.
 
   Args:
     tensor: A tf.Tensor.
 
   Returns:
     A tf.Tensor. If input tensor is an output of reading a ResourceVariable, we
-    return an equivalent tensor produced outside the while loop. Otherwise, we
+    return an equivalent tensor produced in the current context. Otherwise, we
     return the original input tensor.
   """
   op = tensor.op
@@ -64,9 +69,21 @@ def maybe_convert_to_variable(tensor):
       reuse=True,
   ):
     variable_name = get_variable_name(op)
-    tf.logging.info('Converting tensor %s --> tf.get_variable(%s)',
+    tf.logging.info('Converting tensor %s --> variable %s',
                     tensor, variable_name)
-    return tf.get_variable(variable_name)
+    try:
+      return tf.get_variable(variable_name)
+    except ValueError:
+      tf.logging.info(
+          'Variable %s was not created with tf.get_variable(). '
+          'Attempting to find it in GLOBAL_VARIABLES collection.',
+          variable_name)
+    global_vars = tensor.graph.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+    matched_vars = [v for v in global_vars if v.name == variable_name + ':0']
+    if not matched_vars:
+      raise ValueError('Variable %s is in GraphDef but not in the live graph.')
+    assert len(matched_vars) == 1
+    return matched_vars[0]
 
 
 var_store = {}

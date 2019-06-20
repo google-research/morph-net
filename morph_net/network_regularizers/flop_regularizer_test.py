@@ -792,25 +792,6 @@ class GroupLassoFlopRegTest(tf.test.TestCase):
       self.assertNearRelatively(flop_reg.get_regularization_term().eval(),
                                 expected_reg_term)
 
-  def testFlopRegularizerExpectErrorWithConvertToVariable(self):
-    """Tests the functionality of the convert_to_variable parameter.
-
-    This test explicitly tests the failure condition. The failure condition is
-    the use of a resource variable not made with tf.get_variable.
-    """
-    tf.reset_default_graph()
-    tf.set_random_seed(1234)
-
-    x = tf.constant(1.0, shape=[2, 6], name='x', dtype=tf.float32)
-    w = tf.Variable(tf.truncated_normal([6, 4], stddev=1.0), use_resource=True)
-    net = tf.matmul(x, w)
-
-    # Create FLOPs network regularizer.
-    threshold = 0.9
-    with self.assertRaises(ValueError):
-      _ = flop_regularizer.GroupLassoFlopsRegularizer(
-          [net.op], threshold, 0, convert_to_variable=True)
-
   def testFlopRegularizerDontConvertToVariable(self):
     tf.reset_default_graph()
     tf.set_random_seed(1234)
