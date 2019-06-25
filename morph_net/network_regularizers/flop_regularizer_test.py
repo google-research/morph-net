@@ -353,19 +353,19 @@ class GammaFlopLossWithDepthwiseConvTest(
     conv = self.GetConv('conv1')
     self.assertEqual(_coeff(conv) * 7 * NUM_CHANNELS, self.cost([conv]))
 
-    # Conv2 is followed by dw2 which has its own batch norm that overrides the
-    # batch norm of conv2.  Thus, conv2 has 10 output channels alive.  Conv2 has
-    # NUM_CHANNELS inputs (from the image).
+    # Conv2 has 11 active + 12 inactive, while Dw2 has 5 inactive, 10 active and
+    # 8 active. Their max (or) has 15 active and 8 inactive.
+    # Conv2 has NUM_CHANNELS inputs (from the image).
     conv = self.GetConv('conv2')
-    self.assertEqual(_coeff(conv) * 10 * NUM_CHANNELS, self.cost([conv]))
+    self.assertEqual(_coeff(conv) * 15 * NUM_CHANNELS, self.cost([conv]))
 
     # Dw2 has 15 out of 23 inputs (from the Conv2).
     conv = self.GetConv('dw2')
-    self.assertEqual(_coeff(conv) * 10, self.cost([conv]))
+    self.assertEqual(_coeff(conv) * 15, self.cost([conv]))
 
-    # Conv3 has 10 gammas above 0.45, and 7 + 10 inputs from conv1 and dw2.
+    # Conv3 has 10 gammas above 0.45, and 7 + 15 inputs from conv1 and dw2.
     conv = self.GetConv('conv3')
-    self.assertEqual(_coeff(conv) * 10 * 17, self.cost([conv]))
+    self.assertEqual(_coeff(conv) * 10 * 22, self.cost([conv]))
 
   def testRegularizer(self):
     # Dw1 depthwise convolution is connected to the input (no regularizer).
@@ -391,12 +391,12 @@ class GammaFlopLossWithDepthwiseConvTest(
     expected_loss = _coeff(conv) * (gamma.sum() * NUM_CHANNELS)
     self.assertNear(expected_loss, self.loss([conv]), expected_loss * 1e-5)
 
-    # Dw2 depthwise convolution overrides regularizer of conv2 (sequential
-    # regularizer).
+    # Dw2 depthwise convolution is connected to conv2 (grouped regularizer).
     conv = self.GetConv('conv2')
+    gamma_conv = self.GetGammaAbsValue('conv2')
     dw = self.GetConv('dw2')
     gamma_dw = self.GetGammaAbsValue('dw2')
-    gamma = gamma_dw.sum()
+    gamma = np.maximum(gamma_dw, gamma_conv).sum()
     expected_loss = _coeff(conv) * (gamma * 3 + (gamma > 0.45).sum() * 0)
     self.assertNear(expected_loss, self.loss([conv]), expected_loss * 1e-5)
     expected_loss = _coeff(dw) * gamma * 2

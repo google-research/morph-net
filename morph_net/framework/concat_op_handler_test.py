@@ -589,12 +589,9 @@ class ConcatOpHandlerTest(tf.test.TestCase):
 
     # Verify manager groups the new slices.
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
-        [mock.call([self.concat_op_slice_0_5, self.relu1_op_slice],
-                   omit_source_op_slices=[]),
-         mock.call([self.concat_op_slice_5_11, self.relu2_op_slice],
-                   omit_source_op_slices=[]),
-         mock.call([self.concat_op_slice_11_18, self.relu3_op_slice],
-                   omit_source_op_slices=[])])
+        [mock.call([self.concat_op_slice_0_5, self.relu1_op_slice]),
+         mock.call([self.concat_op_slice_5_11, self.relu2_op_slice]),
+         mock.call([self.concat_op_slice_11_18, self.relu3_op_slice])])
 
     # Verify manager adds ops to processing queue.
     self.mock_op_reg_manager.process_ops.assert_called_once_with(

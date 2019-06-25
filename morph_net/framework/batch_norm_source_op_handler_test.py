@@ -169,8 +169,7 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         [mock.call([self.batch_norm_op_slice, self.relu_op_slice,
                     self.mean_op_slice, self.std_op_slice]),
          mock.call([self.batch_norm_op_slice, self.conv_op_slice,
-                    self.gamma_op_slice, self.beta_op_slice],
-                   omit_source_op_slices=[])])
+                    self.gamma_op_slice, self.beta_op_slice])])
 
     # Verify manager does not reprocess any ops.
     self.mock_op_reg_manager.process_ops.assert_not_called()
@@ -265,13 +264,11 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         [mock.call([batch_norm_op_slice_0_2, relu_op_slice_0_2,
                     mean_op_slice_0_2, std_op_slice_0_2]),
          mock.call([batch_norm_op_slice_0_2, conv_op_slice_0_2,
-                    gamma_op_slice_0_2, beta_op_slice_0_2],
-                   omit_source_op_slices=[]),
+                    gamma_op_slice_0_2, beta_op_slice_0_2]),
          mock.call([batch_norm_op_slice_2_3, relu_op_slice_2_3,
                     mean_op_slice_2_3, std_op_slice_2_3]),
          mock.call([batch_norm_op_slice_2_3, conv_op_slice_2_3,
-                    gamma_op_slice_2_3, beta_op_slice_2_3],
-                   omit_source_op_slices=[])])
+                    gamma_op_slice_2_3, beta_op_slice_2_3])])
 
     # Verify manager does not reprocess any ops.
     self.mock_op_reg_manager.process_ops.assert_not_called()
@@ -316,7 +313,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
 
   def testAssignGrouping_NeighborsHaveSameGroup_ReprocessSources(self):
     source_conv_op_group = orm.OpGroup(self.conv_op_slice)
-
     self.op_slice_dict = {
         self.batch_norm_op: [self.batch_norm_op_slice],
         self.conv_op: [self.conv_op_slice],
@@ -354,8 +350,7 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
     # Verify manager groups batch norm with inputs and overrides source.
     self.mock_op_reg_manager.group_op_slices.assert_called_once_with(
         [self.batch_norm_op_slice, self.conv_op_slice, self.gamma_op_slice,
-         self.beta_op_slice],
-        omit_source_op_slices=[self.conv_op_slice])
+         self.beta_op_slice])
 
     # Verify manager adds ungrouped output ops to queue.
     self.mock_op_reg_manager.process_ops.assert_called_once_with(

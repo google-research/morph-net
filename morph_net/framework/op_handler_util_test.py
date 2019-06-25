@@ -205,8 +205,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
     self.assertTrue(ops_grouped)
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
         [mock.call([self.batch_norm_op_slice, self.relu_op_slice]),
-         mock.call([self.batch_norm_op_slice, self.conv_op_slice],
-                   omit_source_op_slices=[])])
+         mock.call([self.batch_norm_op_slice, self.conv_op_slice])])
 
   def testGroupOpWithInputsAndOutputs_MultipleSlices(self):
     # For the multiple slice case, verify that batch norm slices are grouped
@@ -266,11 +265,9 @@ class OpHandlerUtilTest(tf.test.TestCase):
     self.assertTrue(ops_grouped)
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
         [mock.call([batch_norm_op_slice_0_2, relu_op_slice_0_2]),
-         mock.call([batch_norm_op_slice_0_2, conv_op_slice_0_2],
-                   omit_source_op_slices=[]),
+         mock.call([batch_norm_op_slice_0_2, conv_op_slice_0_2]),
          mock.call([batch_norm_op_slice_2_5, relu_op_slice_2_5]),
-         mock.call([batch_norm_op_slice_2_5, conv_op_slice_2_5],
-                   omit_source_op_slices=[])])
+         mock.call([batch_norm_op_slice_2_5, conv_op_slice_2_5])])
 
   def testGetConcatInputOpSlices(self):
     # For concat, the input op slices are the concatenation of op slices of each
@@ -497,43 +494,6 @@ class OpHandlerUtilTest(tf.test.TestCase):
         op_handler_util._get_source_op_slices(
             op_slices, self.mock_op_reg_manager))
 
-  def testGetInputSourceOpsToOmit_NotSource(self):
-    input_op_slices = [
-        self.relu2_op_slice, self.relu3_op_slice, self.relu4_op_slice]
-    # ReLU3 is a source ops now.
-    relu3_op_group = orm.OpGroup(self.relu3_op_slice)
-    self.op_group_dict = {
-        self.relu2_op_slice: self.relu2_op_group,
-        self.relu3_op_slice: relu3_op_group,
-        self.relu4_op_slice: self.relu4_op_group,
-        self.concat_op_slice: self.concat_op_group,
-    }
-    expected_ops_to_omit = []
-
-    self.assertEqual(
-        expected_ops_to_omit,
-        op_handler_util._get_input_source_ops_to_omit(
-            input_op_slices, self.concat_op_slice, self.mock_op_reg_manager))
-
-  def testGetInputSourceOpsToOmit_IsSource(self):
-    input_op_slices = [
-        self.relu2_op_slice, self.relu3_op_slice, self.relu4_op_slice]
-    # ReLU3 and concat are source ops now.
-    relu3_op_group = orm.OpGroup(self.relu3_op_slice)
-    concat_op_group = orm.OpGroup(self.concat_op_slice)
-    self.op_group_dict = {
-        self.relu2_op_slice: self.relu2_op_group,
-        self.relu3_op_slice: relu3_op_group,
-        self.relu4_op_slice: self.relu4_op_group,
-        self.concat_op_slice: concat_op_group,
-    }
-    expected_ops_to_omit = [self.relu3_op_slice]
-
-    self.assertEqual(
-        expected_ops_to_omit,
-        op_handler_util._get_input_source_ops_to_omit(
-            input_op_slices, self.concat_op_slice, self.mock_op_reg_manager))
-
   def testGroupAlignedInputOutputSlices_InputsOutputsGrouped(self):
     self.op_slice_dict = {
         self.batch_norm_op: [self.batch_norm_op_slice],
@@ -555,8 +515,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
 
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
         [mock.call([self.batch_norm_op_slice, self.relu_op_slice]),
-         mock.call([self.batch_norm_op_slice, self.conv_op_slice],
-                   omit_source_op_slices=[])])
+         mock.call([self.batch_norm_op_slice, self.conv_op_slice])])
     self.mock_op_reg_manager.process_ops.assert_not_called()
 
   def testGroupAlignedInputOutputSlices_InputsGrouped(self):
@@ -579,8 +538,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
         output_op_slices, aligned_op_slice_sizes, self.mock_op_reg_manager)
 
     self.mock_op_reg_manager.group_op_slices.assert_called_once_with(
-        [self.batch_norm_op_slice, self.conv_op_slice],
-        omit_source_op_slices=[])
+        [self.batch_norm_op_slice, self.conv_op_slice])
     self.mock_op_reg_manager.process_ops.assert_called_once_with([self.relu_op])
 
   def testGroupAlignedInputOutputSlices_OutputsGrouped(self):

@@ -196,8 +196,7 @@ class GroupingOpHandlerTest(tf.test.TestCase):
     # Verify manager groups batch norm with input ops.
     self.mock_op_reg_manager.group_op_slices.assert_called_once_with(
         [self.batch_norm_op_slice, self.conv_op_slice, self.gamma_op_slice,
-         self.beta_op_slice],
-        omit_source_op_slices=[])
+         self.beta_op_slice])
 
     # Verify manager processes grouping for mean_op and std_op which do not have
     # groups.
@@ -318,8 +317,7 @@ class GroupingOpHandlerTest(tf.test.TestCase):
         [mock.call([self.batch_norm_op_slice, self.relu_op_slice,
                     self.mean_op_slice, self.std_op_slice]),
          mock.call([self.batch_norm_op_slice, self.conv_op_slice,
-                    self.gamma_op_slice, self.beta_op_slice],
-                   omit_source_op_slices=[])])
+                    self.gamma_op_slice, self.beta_op_slice])])
 
     # Verify manager does not process any additional ops.
     self.mock_op_reg_manager.process_ops.assert_not_called()
@@ -446,8 +444,7 @@ class GroupingOpHandlerTest(tf.test.TestCase):
         [mock.call([self.batch_norm_op_slice, self.mean_op_slice,
                     self.std_op_slice]),
          mock.call([self.batch_norm_op_slice, self.conv_op_slice,
-                    self.gamma_op_slice, self.beta_op_slice],
-                   omit_source_op_slices=[])])
+                    self.gamma_op_slice, self.beta_op_slice])])
 
     # Verify manager does not process any additional ops.
     self.mock_op_reg_manager.process_ops.assert_not_called()

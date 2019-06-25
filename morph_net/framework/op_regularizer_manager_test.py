@@ -1804,6 +1804,25 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
                          op_group13.source_op_slices)
     self.assertEqual(12, op_group13._index)  # OpGroup is zero-indexed.
 
+  def testCorrectSourceOpsWithSkipConnection(self):
+    inputs = tf.zeros([2, 4, 4, 3])
+    x0 = layers.conv2d(
+        inputs, num_outputs=8, kernel_size=3, activation_fn=None, scope='conv0')
+    x1 = tf.nn.relu(layers.batch_norm(x0, scale=True, scope='bn0'))
+    x1 = layers.conv2d(
+        x1, num_outputs=8, kernel_size=3, activation_fn=None, scope='conv1')
+    x2 = tf.add_n([x0, x1], name='add')
+    final_op = tf.nn.relu(layers.batch_norm(x2, scale=True, scope='bn1'))
+
+    op_handler_dict = self._default_op_handler_dict
+    op_reg_manager = orm.OpRegularizerManager([final_op.op], op_handler_dict)
+
+    # All ops are in the same group
+    group = list(op_reg_manager._op_group_dict.values())[0]
+    source_op_names = [s.op.name for s in group.source_op_slices]
+    self.assertSetEqual(set(['bn0/FusedBatchNormV3', 'bn1/FusedBatchNormV3']),
+                        set(source_op_names))
+
   def testPrintOpSlices(self):
     inputs = tf.zeros([2, 4, 4, 3])
     identity1 = tf.identity(inputs)

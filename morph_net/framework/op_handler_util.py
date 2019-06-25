@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import re
+import tensorflow as tf
 
 OP_TYPES_WITH_MULTIPLE_OUTPUTS = ('SplitV',)
 
@@ -148,12 +149,28 @@ def group_op_with_inputs_and_outputs(op, input_op_slices, output_op_slices,
     if any([op_group != op_reg_manager.get_op_group(input_op_slice)
             for input_op_slice in input_op_slices_at_index]):
       # Some input OpSlice have different grouping.
-      op_reg_manager.group_op_slices(
-          [op_slices[slice_index]] + input_op_slices_at_index,
-          omit_source_op_slices=_get_input_source_ops_to_omit(
-              input_op_slices_at_index,
-              op_slices[slice_index],
-              op_reg_manager))
+      op_slice = op_slices[slice_index]
+
+      # Check if inputs have source ops. The default behavior is to regularize
+      # all sources in the group; however, depending on the local structure, it
+      # may be unnecessary to regularize these input sources. Flag this as a
+      # potential issue.
+      source_op_slices = _get_source_op_slices([op_slice], op_reg_manager)
+      input_source_op_slices = _get_source_op_slices(
+          input_op_slices_at_index, op_reg_manager)
+      input_source_op_slices_to_be_merged = [s for s in input_source_op_slices
+                                             if s not in source_op_slices]
+      if source_op_slices and input_source_op_slices_to_be_merged:
+        tf.logging.warn('Potential overregularization near {}.'.format(op.name))
+        tf.logging.warn('Downstream source slices:')
+        for ss in source_op_slices:
+          tf.logging.warn('  {}'.format(ss))
+        tf.logging.warn('...to be merged with upstream source slices:')
+        for ss in input_source_op_slices_to_be_merged:
+          tf.logging.warn('  {}'.format(ss))
+        tf.logging.warn('')
+
+      op_reg_manager.group_op_slices([op_slice] + input_op_slices_at_index)
       inconsistent_grouping = True
 
   return inconsistent_grouping
@@ -425,34 +442,6 @@ def _get_source_op_slices(op_slices, op_reg_manager):
   return list(set([source_op_slice for op_group in op_groups
                    for source_op_slice in op_group.source_op_slices]))
   # pylint: enable=g-complex-comprehension
-
-
-def _get_input_source_ops_to_omit(input_op_slices, op_slice,
-                                  op_reg_manager):
-  """Returns list of input OpSlice to omit as sources in a new group.
-
-  If op_slice contains a source, the new group should ignore sources from
-  the input OpSlice (e.g. Conv2D input to batch norm).  Otherwise, return an
-  empty list so that the new group propagates the sources from the input.
-
-  Args:
-    input_op_slices: List of OpSlice that are inputs to a grouping op.
-    op_slice: OpSlice that is being assigned grouping.
-    op_reg_manager: OpRegularizerManager to keep track of slicing.
-
-  Returns:
-    List of source input OpSlice to omit as sources in a new group.
-  """
-  source_op_slices = _get_source_op_slices([op_slice], op_reg_manager)
-  # If op_slice has a source, it overrides the input sources.  Otherwise,
-  # return an empty list so input sources are propagated to the new group.
-  if source_op_slices:
-    input_source_op_slices = _get_source_op_slices(
-        input_op_slices, op_reg_manager)
-    return [op_slice for op_slice in input_source_op_slices
-            if op_slice not in source_op_slices]
-  else:
-    return []
 
 
 def group_aligned_input_output_slices(
