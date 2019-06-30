@@ -55,22 +55,23 @@ class StructureExporter(object):
         with the same prefix (up to and including the first '/'), and if so,
         skip that prefix in exported data.
     """
-    # TODO(p1): Consider deleting unused `remove_common_prefix` b/133261798.
-    self._tensors = {}  # type: Dict[Text, tf.Tensor]
-    self._alive_vectors = None  # type: Optional[Dict[Text, Sequence[bool]]]
-    rename_fn = get_remove_common_prefix_fn(
-        self._tensors) if remove_common_prefix else lambda x: x
+    self._alive_vectors_as_tensors = {}  # type: Dict[Text, tf.Tensor]
+    self._alive_vectors_as_values = None  # type: Optional[Dict[Text, Sequence[bool]]]
 
     for op in op_regularizer_manager.ops:
       if op.type not in _SUPPORTED_OPS:
         continue
-
       op_regularizer = op_regularizer_manager.get_regularizer(op)
       if not op_regularizer:
         tf.logging.warning('No regularizer found for: %s', op.name)
         continue
+      self._alive_vectors_as_tensors[op.name] = op_regularizer.alive_vector
 
-      self._tensors[rename_fn(op.name)] = op_regularizer.alive_vector
+    if remove_common_prefix:
+      rename_op = get_remove_common_prefix_fn(self._alive_vectors_as_tensors)
+      self._alive_vectors_as_tensors = {
+          rename_op(k): v for k, v in self._alive_vectors_as_tensors.items()
+      }
 
   @property
   def tensors(self):
@@ -81,8 +82,7 @@ class StructureExporter(object):
     Returns:
       Dict: op name -> alive vector tensor
     """
-    # TODO(p1): Rename tensors to something better. tensors is a dict!
-    return self._tensors
+    return self._alive_vectors_as_tensors
 
   def populate_tensor_values(self, values: Dict[Text, Sequence[bool]]) -> None:
     """Records alive values for ops regularized by op_regularizer_manager.
@@ -100,7 +100,7 @@ class StructureExporter(object):
       raise ValueError(
           '`values` and `self.tensors` must have the same keys but are %s and %s'
           % (sorted(values), sorted(self.tensors)))
-    self._alive_vectors = values
+    self._alive_vectors_as_values = values
 
   def get_alive_counts(self) -> Dict[Text, int]:
     """Computes alive counts.
@@ -114,9 +114,9 @@ class StructureExporter(object):
       RuntimeError: tensor values not populated.
     """
 
-    if self._alive_vectors is None:
+    if self._alive_vectors_as_values is None:
       raise RuntimeError('Tensor values not populated.')
-    return _compute_alive_counts(self._alive_vectors)
+    return _compute_alive_counts(self._alive_vectors_as_values)
 
   def save_alive_counts(self, f: IO[bytes]) -> None:
     """Saves live counts to a file.

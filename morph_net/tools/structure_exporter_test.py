@@ -170,8 +170,7 @@ class TestStructureExporterRemovePrefix(tf.test.TestCase):
   def test_removes_prefix(self):
     exporter = se.StructureExporter(
         op_regularizer_manager=FakeORM(), remove_common_prefix=True)
-    # Note: this reproduces b/135633649: X/ prefix should not be present.
-    expected = ['X/c1/Conv2D', 'X/c2/Conv2D', 'X/c3/conv2d_transpose']
+    expected = ['c1/Conv2D', 'c2/Conv2D', 'c3/conv2d_transpose']
     self.assertAllEqual(sorted(exporter.tensors), sorted(expected))
 
 if __name__ == '__main__':
