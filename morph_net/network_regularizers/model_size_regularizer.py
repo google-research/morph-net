@@ -103,8 +103,7 @@ class GroupLassoModelSizeRegularizer(generic_regularizers.NetworkRegularizer):
       decorator_parameters=None,
       input_boundary: List[tf.Operation] = None,
       force_group: List[Text] = None,
-      regularizer_blacklist: List[Text] = None,
-      convert_to_variable=True):
+      regularizer_blacklist: List[Text] = None):
     """Creates a GroupLassoModelSizeRegularizer object.
 
     Args:
@@ -127,17 +126,14 @@ class GroupLassoModelSizeRegularizer(generic_regularizers.NetworkRegularizer):
         detail.
       regularizer_blacklist: List of regex for ops that should not be
         regularized. See op_regularizer_manager for more detail.
-      convert_to_variable: If `True` convert to variable in the
-        `GroupLassoBaseOpHandler`. If your graph creates variables outside of
-        `tf.get_variable`, set to `False`.
     """
     conv2d_handler = conv2d_source_op_handler.Conv2DSourceOpHandler(
-        threshold, l1_fraction, convert_to_variable)
+        threshold, l1_fraction)
     conv2d_transpose_handler = (
         conv2d_transpose_source_op_handler.Conv2DTransposeSourceOpHandler(
-            threshold, l1_fraction, convert_to_variable))
+            threshold, l1_fraction))
     matmul_handler = matmul_source_op_handler.MatMulSourceOpHandler(
-        threshold, l1_fraction, convert_to_variable)
+        threshold, l1_fraction)
     if regularizer_decorator:
       conv2d_handler = op_handler_decorator.OpHandlerDecorator(
           conv2d_handler, regularizer_decorator, decorator_parameters)

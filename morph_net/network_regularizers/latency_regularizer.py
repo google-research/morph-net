@@ -116,8 +116,7 @@ class GroupLassoLatencyRegularizer(generic_regularizers.NetworkRegularizer):
                decorator_parameters=None,
                input_boundary=None,
                force_group=None,
-               regularizer_blacklist=None,
-               convert_to_variable=True):
+               regularizer_blacklist=None):
     """Creates a GroupLassoFlopsRegularizer object.
 
     Args:
@@ -142,17 +141,14 @@ class GroupLassoLatencyRegularizer(generic_regularizers.NetworkRegularizer):
         detail.
       regularizer_blacklist: List of regex for ops that should not be
         regularized. See op_regularizer_manager for more detail.
-      convert_to_variable: If `True` convert to variable in the
-        `GroupLassoBaseOpHandler`. If your graph creates variables outside of
-        `tf.get_variable`, set to `False`.
     """
     conv2d_handler = conv2d_source_op_handler.Conv2DSourceOpHandler(
-        threshold, l1_fraction, convert_to_variable)
+        threshold, l1_fraction)
     conv2d_transpose_handler = (
         conv2d_transpose_source_op_handler.Conv2DTransposeSourceOpHandler(
-            threshold, l1_fraction, convert_to_variable))
+            threshold, l1_fraction))
     matmul_handler = matmul_source_op_handler.MatMulSourceOpHandler(
-        threshold, l1_fraction, convert_to_variable)
+        threshold, l1_fraction)
     if regularizer_decorator:
       conv2d_handler = op_handler_decorator.OpHandlerDecorator(
           conv2d_handler, regularizer_decorator, decorator_parameters)

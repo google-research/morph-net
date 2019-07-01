@@ -802,8 +802,8 @@ class GroupLassoFlopRegTest(tf.test.TestCase):
 
     # Create FLOPs network regularizer.
     threshold = 0.9
-    flop_reg = flop_regularizer.GroupLassoFlopsRegularizer(
-        [net.op], threshold, 0, convert_to_variable=False)
+    flop_reg = flop_regularizer.GroupLassoFlopsRegularizer([net.op], threshold,
+                                                           0)
 
     with self.cached_session():
       tf.global_variables_initializer().run()
