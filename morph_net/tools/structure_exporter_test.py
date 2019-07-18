@@ -133,8 +133,6 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
     self.assertAllEqual(
         _alive_from_file('ee/learned_structure/alive_19'),
         self.expected_alive_1)
-    self.assertAllEqual(
-        _alive_from_file('ee/learned_structure/alive'), self.expected_alive_1)
 
     self.exporter.populate_tensor_values(self.tensor_value_2)
     self.exporter.create_file_and_save_alive_counts(base_dir, 1009)
@@ -144,8 +142,6 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
     self.assertAllEqual(
         _alive_from_file('ee/learned_structure/alive_19'),
         self.expected_alive_1)
-    self.assertAllEqual(
-        _alive_from_file('ee/learned_structure/alive'), self.expected_alive_2)
 
   @parameterized.parameters(
       ([], []),

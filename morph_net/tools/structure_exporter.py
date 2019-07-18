@@ -17,9 +17,8 @@ import numpy as np
 import tensorflow as tf
 from typing import Text, Sequence, Dict, Optional, IO, Iterable, Callable
 
-_SUPPORTED_OPS = ['Conv2D', 'Conv2DBackpropInput']
-_ALIVE_FILENAME = 'alive'
-_REG_FILENAME = 'regularization'
+SUPPORTED_OPS = ['Conv2D', 'Conv2DBackpropInput']
+ALIVE_FILENAME = 'alive'
 
 
 class StructureExporter(object):
@@ -59,7 +58,7 @@ class StructureExporter(object):
     self._alive_vectors_as_values = None  # type: Optional[Dict[Text, Sequence[bool]]]
 
     for op in op_regularizer_manager.ops:
-      if op.type not in _SUPPORTED_OPS:
+      if op.type not in SUPPORTED_OPS:
         continue
       op_regularizer = op_regularizer_manager.get_regularizer(op)
       if not op_regularizer:
@@ -132,15 +131,13 @@ class StructureExporter(object):
 
     Creates the directory `{base_dir}/learned_structure/` and saves the current
     alive counts to:
-      `{base_dir}/learned_structure/{_ALIVE_FILENAME}_{global_step}`
-    and overwrites:
-      `{base_dir}/learned_structure/{_ALIVE_FILENAME}`.
+      `{base_dir}/learned_structure/{ALIVE_FILENAME}_{global_step}`.
 
     Args:
       base_dir: where to export the alive counts.
       global_step: current value of global step, used as a suffix in filename.
     """
-    current_filename = '%s_%s' % (_ALIVE_FILENAME, global_step)
+    current_filename = '%s_%s' % (ALIVE_FILENAME, global_step)
     directory = os.path.join(base_dir, 'learned_structure')
     try:
       tf.gfile.MakeDirs(directory)
@@ -148,8 +145,6 @@ class StructureExporter(object):
       # Probably already exists. If not, we'll see the error in the next line.
       pass
     with tf.gfile.Open(os.path.join(directory, current_filename), 'w') as f:
-      self.save_alive_counts(f)  # pytype: disable=wrong-arg-types
-    with tf.gfile.Open(os.path.join(directory, _ALIVE_FILENAME), 'w') as f:
       self.save_alive_counts(f)  # pytype: disable=wrong-arg-types
 
 
