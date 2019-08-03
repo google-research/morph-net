@@ -12,6 +12,7 @@ from __future__ import print_function
 
 import json
 import os
+import re
 from morph_net.framework import op_regularizer_manager as orm
 import numpy as np
 import tensorflow as tf
@@ -68,8 +69,13 @@ class StructureExporter(object):
 
     if remove_common_prefix:
       rename_op = get_remove_common_prefix_fn(self._alive_vectors_as_tensors)
+      # TODO(p1): remove when TPU and CPU names no longer differ.
+      # Maps name from CPU to TPU.
+      def to_tpu(cpu_name):
+        return re.sub('/convolution$', '/Conv2D', cpu_name)
       self._alive_vectors_as_tensors = {
-          rename_op(k): v for k, v in self._alive_vectors_as_tensors.items()
+          to_tpu(rename_op(k)): v
+          for k, v in self._alive_vectors_as_tensors.items()
       }
 
   @property
