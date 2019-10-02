@@ -60,6 +60,9 @@ def maybe_convert_to_variable(tensor):
   op = tensor.op
   if is_on_cpu() and tensor in var_store:
     return var_store[tensor]
+  while op.type == 'Identity':
+    assert len(op.inputs) == 1
+    op = op.inputs[0].op
   if op.type != 'ReadVariableOp':
     # No need to convert.
     return tensor

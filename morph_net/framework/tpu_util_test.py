@@ -68,10 +68,10 @@ class TpuUtilTest(parameterized.TestCase, tf.test.TestCase):
     self.assertEqual(variable.op, gamma_source_op)
 
     # If input tensor is separated from a variable by an extra hop of Identity,
-    # maybe_read_variable is a no op.
+    # maybe_read_variable pretends the Identity op isn't there.
     identity_tensor = tf.identity(gamma_tensor)
     self.assertEqual(
-        tpu_util.maybe_convert_to_variable(identity_tensor), identity_tensor)
+        tpu_util.maybe_convert_to_variable(identity_tensor), variable)
 
   def test_noop(self):
     with tf.variable_scope('', use_resource=True):
