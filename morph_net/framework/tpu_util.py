@@ -98,7 +98,18 @@ def write_to_variable(tensor):
   """Saves a tensor for later retrieval on CPU."""
   # Only relevant for debugging.
   debug_name = 'tpu_util__' + tensor.name.split(':')[0].split('/')[-1]
-  with tf.variable_scope('', reuse=False):
+
+  # Note: reuse cannot be changed from True to False, so we just check if
+  # the variable exists.
+  with tf.variable_scope('', reuse=True):
+    try:
+      tf.get_variable(debug_name)
+    except ValueError:
+      pass  # Variable with name=debug_name does not exist; proceed.
+    else:
+      raise ValueError('Variable %s already exists!' % debug_name)
+
+  with tf.variable_scope('', reuse=tf.compat.v1.AUTO_REUSE):
     variable = tf.get_variable(
         name=debug_name,
         shape=tensor.shape,

@@ -79,6 +79,16 @@ class TpuUtilTest(parameterized.TestCase, tf.test.TestCase):
     # Check tensors that are not variable reads are ignored.
     self.assertEqual(tpu_util.maybe_convert_to_variable(relu), relu)
 
+  def test_write_to_variable(self):
+    with tf.variable_scope(''):
+      foo = tf.constant(0.)
+      tpu_util.write_to_variable(foo)
+    with tf.variable_scope('', reuse=True):
+      bar = tf.constant(0.)
+      tpu_util.write_to_variable(bar)
+    with tf.variable_scope('', reuse=tf.compat.v1.AUTO_REUSE):
+      zee = tf.constant(0.)
+      tpu_util.write_to_variable(zee)
 
 if __name__ == '__main__':
   tf.test.main()
