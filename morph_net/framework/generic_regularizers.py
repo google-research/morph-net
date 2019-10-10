@@ -21,7 +21,7 @@ from __future__ import print_function
 import abc
 
 
-class NetworkRegularizer(object):
+class NetworkRegularizer(object):  # pytype: disable=ignored-metaclass
   """An interface for Network Regularizers."""
   __metaclass__ = abc.ABCMeta
 
@@ -73,7 +73,7 @@ class NetworkRegularizer(object):
     return ''
 
 
-class OpRegularizer(object):
+class OpRegularizer(object):  # pytype: disable=ignored-metaclass
   """An interface for Op Regularizers.
 
   An OpRegularizer object corresponds to a tf.Operation, and provides
