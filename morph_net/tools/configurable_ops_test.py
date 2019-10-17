@@ -128,7 +128,7 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
         self.inputs,
         num_outputs=88,
         kernel_size=3,
-        depth_multiplier=1.0,
+        depth_multiplier=1,
         scope='test')
     self.assertEqual(12, output.shape.as_list()[-1])
 
