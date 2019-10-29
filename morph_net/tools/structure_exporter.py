@@ -129,22 +129,20 @@ class StructureExporter(object):
                                         global_step: int) -> None:
     """Creates and updates files with alive counts.
 
-    Creates the directory `{base_dir}/learned_structure/` and saves the current
-    alive counts to:
-      `{base_dir}/learned_structure/{ALIVE_FILENAME}_{global_step}`.
+    Creates the directory `{base_dir}` and saves the current alive counts to:
+      `{base_dir}/{ALIVE_FILENAME}_{global_step}`.
 
     Args:
       base_dir: where to export the alive counts.
       global_step: current value of global step, used as a suffix in filename.
     """
     current_filename = '%s_%s' % (ALIVE_FILENAME, global_step)
-    directory = os.path.join(base_dir, 'learned_structure')
     try:
-      tf.gfile.MakeDirs(directory)
+      tf.gfile.MakeDirs(base_dir)
     except tf.errors.OpError:
       # Probably already exists. If not, we'll see the error in the next line.
       pass
-    with tf.gfile.Open(os.path.join(directory, current_filename), 'w') as f:
+    with tf.gfile.Open(os.path.join(base_dir, current_filename), 'w') as f:
       self.save_alive_counts(f)  # pytype: disable=wrong-arg-types
 
 
@@ -196,3 +194,29 @@ def _compute_alive_counts(
 
 def format_structure(structure: Dict[Text, int]) -> Text:
   return json.dumps(structure, indent=2, sort_keys=True, default=str)
+
+
+class StructureExporterHook(tf.train.SessionRunHook):
+  """Estimator hook for StructureExporter.
+
+  Usage:
+      exporter = structure_exporter.StructureExporter(
+        network_regularizer.op_regularizer_manager)
+      structure_export_hook = structure_exporter.StructureExporterHook(
+        exporter, '/path/to/cns')
+      estimator_spec = tf.contrib.tpu.TPUEstimatorSpec(
+        ...,
+        training_hooks=[structure_export_hook])
+  """
+
+  def __init__(self, exporter: StructureExporter, export_dir: Text):
+    self._export_dir = export_dir
+    self._exporter = exporter
+
+  def end(self, session: tf.Session):
+    global_step = session.run(tf.train.get_global_step())
+    tf.logging.info('Exporting structure at step %d', global_step)
+    tensor_to_eval_dict = session.run(self._exporter.tensors)
+    self._exporter.populate_tensor_values(session.run(tensor_to_eval_dict))
+    self._exporter.create_file_and_save_alive_counts(self._export_dir,
+                                                     global_step)

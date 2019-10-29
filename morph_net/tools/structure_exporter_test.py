@@ -129,13 +129,15 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
     base_dir = os.path.join(FLAGS.test_tmpdir, 'ee')
 
     self.exporter.populate_tensor_values(self.tensor_value_1)
-    self.exporter.create_file_and_save_alive_counts(base_dir, 19)
+    self.exporter.create_file_and_save_alive_counts(
+        os.path.join(base_dir, 'learned_structure'), 19)
     self.assertAllEqual(
         _alive_from_file('ee/learned_structure/alive_19'),
         self.expected_alive_1)
 
     self.exporter.populate_tensor_values(self.tensor_value_2)
-    self.exporter.create_file_and_save_alive_counts(base_dir, 1009)
+    self.exporter.create_file_and_save_alive_counts(
+        os.path.join(base_dir, 'learned_structure'), 1009)
     self.assertAllEqual(
         _alive_from_file('ee/learned_structure/alive_1009'),
         self.expected_alive_2)
