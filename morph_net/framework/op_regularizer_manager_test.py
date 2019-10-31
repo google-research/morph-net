@@ -8,7 +8,7 @@ import collections
 from absl.testing import parameterized
 from morph_net.framework import batch_norm_source_op_handler
 from morph_net.framework import concat_op_handler
-from morph_net.framework import conv2d_source_op_handler
+from morph_net.framework import conv_source_op_handler
 from morph_net.framework import depthwise_convolution_op_handler
 from morph_net.framework import generic_regularizers
 from morph_net.framework import grouping_op_handler
@@ -90,7 +90,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     op_handler_dict['FusedBatchNormV3'] = StubBatchNormSourceOpHandler(
         model_stub)
     if not use_batch_norm:
-      op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(model_stub)
+      op_handler_dict['Conv2D'] = StubConvSourceOpHandler(model_stub)
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
 
     expected_alive = model_stub.expected_alive()
@@ -117,7 +117,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     op_handler_dict['FusedBatchNormV3'] = StubBatchNormSourceOpHandler(
         model_stub)
     if not use_batch_norm:
-      op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(model_stub)
+      op_handler_dict['Conv2D'] = StubConvSourceOpHandler(model_stub)
     op_reg_manager = orm.OpRegularizerManager([final_op], op_handler_dict)
 
     expected_alive = model_stub.expected_alive()
@@ -188,7 +188,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['Conv2D'] = StubConv2DSourceOpHandler(add_concat_model_stub)
+    op_handler_dict['Conv2D'] = StubConvSourceOpHandler(add_concat_model_stub)
     op_reg_manager = orm.OpRegularizerManager([output.op], op_handler_dict)
 
     expected_alive = add_concat_model_stub.expected_alive()
@@ -212,7 +212,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['Conv2D'] = RandomConv2DSourceOpHandler(th)
+    op_handler_dict['Conv2D'] = RandomConvSourceOpHandler(th)
     op_reg_manager = orm.OpRegularizerManager([res.op], op_handler_dict)
 
     alive = op_reg_manager.get_regularizer(res.op).alive_vector
@@ -238,7 +238,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Instantiate OpRegularizerManager.
     op_handler_dict = self._default_op_handler_dict
-    op_handler_dict['Conv2D'] = IndexConv2DSourceOpHandler()
+    op_handler_dict['Conv2D'] = IndexConvSourceOpHandler()
     op_reg_manager = orm.OpRegularizerManager([out.op], op_handler_dict)
 
     grouped_names = [
@@ -608,9 +608,11 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     relu2_op_slices = manager.get_op_slices(c2.op)
 
     # Expected input grouping has a pattern like [0, 0, 1, 1, 2, 2, ...].
+    # pylint: disable=g-complex-comprehension
     expected_input_grouping = [j
                                for j in range(num_outputs)
                                for i in range(depth_multiplier)]
+    # pylint: enable=g-complex-comprehension
     # Expected output grouping is just linear, but with
     # num_outputs * depth_multiplier channels (e.g. [0, 1, 2, 3, ...]).
     expected_output_grouping = range(num_outputs * depth_multiplier)
@@ -1935,11 +1937,11 @@ class StubBatchNormSourceOpHandler(
     return _stub_create_regularizer(op_slice, self._model_stub)
 
 
-class IndexConv2DSourceOpHandler(
-    conv2d_source_op_handler.Conv2DSourceOpHandler):
+class IndexConvSourceOpHandler(
+    conv_source_op_handler.ConvSourceOpHandler):
   """An OpHandler that creates OpRegularizer using IndexOpRegularizer.
 
-  A wrapper around Conv2DSourceOpHandler that overrides the create_regularizer
+  A wrapper around ConvSourceOpHandler that overrides the create_regularizer
   method to use IndexOpRegularizer for testing.
   """
 
@@ -1950,26 +1952,26 @@ class IndexConv2DSourceOpHandler(
     return IndexOpRegularizer(op_slice, None)
 
 
-class StubConv2DSourceOpHandler(conv2d_source_op_handler.Conv2DSourceOpHandler):
+class StubConvSourceOpHandler(conv_source_op_handler.ConvSourceOpHandler):
   """An OpHandler that creates OpRegularizer using stub values.
 
-  A wrapper around Conv2DSourceOpHandler that overrides the create_regularizer
+  A wrapper around ConvSourceOpHandler that overrides the create_regularizer
   method to use stub values for testing.
   """
 
   def __init__(self, model_stub):
-    super(StubConv2DSourceOpHandler, self).__init__(0.1)
+    super(StubConvSourceOpHandler, self).__init__(0.1)
     self._model_stub = model_stub
 
   def create_regularizer(self, op_slice):
     return _stub_create_regularizer(op_slice, self._model_stub)
 
 
-class RandomConv2DSourceOpHandler(
-    conv2d_source_op_handler.Conv2DSourceOpHandler):
+class RandomConvSourceOpHandler(
+    conv_source_op_handler.ConvSourceOpHandler):
   """An OpHandler that creates OpRegularizer using random values.
 
-  A wrapper around Conv2DSourceOpHandler that overrides the create_regularizer
+  A wrapper around ConvSourceOpHandler that overrides the create_regularizer
   method to use random values for testing.
   """
 

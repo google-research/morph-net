@@ -55,6 +55,8 @@ def get_gamma_op_handler_dict():
   """Returns the base op_hander_dict for gamma based regularizers."""
   op_handler_dict = _get_base_op_hander_dicts()
   op_handler_dict.update({
+      'Conv3D':
+          output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
       'Conv2D':
           output_non_passthrough_op_handler.OutputNonPassthroughOpHandler(),
       'MatMul':

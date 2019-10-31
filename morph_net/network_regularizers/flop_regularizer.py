@@ -6,10 +6,10 @@ from __future__ import division
 from __future__ import print_function
 
 from morph_net.framework import batch_norm_source_op_handler
-from morph_net.framework import conv2d_source_op_handler
-from morph_net.framework import conv2d_transpose_source_op_handler
+from morph_net.framework import conv2d_transpose_source_op_handler as conv2d_transpose_handler
+from morph_net.framework import conv_source_op_handler as conv_handler
 from morph_net.framework import generic_regularizers
-from morph_net.framework import matmul_source_op_handler
+from morph_net.framework import matmul_source_op_handler as matmul_handler
 from morph_net.framework import op_handler_decorator
 from morph_net.framework import op_handlers
 from morph_net.framework import op_regularizer_manager as orm
@@ -127,27 +127,24 @@ class GroupLassoFlopsRegularizer(generic_regularizers.NetworkRegularizer):
       regularizer_blacklist: List of regex for ops that should not be
         regularized. See op_regularizer_manager for more detail.
     """
-    conv2d_handler = conv2d_source_op_handler.Conv2DSourceOpHandler(
-        threshold, l1_fraction)
-    conv2d_transpose_handler = (
-        conv2d_transpose_source_op_handler.Conv2DTransposeSourceOpHandler(
-            threshold, l1_fraction))
-    matmul_handler = matmul_source_op_handler.MatMulSourceOpHandler(
-        threshold, l1_fraction)
+    custom_handlers = {
+        'Conv2D':
+            conv_handler.ConvSourceOpHandler(threshold, l1_fraction),
+        'Conv3D':
+            conv_handler.ConvSourceOpHandler(threshold, l1_fraction),
+        'Conv2DBackpropInput':
+            conv2d_transpose_handler.Conv2DTransposeSourceOpHandler(
+                threshold, l1_fraction),
+        'MatMul':
+            matmul_handler.MatMulSourceOpHandler(threshold, l1_fraction)
+    }
     if regularizer_decorator:
-      conv2d_handler = op_handler_decorator.OpHandlerDecorator(
-          conv2d_handler, regularizer_decorator, decorator_parameters)
-      conv2d_transpose_handler = op_handler_decorator.OpHandlerDecorator(
-          conv2d_transpose_handler, regularizer_decorator, decorator_parameters)
-      matmul_handler = op_handler_decorator.OpHandlerDecorator(
-          matmul_handler, regularizer_decorator, decorator_parameters)
+      for key in custom_handlers:
+        custom_handlers[key] = op_handler_decorator.OpHandlerDecorator(
+            custom_handlers[key], regularizer_decorator, decorator_parameters)
 
     op_handler_dict = op_handlers.get_group_lasso_op_handler_dict()
-    op_handler_dict.update({
-        'Conv2D': conv2d_handler,
-        'Conv2DBackpropInput': conv2d_transpose_handler,
-        'MatMul': matmul_handler,
-    })
+    op_handler_dict.update(custom_handlers)
 
     self._manager = orm.OpRegularizerManager(
         output_boundary,

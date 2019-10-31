@@ -1,11 +1,12 @@
-"""Tests for regularizers.framework.conv2d_source_op_handler."""
+"""Tests for regularizers.framework.conv_source_op_handler."""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from absl.testing import parameterized
 
 import mock
-from morph_net.framework import conv2d_source_op_handler
+from morph_net.framework import conv_source_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 import tensorflow as tf
 
@@ -14,22 +15,25 @@ layers = tf.contrib.layers
 _DEFAULT_THRESHOLD = 0.001
 
 
-class Conv2dSourceOpHandlerTest(tf.test.TestCase):
+class ConvsSourceOpHandlerTest(parameterized.TestCase, tf.test.TestCase):
 
-  def setUp(self):
-    tf.reset_default_graph()
+  def _build(self, conv_type):
+    assert conv_type in ['Conv2D', 'Conv3D']
+    if conv_type == 'Conv2D':
+      inputs = tf.zeros([2, 4, 4, 3])
+      conv_fn = layers.conv2d
+    else:
+      inputs = tf.zeros([2, 4, 4, 4, 3])
+      conv_fn = layers.conv3d
 
-    # This tests 2 Conv2D ops.
-    inputs = tf.zeros([2, 4, 4, 3])
-    c1 = layers.conv2d(inputs, num_outputs=5,
-                       kernel_size=3, scope='conv1', normalizer_fn=None)
-    layers.conv2d(c1, num_outputs=6, kernel_size=3, scope='conv2',
-                  normalizer_fn=None)
+    c1 = conv_fn(
+        inputs, num_outputs=5, kernel_size=3, scope='conv1', normalizer_fn=None)
+    conv_fn(c1, num_outputs=6, kernel_size=3, scope='conv2', normalizer_fn=None)
 
     g = tf.get_default_graph()
 
     # Declare OpSlice and OpGroup for ops of interest.
-    self.conv1_op = g.get_operation_by_name('conv1/Conv2D')
+    self.conv1_op = g.get_operation_by_name('conv1/' + conv_type)
     self.conv1_op_slice = orm.OpSlice(self.conv1_op, orm.Slice(0, 5))
     self.conv1_op_group = orm.OpGroup(
         self.conv1_op_slice, omit_source_op_slices=[self.conv1_op_slice])
@@ -39,7 +43,7 @@ class Conv2dSourceOpHandlerTest(tf.test.TestCase):
     self.relu1_op_group = orm.OpGroup(
         self.relu1_op_slice, omit_source_op_slices=[self.relu1_op_slice])
 
-    self.conv2_op = g.get_operation_by_name('conv2/Conv2D')
+    self.conv2_op = g.get_operation_by_name('conv2/' + conv_type)
     self.conv2_op_slice = orm.OpSlice(self.conv2_op, orm.Slice(0, 6))
     self.conv2_op_group = orm.OpGroup(
         self.conv2_op_slice, omit_source_op_slices=[self.conv2_op_slice])
@@ -68,7 +72,7 @@ class Conv2dSourceOpHandlerTest(tf.test.TestCase):
 
     def is_passthrough(op):
       if op in [self.conv1_op, self.conv2_op]:
-        h = conv2d_source_op_handler.Conv2DSourceOpHandler(_DEFAULT_THRESHOLD)
+        h = conv_source_op_handler.ConvSourceOpHandler(_DEFAULT_THRESHOLD)
         return h.is_passthrough
       else:
         return False
@@ -81,7 +85,9 @@ class Conv2dSourceOpHandlerTest(tf.test.TestCase):
         self.conv1_op, self.relu1_op, self.conv2_op, self.relu2_op,
         self.conv2_weights_op]
 
-  def testAssignGrouping_GroupWithOutputOnly(self):
+  @parameterized.named_parameters(('_conv2d', 'Conv2D'), ('_conv3d', 'Conv3D'))
+  def testAssignGrouping_GroupWithOutputOnly(self, conv_type):
+    self._build(conv_type)
     # Map ops to slices.
     self.op_slice_dict = {
         self.conv1_op: [self.conv1_op_slice],
@@ -96,7 +102,7 @@ class Conv2dSourceOpHandlerTest(tf.test.TestCase):
     }
 
     # Call handler to assign grouping.
-    handler = conv2d_source_op_handler.Conv2DSourceOpHandler(_DEFAULT_THRESHOLD)
+    handler = conv_source_op_handler.ConvSourceOpHandler(_DEFAULT_THRESHOLD)
     handler.assign_grouping(self.conv2_op, self.mock_op_reg_manager)
 
     # Verify manager looks up op slice for ops of interest.
@@ -109,9 +115,11 @@ class Conv2dSourceOpHandlerTest(tf.test.TestCase):
     self.mock_op_reg_manager.process_ops.assert_called_once_with(
         [self.relu1_op])
 
-  def testCreateRegularizer(self):
+  @parameterized.named_parameters(('_conv2d', 'Conv2D'), ('_conv3d', 'Conv3D'))
+  def testCreateRegularizer(self, conv_type):
+    self._build(conv_type)
     # Call handler to create regularizer.
-    handler = conv2d_source_op_handler.Conv2DSourceOpHandler(_DEFAULT_THRESHOLD)
+    handler = conv_source_op_handler.ConvSourceOpHandler(_DEFAULT_THRESHOLD)
     regularizer = handler.create_regularizer(self.conv2_op_slice)
 
     # Verify regularizer produces correctly shaped tensors.
@@ -120,9 +128,11 @@ class Conv2dSourceOpHandlerTest(tf.test.TestCase):
     self.assertEqual(expected_norm_dim,
                      regularizer.regularization_vector.shape.as_list()[0])
 
-  def testCreateRegularizer_Sliced(self):
+  @parameterized.named_parameters(('_conv2d', 'Conv2D'), ('_conv3d', 'Conv3D'))
+  def testCreateRegularizer_Sliced(self, conv_type):
+    self._build(conv_type)
     # Call handler to create regularizer.
-    handler = conv2d_source_op_handler.Conv2DSourceOpHandler(_DEFAULT_THRESHOLD)
+    handler = conv_source_op_handler.ConvSourceOpHandler(_DEFAULT_THRESHOLD)
     conv2_op_slice = orm.OpSlice(self.conv2_op, orm.Slice(0, 3))
     regularizer = handler.create_regularizer(conv2_op_slice)
 

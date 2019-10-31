@@ -6,8 +6,8 @@ from __future__ import division
 from __future__ import print_function
 
 from morph_net.framework import batch_norm_source_op_handler
-from morph_net.framework import conv2d_source_op_handler
 from morph_net.framework import conv2d_transpose_source_op_handler
+from morph_net.framework import conv_source_op_handler
 from morph_net.framework import generic_regularizers
 from morph_net.framework import matmul_source_op_handler
 from morph_net.framework import op_handler_decorator
@@ -127,7 +127,7 @@ class GroupLassoActivationRegularizer(generic_regularizers.NetworkRegularizer):
       regularizer_blacklist: List of regex for ops that should not be
         regularized. See op_regularizer_manager for more detail.
     """
-    conv2d_handler = conv2d_source_op_handler.Conv2DSourceOpHandler(
+    conv2d_handler = conv_source_op_handler.Conv2DSourceOpHandler(
         threshold, l1_fraction)
     conv2d_transpose_handler = (
         conv2d_transpose_source_op_handler.Conv2DTransposeSourceOpHandler(

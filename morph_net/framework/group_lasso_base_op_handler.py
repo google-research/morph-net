@@ -116,7 +116,9 @@ class GroupLassoBaseSourceOpHandler(op_handler.OpHandler):
     weights = tpu_util.maybe_convert_to_variable(weights)
     reduce_dims = self._reduce_dims(op_slice.op)
     rank = len(weights.shape.as_list())
-    assert rank == len(reduce_dims) + 1
+    if rank != len(reduce_dims) + 1:
+      raise ValueError('Rank %d incompatible with reduce_dims %s for op %s' %
+                       (rank, reduce_dims, op_slice.op.name))
 
     def _slice_weights():
       """Slices the weight tensor according to op_slice information."""
@@ -141,7 +143,12 @@ class GroupLassoBaseSourceOpHandler(op_handler.OpHandler):
           return weights[:, start_index:start_index + size, :, :]
         if 0 not in reduce_dims:
           return weights[start_index:start_index + size, :, :, :]
-      raise ValueError('Unsupported rankd or bad reduce_dim')
+      if rank == 5:
+        if 4 not in reduce_dims:
+          return weights[:, :, :, :, start_index:start_index + size]
+        raise ValueError('Unsupported reduce_dim for rank 5 tensors (Conv3D)')
+
+      raise ValueError('Unsupported rank or bad reduce_dim')
 
     weight_tensor = _slice_weights()
 

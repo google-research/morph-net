@@ -16,11 +16,17 @@ from __future__ import print_function
 from morph_net.framework import group_lasso_base_op_handler
 
 
-class Conv2DSourceOpHandler(
+class ConvSourceOpHandler(
     group_lasso_base_op_handler.GroupLassoBaseSourceOpHandler):
-  """OpHandler implementation for Conv2D source operations."""
+  """OpHandler implementation for Conv2D, Conv3D source operations."""
 
   def _reduce_dims(self, op):
-    del op  #  Unused.
     # Reduction dimensions for Group Lasso.
-    return (0, 1, 2)
+    if op.type == 'Conv2D':
+      return (0, 1, 2)
+    elif op.type == 'Conv3D':
+      return (0, 1, 2, 3)
+    else:
+      raise ValueError('Unsupported op type %s' % op.type)
+
+Conv2DSourceOpHandler = ConvSourceOpHandler

@@ -1,10 +1,10 @@
+# Lint as: python3
 """Tests for network_regularizers.flop_regularizer."""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import abc
 from absl.testing import parameterized
 from morph_net.network_regularizers import flop_regularizer
 from morph_net.network_regularizers import resource_function
@@ -19,9 +19,10 @@ slim = tf.contrib.slim
 
 _coeff = resource_function.flop_coeff
 NUM_CHANNELS = 3
+SKIP_GAMMA_CONV3D = True  # TODO(e1) remove when gamma is supported.
 
 
-class GammaFlopLossTest(parameterized.TestCase, tf.test.TestCase):
+class GammaFlopsTest(parameterized.TestCase, tf.test.TestCase):
 
   def BuildWithBatchNorm(self, fused):
     params = {
@@ -238,13 +239,8 @@ class GroupLassoFlopDecoratedTest(parameterized.TestCase, tf.test.TestCase):
       self.assertEqual(_coeff(conv) * 2 * NUM_CHANNELS, pred_cost)
 
 
-class GammaFlopLossWithDepthwiseConvTestBase(object):
+class GammaFlopsWithDepthwiseConvTestBase(tf.test.TestCase):
   """Test flop_regularizer for a network with depthwise convolutions."""
-  __metaclass__ = abc.ABCMeta
-
-  @abc.abstractmethod
-  def GetSession(self):
-    return
 
   def BuildWithBatchNorm(self):
     params = {
@@ -298,7 +294,7 @@ class GammaFlopLossWithDepthwiseConvTestBase(object):
   def GetGammaAbsValue(self, name):
     gamma_op = tf.get_default_graph().get_operation_by_name(name +
                                                             '/BatchNorm/gamma')
-    with self.GetSession():  # pylint: disable=not-context-manager
+    with self.cached_session():
       gamma = gamma_op.outputs[0].eval()
     return np.abs(gamma)
 
@@ -318,29 +314,25 @@ class GammaFlopLossWithDepthwiseConvTestBase(object):
       gammad2.assign([0.3] * 5 + [0.9] * 10 + [-0.1] * 8).eval()
 
   def cost(self, conv):  # pylint: disable=invalid-name
-    with self.GetSession():  # pylint: disable=not-context-manager
+    with self.cached_session():
       cost = self.gamma_flop_reg.get_cost(conv)
       return cost.eval() if isinstance(cost, tf.Tensor) else cost
 
   def loss(self, conv):  # pylint: disable=invalid-name
-    with self.GetSession():  # pylint: disable=not-context-manager
+    with self.cached_session():
       reg = self.gamma_flop_reg.get_regularization_term(conv)
       return reg.eval() if isinstance(reg, tf.Tensor) else reg
 
 
-class GammaFlopLossWithDepthwiseConvTest(
-    tf.test.TestCase, GammaFlopLossWithDepthwiseConvTestBase):
+class GammaFlopsWithDepthwiseConvTest(GammaFlopsWithDepthwiseConvTestBase):
   """Test flop_regularizer for a network with depthwise convolutions."""
 
   def setUp(self):
     self._depthwise_use_batchnorm = True
-    super(GammaFlopLossWithDepthwiseConvTest, self).setUp()
+    super(GammaFlopsWithDepthwiseConvTest, self).setUp()
     self.BuildWithBatchNorm()
     with self.cached_session():
       self.Init()
-
-  def GetSession(self):
-    return self.cached_session()
 
   def testCost(self):
     # Dw1 has 2 gammas above 0.45 out of NUM_CHANNELS inputs (from the image),
@@ -403,8 +395,8 @@ class GammaFlopLossWithDepthwiseConvTest(
     self.assertNear(expected_loss, self.loss([dw]), expected_loss * 1e-5)
 
 
-class GammaFlopLossWithDepthwiseConvNoBatchNormTest(
-    tf.test.TestCase, GammaFlopLossWithDepthwiseConvTestBase):
+class GammaFlopsWithDepthwiseConvNoBatchNormTest(
+    GammaFlopsWithDepthwiseConvTestBase):
   """Test flop_regularizer for un-batchnormed depthwise convolutions.
 
   This test is used to confirm that when depthwise convolution is not BNed, it
@@ -417,13 +409,10 @@ class GammaFlopLossWithDepthwiseConvNoBatchNormTest(
 
   def setUp(self):
     self._depthwise_use_batchnorm = False
-    super(GammaFlopLossWithDepthwiseConvNoBatchNormTest, self).setUp()
+    super(GammaFlopsWithDepthwiseConvNoBatchNormTest, self).setUp()
     self.BuildWithBatchNorm()
     with self.cached_session():
       self.Init()
-
-  def GetSession(self):
-    return self.cached_session()
 
   def testCost(self):
     # Dw1 has NUM_CHANNELS inputs (from the image).
@@ -589,6 +578,80 @@ class GammaFlopResidualConnectionsLossTest(tf.test.TestCase):
       self.assertEqual(
           sum(expected.values()),
           self.gamma_flop_reg.get_cost().eval())
+
+
+class GammaConv3DTest(parameterized.TestCase, tf.test.TestCase):
+
+  @parameterized.named_parameters(
+      ('_all_alive', 1e-3, 3),
+      ('_one_alive', .35, 1),
+      ('_all_dead', .99, 0),
+  )
+  def test_simple_conv3d(self, threshold, expected_alive):
+    # TODO(e1) remove when gamma is supported.
+    # This test works if reshape not set to be a handled by
+    # leaf_op_handler.LeafOpHandler() in op_handlers.py. However this changes
+    # brakes other tests for reasons to be investigated.
+    if SKIP_GAMMA_CONV3D:
+      return
+
+    def fused_batch_norm3d(*args, **kwargs):
+      if args:
+        inputs = args[0]
+        args = args[1:]
+      else:
+        inputs = kwargs.pop('inputs')
+      shape = inputs.shape
+      # inputs is assumed to be NHWTC (T is for time).
+      batch_size = shape[0]
+      # space x time cube is reshaped to be 2D with dims:
+      # H, W, T --> H, W * T
+      # the idea is that batch norm only needs this to collect spacial stats.
+      target_shape = [batch_size, shape[1], shape[2] * shape[3], shape[4]]
+      inputs = tf.reshape(inputs, target_shape, name='Reshape/to2d')
+      normalized = slim.batch_norm(inputs, *args, **kwargs)
+      return tf.reshape(normalized, shape, name='Reshape/to3d')
+
+    gamma_val = [0.5, 0.3, 0.2]
+    num_inputs = 4
+    batch_size = 2
+    video = tf.zeros([batch_size, 8, 8, 8, num_inputs])
+    kernel = [5, 5, 5]
+    num_outputs = 3
+    net = slim.conv3d(
+        video,
+        num_outputs,
+        kernel,
+        padding='SAME',
+        normalizer_fn=fused_batch_norm3d,
+        normalizer_params={
+            'scale': True,
+            'fused': True
+        },
+        scope='vconv1')
+    self.assertLen(net.shape.as_list(), 5)
+    shape = net.shape.as_list()
+    # The number of applications is the number of elements in the [HWT] tensor.
+    num_applications = shape[1] * shape[2] * shape[3]
+    application_cost = num_inputs * kernel[0] * kernel[1] * kernel[2]
+    name_to_var = {v.op.name: v for v in tf.global_variables()}
+    flop_reg = flop_regularizer.GammaFlopsRegularizer(
+        [net.op,
+         tf.get_default_graph().get_operation_by_name('vconv1/Conv3D')],
+        threshold,
+        force_group=['vconv1/Reshape/to3d|vconv1/Reshape/to2d|vconv1/Conv3D'])
+    gamma = name_to_var['vconv1/BatchNorm/gamma']
+    with self.session():
+      tf.global_variables_initializer().run()
+      gamma.assign(gamma_val).eval()
+
+      self.assertAllClose(
+          flop_reg.get_cost(),
+          2 * expected_alive * num_applications * application_cost)
+
+      raw_cost = 2 * num_outputs * num_applications * application_cost
+      self.assertAllClose(flop_reg.get_regularization_term(),
+                          raw_cost * np.mean(gamma_val))
 
 
 class GroupLassoFlopRegTest(tf.test.TestCase):
@@ -808,6 +871,31 @@ class GroupLassoFlopRegTest(tf.test.TestCase):
     with self.cached_session():
       tf.global_variables_initializer().run()
       flop_reg.get_regularization_term().eval()
+
+  def test_group_lasso_conv3d(self):
+    shape = [3, 3, 3]
+    video = tf.zeros([2, 3, 3, 3, 1])
+    net = slim.conv3d(
+        video,
+        5,
+        shape,
+        padding='VALID',
+        weights_initializer=tf.glorot_normal_initializer(),
+        scope='vconv1')
+    conv3d_op = tf.get_default_graph().get_operation_by_name('vconv1/Conv3D')
+    conv3d_weights = conv3d_op.inputs[1]
+
+    threshold = 0.09
+    flop_reg = flop_regularizer.GroupLassoFlopsRegularizer([net.op],
+                                                           threshold=threshold)
+    norm = tf.sqrt(tf.reduce_mean(tf.square(conv3d_weights), [0, 1, 2, 3]))
+    alive = tf.reduce_sum(tf.cast(norm > threshold, tf.float32))
+    with self.session():
+      flop_coeff = 2 * shape[0] * shape[1] * shape[2]
+      tf.compat.v1.global_variables_initializer().run()
+      self.assertAllClose(flop_reg.get_cost(), flop_coeff * alive)
+      self.assertAllClose(flop_reg.get_regularization_term(),
+                          flop_coeff * tf.reduce_sum(norm))
 
 
 def _get_op(name):  # pylint: disable=invalid-name
