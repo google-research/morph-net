@@ -8,8 +8,10 @@ import mock
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.framework import output_non_passthrough_op_handler
 import tensorflow as tf
+from tensorflow.contrib import framework as contrib_framework
+from tensorflow.contrib import layers as contrib_layers
 
-layers = tf.contrib.layers
+layers = contrib_layers
 
 
 class OutputNonPassthroughOpHandlerTest(tf.test.TestCase):
@@ -23,14 +25,14 @@ class OutputNonPassthroughOpHandlerTest(tf.test.TestCase):
         },
     }
 
-    with tf.contrib.framework.arg_scope([layers.conv2d], **params) as sc:
+    with contrib_framework.arg_scope([layers.conv2d], **params) as sc:
       return sc
 
   def setUp(self):
     tf.reset_default_graph()
 
     # This tests 2 Conv2D ops with batch norm at the top.
-    with tf.contrib.framework.arg_scope(self._batch_norm_scope()):
+    with contrib_framework.arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=5,
                          kernel_size=3, scope='conv1', normalizer_fn=None)
