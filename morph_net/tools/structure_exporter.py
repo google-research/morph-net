@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 from typing import Text, Sequence, Dict, Optional, IO, Iterable, Callable
 
-SUPPORTED_OPS = ['Conv2D', 'Conv2DBackpropInput']
+SUPPORTED_OPS = ['Conv2D', 'Conv2DBackpropInput', 'Conv3D']
 ALIVE_FILENAME = 'alive'
 
 

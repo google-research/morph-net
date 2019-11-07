@@ -47,9 +47,16 @@ class FakeORM(orm.OpRegularizerManager):
     layers.conv2d(image, 3, 2, scope='X/c1')
     layers.conv2d(image, 4, 3, scope='X/c2')
     layers.conv2d_transpose(image, 5, 1, scope='X/c3')
+
+    layers.conv3d(
+        tf.zeros(shape=[1, 4, 4, 6, 3]),
+        num_outputs=2,
+        kernel_size=3,
+        scope='X/c4')
     self.regularizer = {
         'X/c1/Conv2D': FakeOpReg([True, False, True]),
         'X/c2/Conv2D': FakeOpReg([True, False, True, False]),
+        'X/c4/Conv3D': FakeOpReg([True, False]),
         'X/c3/conv2d_transpose': FakeOpReg([True, True, False, True, False])
     }
     self.ops = [
@@ -73,22 +80,26 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
     self.tensor_value_1 = {
         'X/c1/Conv2D': [True] * 3,
         'X/c2/Conv2D': [False] * 4,
+        'X/c4/Conv3D': [False, True],
         'X/c3/conv2d_transpose': [True] * 5
     }
     self.expected_alive_1 = {
         'X/c1/Conv2D': 3,
         'X/c2/Conv2D': 0,
+        'X/c4/Conv3D': 1,
         'X/c3/conv2d_transpose': 5
     }
 
     self.tensor_value_2 = {
         'X/c1/Conv2D': [True, False, False],
+        'X/c4/Conv3D': [True, True],
         'X/c2/Conv2D': [True] * 4,
         'X/c3/conv2d_transpose': [False, False, False, False, True]
     }
     self.expected_alive_2 = {
         'X/c1/Conv2D': 1,
         'X/c2/Conv2D': 4,
+        'X/c4/Conv3D': 2,
         'X/c3/conv2d_transpose': 1
     }
 
@@ -96,6 +107,7 @@ class TestStructureExporter(parameterized.TestCase, tf.test.TestCase):
     expected = {
         'X/c1/Conv2D': [1, 0, 1],
         'X/c2/Conv2D': [1, 0, 1, 0],
+        'X/c4/Conv3D': [1, 0],
         'X/c3/conv2d_transpose': [1, 1, 0, 1, 0]
     }
     self.assertAllEqual(sorted(self.exporter.tensors), sorted(expected))
@@ -166,7 +178,7 @@ class TestStructureExporterRemovePrefix(tf.test.TestCase):
   def test_removes_prefix(self):
     exporter = se.StructureExporter(
         op_regularizer_manager=FakeORM(), remove_common_prefix=True)
-    expected = ['c1/Conv2D', 'c2/Conv2D', 'c3/conv2d_transpose']
+    expected = ['c1/Conv2D', 'c2/Conv2D', 'c4/Conv3D', 'c3/conv2d_transpose']
     self.assertAllEqual(sorted(exporter.tensors), sorted(expected))
 
 if __name__ == '__main__':
