@@ -18,8 +18,7 @@ from utils import set_reproducible_environment, select_keras_base_model, train_e
 def main():
 
     parser = argparse.ArgumentParser(
-        description="Run MorphNet Algorithm on Image Classification Model Zoo."
-    )
+        description="Run MorphNet Algorithm on Image Classification Model Zoo.")
 
     num_epochs_default = 1000
     num_classes_default = 10

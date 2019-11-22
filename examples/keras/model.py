@@ -16,6 +16,7 @@ from morph_net.tools import structure_exporter
 
 
 class MorphNetModel(object):
+
     def __init__(self,
                  base_model,
                  num_classes,
@@ -95,8 +96,7 @@ class MorphNetModel(object):
             x = tf.keras.layers.Dense(1024, activation="relu")(x)
             logits = tf.keras.layers.Dense(self.num_classes)(x)
 
-            self.model = tf.keras.Model(inputs=base_model.input,
-                                        outputs=logits)
+            self.model = tf.keras.Model(inputs=base_model.input, outputs=logits)
 
             self.inputs = self.model.input
             self.labels = tf.placeholder(tf.float32, [None, self.num_classes])
@@ -143,8 +143,7 @@ class MorphNetModel(object):
                     input_boundary=input_boundary,
                     threshold=self.morphnet_regularizer_threshold)
             else:
-                raise Exception(
-                    "Unsupported MorphNet Regularizer Target Cost!")
+                raise Exception("Unsupported MorphNet Regularizer Target Cost!")
         elif self.morphnet_regularizer_algorithm == "Gamma":
             if self.morphnet_target_cost == "FLOPs":
                 regularizer_fn = flop_regularizer.GammaFlopsRegularizer
@@ -170,8 +169,7 @@ class MorphNetModel(object):
                     input_boundary=input_boundary,
                     gamma_threshold=self.morphnet_regularizer_threshold)
             else:
-                raise Exception(
-                    "Unsupported MorphNet Regularizer Target Cost!")
+                raise Exception("Unsupported MorphNet Regularizer Target Cost!")
         else:
             raise Exception("Unsupported MorphNet Regularizer Algorithm!")
 
@@ -339,11 +337,11 @@ class MorphNetModel(object):
             ],
             feed_dict={
                 self.inputs:
-                inputs,
+                    inputs,
                 self.labels:
-                labels,
+                    labels,
                 self.morphnet_regularization_strength_placeholder:
-                self.morphnet_regularization_strength
+                    self.morphnet_regularization_strength
             })
 
         self.writer.add_summary(morphnet_summary, self.global_step)
