@@ -9,8 +9,9 @@ import mock
 from morph_net.framework import conv_source_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
 
-layers = tf.contrib.layers
+layers = contrib_layers
 
 _DEFAULT_THRESHOLD = 0.001
 
