@@ -38,6 +38,7 @@ class GroupingRegularizersTest(parameterized.TestCase, tf.test.TestCase):
 
   # TODO(e1): Add parametrized tests.
   def setUp(self):
+    super(GroupingRegularizersTest, self).setUp()
     self._reg_vec1 = [0.1, 0.3, 0.6, 0.2]
     self._alive_vec1 = [False, True, True, False]
     self._reg_vec2 = [0.2, 0.4, 0.5, 0.1]

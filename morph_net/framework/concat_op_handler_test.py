@@ -8,17 +8,16 @@ import mock
 from morph_net.framework import concat_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 import tensorflow as tf
-from tensorflow.contrib import framework as contrib_framework
-from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import framework
+from tensorflow.contrib import layers
 
-layers = contrib_layers
-arg_scope = contrib_framework.arg_scope
+arg_scope = framework.arg_scope
 
 
 class ConcatOpHandlerTest(tf.test.TestCase):
 
   def setUp(self):
-    tf.reset_default_graph()
+    super(ConcatOpHandlerTest, self).setUp()
 
     # This tests 3 Conv2D ops being concatenated.
     inputs = tf.zeros([2, 4, 4, 3])
@@ -772,11 +771,11 @@ class GroupingConcatOpHandlerTest(tf.test.TestCase):
       return sc
 
   def setUp(self):
-    tf.reset_default_graph()
+    super(GroupingConcatOpHandlerTest, self).setUp()
 
     # This tests 3 Conv2D ops being concatenated.
     inputs = tf.zeros([2, 4, 4, 3])
-    with contrib_framework.arg_scope(self._get_scope()):
+    with framework.arg_scope(self._get_scope()):
       c1 = layers.conv2d(inputs, num_outputs=6, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=6, kernel_size=3, scope='conv2')
       c3 = layers.conv2d(inputs, num_outputs=6, kernel_size=3, scope='conv3')

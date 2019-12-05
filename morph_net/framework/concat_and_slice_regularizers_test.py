@@ -26,6 +26,7 @@ import tensorflow as tf
 class ConcatAndSliceRegularizersTest(tf.test.TestCase):
 
   def setUp(self):
+    super(ConcatAndSliceRegularizersTest, self).setUp()
     self._reg_vec1 = [0.1, 0.3, 0.6, 0.2]
     self._alive_vec1 = [False, True, True, False]
     self._reg_vec2 = [0.2, 0.4, 0.5]

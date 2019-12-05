@@ -8,11 +8,10 @@ import mock
 from morph_net.framework import depthwise_convolution_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 import tensorflow as tf
-from tensorflow.contrib import framework as contrib_framework
-from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import framework as framework
+from tensorflow.contrib import layers
 
-arg_scope = contrib_framework.arg_scope
-layers = contrib_layers
+arg_scope = framework.arg_scope
 
 
 class DepthwiseConvolutionOpHandlerTest(tf.test.TestCase):
@@ -30,10 +29,11 @@ class DepthwiseConvolutionOpHandlerTest(tf.test.TestCase):
       return sc
 
   def setUp(self):
+    super(DepthwiseConvolutionOpHandlerTest, self).setUp()
     tf.reset_default_graph()
 
     # This tests a Conv2D -> SeparableConv2D -> Conv2D chain of ops.
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with framework.arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv1')
       c2 = layers.separable_conv2d(c1, num_outputs=8, kernel_size=3,
@@ -175,7 +175,7 @@ class DepthwiseConvolutionOpHandlerTest(tf.test.TestCase):
     tf.reset_default_graph()
 
     # This tests a Conv2D -> SeparableConv2D -> Conv2D chain of ops.
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with framework.arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv1')
       c2 = layers.separable_conv2d(c1, num_outputs=8, kernel_size=3,

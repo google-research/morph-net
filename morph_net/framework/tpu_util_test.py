@@ -8,9 +8,7 @@ from __future__ import print_function
 from absl.testing import parameterized
 from morph_net.framework import tpu_util
 import tensorflow as tf
-from tensorflow.contrib import slim as contrib_slim
-
-slim = contrib_slim
+from tensorflow.contrib import slim
 
 
 class TpuUtilTest(parameterized.TestCase, tf.test.TestCase):

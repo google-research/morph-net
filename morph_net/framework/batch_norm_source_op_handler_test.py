@@ -8,11 +8,10 @@ import mock
 from morph_net.framework import batch_norm_source_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 import tensorflow as tf
-from tensorflow.contrib import framework as contrib_framework
-from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import framework
+from tensorflow.contrib import layers
 
-arg_scope = contrib_framework.arg_scope
-layers = contrib_layers
+arg_scope = framework.arg_scope
 
 _GAMMA_THRESHOLD = 0.001
 
@@ -32,10 +31,10 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
       return sc
 
   def setUp(self):
-    tf.reset_default_graph()
+    super(BatchNormSourceOpHandlerTest, self).setUp()
 
     # This tests a Conv2D -> BatchNorm -> ReLU chain of ops.
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv1')
 

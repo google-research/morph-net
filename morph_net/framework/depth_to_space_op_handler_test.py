@@ -14,8 +14,7 @@ import tensorflow as tf
 class DepthToSpaceOpHandlerTest(tf.test.TestCase):
 
   def setUp(self):
-    tf.reset_default_graph()
-
+    super(DepthToSpaceOpHandlerTest, self).setUp()
     # Test a Identity -> DepthToSpace -> Identity chain of ops.
     inputs = tf.zeros([2, 4, 4, 4])
     id1 = tf.identity(inputs)

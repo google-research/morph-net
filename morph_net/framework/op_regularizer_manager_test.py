@@ -18,11 +18,10 @@ from morph_net.testing import add_concat_model_stub
 from morph_net.testing import grouping_concat_model_stub
 import numpy as np
 import tensorflow as tf
-from tensorflow.contrib import framework as contrib_framework
-from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import framework
+from tensorflow.contrib import layers
 
-arg_scope = contrib_framework.arg_scope
-layers = contrib_layers
+arg_scope = framework.arg_scope
 
 DEBUG_PRINTS = False
 
@@ -315,7 +314,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 3])
     num_outputs = 3
     kernel_size = 1
-    with arg_scope([layers.conv2d], normalizer_fn=contrib_layers.batch_norm):
+    with arg_scope([layers.conv2d], normalizer_fn=layers.batch_norm):
       with tf.variable_scope('parallel', reuse=tf.AUTO_REUSE):
         mul0 = layers.conv2d(inputs, num_outputs, kernel_size, scope='conv1')
         mul1 = layers.conv2d(inputs, num_outputs, kernel_size,
@@ -347,7 +346,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
   def testGather(self):
     gather_index = [5, 6, 7, 8, 9, 0, 1, 2, 3, 4]
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       gather = tf.gather(c1, gather_index, axis=3)
@@ -372,7 +371,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertAllEqual(list(range(10)), gather_reg.regularization_vector)
 
   def testConcat(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
@@ -411,7 +410,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
                      manager.get_op_group(concat_op_slice1))
 
   def testGroupingConcat(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv2')
@@ -550,7 +549,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
           self.assertNotIn(batch_norm_op_slices[j], group_op_slices)
 
   def testSplit(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       split = tf.split(c1, [5, 5], axis=3)
@@ -574,7 +573,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
                                   ('DepthMultiplier_7_no_pointwise', None, 7))
   def testSeparableConv2D_DepthMultiplier(
       self, pointwise_outputs, depth_multiplier):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       num_outputs = 5
       c1 = layers.conv2d(
@@ -680,7 +679,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       self.assertIn(test_op_slices[0], op_group)
 
   def testInit_Add(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
@@ -732,7 +731,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
                         manager.get_regularizer(c1.op))
 
   def testInit_Concat(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
@@ -785,7 +784,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
         manager.get_regularizer(out.op).regularization_vector[10:20])
 
   def testInit_AddConcat(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
@@ -863,7 +862,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
                         manager.get_regularizer(c4.op))
 
   def testInit_AddConcat_AllOps(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
@@ -882,7 +881,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertNotIn(concat.op, manager.ops)
 
   def testInit_ForceGroup(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(c1, num_outputs=10, kernel_size=3, scope='conv2')
@@ -918,7 +917,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertIn(c3_op_slice, c2_group.op_slices)
 
   def testInit_ForceGroup_MultipleOpSlice(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=5, kernel_size=3, scope='conv2')
@@ -933,7 +932,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
         SumGroupingRegularizer, force_group=['conv3|concat'])
 
   def testInit_ForceGroup_SizeMismatch(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(c1, num_outputs=10, kernel_size=3, scope='conv2')
@@ -958,7 +957,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
         SumGroupingRegularizer, force_group='conv')
 
   def testInit_Blacklist(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=3, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(c1, num_outputs=4, kernel_size=3, scope='conv2')
@@ -976,7 +975,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertIsNone(manager.get_regularizer(c2.op))
 
   def testInit_BlacklistGroup(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
@@ -995,7 +994,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     self.assertIsNone(manager.get_regularizer(c2.op))
 
   def testInit_BlacklistGroup_NoMatch(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
@@ -1681,7 +1680,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
         manager._get_source_slices(sizes, [identity_slice1, identity_slice2]))
 
   def testDfsForSourceOps(self):
-    with contrib_framework.arg_scope(self._batch_norm_scope()):
+    with arg_scope(self._batch_norm_scope()):
       inputs = tf.zeros([2, 4, 4, 3])
       c1 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv1')
       c2 = layers.conv2d(inputs, num_outputs=10, kernel_size=3, scope='conv2')
