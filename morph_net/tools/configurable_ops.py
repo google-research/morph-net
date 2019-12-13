@@ -159,6 +159,11 @@ class ConfigurableOps(object):
     self._default_to_zero = fallback_rule == FallbackRule.zero
     self._strict = fallback_rule == FallbackRule.strict
 
+  @property
+  def parameterization(self):
+    """Returns the parameterization dict mapping op names to num_outputs."""
+    return self._parameterization
+
   @tf.contrib.framework.add_arg_scope
   def conv2d(self, *args, **kwargs):
     """Masks num_outputs from the function pointed to by 'conv2d'.
