@@ -31,6 +31,8 @@ def get_input_ops(op, op_reg_manager, whitelist_indices=None):
   Returns:
     List of tf.Operation that are the inputs to op.
   """
+  if 'GumbelPrefix' in op.type:
+    return []
   # Ignore scalar or 1-D constant inputs.
   def is_const(tensor):
     return tensor.op.type == 'Const'
