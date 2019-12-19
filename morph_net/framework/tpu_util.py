@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 
 import contextlib2
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 _run_on_cpu = False
 

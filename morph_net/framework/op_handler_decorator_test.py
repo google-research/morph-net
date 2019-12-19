@@ -9,7 +9,7 @@ from morph_net.framework import generic_regularizers
 from morph_net.framework import op_handler_decorator
 from morph_net.framework import op_regularizer_manager as orm
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class DummyDecorator(generic_regularizers.OpRegularizer):

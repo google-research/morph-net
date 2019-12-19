@@ -8,7 +8,7 @@ from absl.testing import parameterized
 import mock
 from morph_net.framework import conv_source_op_handler
 from morph_net.framework import op_regularizer_manager as orm
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers
 
 

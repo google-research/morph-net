@@ -8,7 +8,7 @@ import mock
 
 from morph_net.framework import depth_to_space_op_handler
 from morph_net.framework import op_regularizer_manager as orm
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class DepthToSpaceOpHandlerTest(tf.test.TestCase):

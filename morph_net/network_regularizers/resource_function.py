@@ -7,7 +7,7 @@ from morph_net.framework import op_handler_util
 from morph_net.network_regularizers import cost_calculator
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # Data sheet for K80:
 # https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/tesla-product-literature/nvidia-tesla-k80-overview.pdf

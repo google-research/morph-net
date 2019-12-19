@@ -17,7 +17,7 @@ from morph_net.framework import output_non_passthrough_op_handler
 from morph_net.testing import add_concat_model_stub
 from morph_net.testing import grouping_concat_model_stub
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import framework
 from tensorflow.contrib import layers
 

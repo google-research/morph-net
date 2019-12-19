@@ -22,7 +22,7 @@ from absl.testing import parameterized
 from morph_net.framework import grouping_regularizers
 from morph_net.testing import op_regularizer_stub
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _l2_reg_with_025_threshold(regularizers_to_group):

@@ -14,7 +14,7 @@ import json
 import os
 from morph_net.framework import op_regularizer_manager as orm
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from typing import Text, Sequence, Dict, Optional, IO, Iterable, Callable
 
 SUPPORTED_OPS = ['Conv2D', 'Conv2DBackpropInput', 'Conv3D']

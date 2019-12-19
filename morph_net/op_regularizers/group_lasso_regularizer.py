@@ -9,7 +9,7 @@ from __future__ import division
 from __future__ import print_function
 from morph_net.framework import generic_regularizers
 from morph_net.framework import tpu_util
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class GroupLassoRegularizer(generic_regularizers.OpRegularizer):

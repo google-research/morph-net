@@ -15,7 +15,7 @@ from morph_net.framework import op_handlers
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.network_regularizers import cost_calculator
 from morph_net.network_regularizers import resource_function
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from typing import Type, List
 
 

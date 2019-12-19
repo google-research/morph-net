@@ -6,7 +6,7 @@ from __future__ import print_function
 
 from morph_net.framework import op_handlers
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class OpHandlersTest(tf.test.TestCase):

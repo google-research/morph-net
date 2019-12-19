@@ -7,7 +7,7 @@ from __future__ import print_function
 import mock
 from morph_net.framework import depthwise_convolution_op_handler
 from morph_net.framework import op_regularizer_manager as orm
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import framework as framework
 from tensorflow.contrib import layers
 

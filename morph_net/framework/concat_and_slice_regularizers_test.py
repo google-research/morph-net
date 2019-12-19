@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from morph_net.framework import concat_and_slice_regularizers
 from morph_net.testing import op_regularizer_stub
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class ConcatAndSliceRegularizersTest(tf.test.TestCase):

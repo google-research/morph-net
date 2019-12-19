@@ -11,7 +11,7 @@ from morph_net.framework import concat_and_slice_regularizers
 from morph_net.framework import constant_op_regularizer
 from morph_net.framework import grouping_regularizers
 from morph_net.framework import op_handler_util
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from typing import List
 

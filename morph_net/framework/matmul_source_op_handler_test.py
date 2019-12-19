@@ -6,7 +6,7 @@ from __future__ import print_function
 from absl.testing import parameterized
 from morph_net.framework import matmul_source_op_handler
 from morph_net.framework import op_regularizer_manager as orm
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class MatmulSourceOpHandlerTest(parameterized.TestCase, tf.test.TestCase):
