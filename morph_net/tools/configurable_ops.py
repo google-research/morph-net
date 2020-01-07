@@ -276,12 +276,14 @@ class ConfigurableOps(object):
     Raises:
       ValueError: If kwargs does not contain a key named 'scope'.
     """
-    if 'scope' not in kwargs:  # TODO(e1): Can this be fixed.
-      raise ValueError('kwargs must contain key \'scope\'')
+    if ('scope' not in kwargs) and ('name' not in kwargs):
+      raise ValueError('kwargs must contain key \'scope\' or \'name\'')
     inputs = args[0] if args else kwargs.pop('inputs')
     if is_vanished(inputs):
       return VANISHED
-    op_scope = kwargs['scope']
+
+    # Support for tf.contrib.layers and tf.layers API.
+    op_scope = kwargs.get('scope') or kwargs.get('name')
     current_scope = tf.contrib.framework.get_name_scope() or ''
     if current_scope and not current_scope.endswith('/'):
       current_scope += '/'

@@ -104,6 +104,33 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
     add_n = decorator.add_n(name='add_n', inputs=[1, None, 2])
     self.assertEqual(add_n['args'][0], [1, 2])
 
+  def testScopeAndNameKwargs(self):
+    function_dict = {
+        'fully_connected': mock_fully_connected,
+        'conv2d': mock_conv2d,
+        'separable_conv2d': mock_separable_conv2d,
+        'concat': mock_concat,
+        'add_n': mock_add_n,
+    }
+    parameterization = {
+        'fc/MatMul': 13,
+        'conv/Conv2D': 15,
+        'sep/separable_conv2d': 17
+    }
+    num_outputs = lambda res: res['args'][1]
+    decorator = ops.ConfigurableOps(
+        parameterization=parameterization, function_dict=function_dict)
+
+    conv2d = decorator.conv2d(
+        self.inputs, num_outputs=11, kernel_size=3, scope='conv')
+    self.assertEqual('myconv2d', conv2d['mock_name'])
+    self.assertEqual(parameterization['conv/Conv2D'], num_outputs(conv2d))
+
+    conv2d = decorator.conv2d(
+        self.inputs, num_outputs=11, kernel_size=3, name='conv')
+    self.assertEqual('myconv2d', conv2d['mock_name'])
+    self.assertEqual(parameterization['conv/Conv2D'], num_outputs(conv2d))
+
   def testFullyConnectedOpAllKwargs(self):
     decorator = ops.ConfigurableOps(parameterization={'test/MatMul': 13})
     output = decorator.fully_connected(
