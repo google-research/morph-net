@@ -15,16 +15,13 @@ from morph_net.tools import configurable_ops as ops
 
 import tensorflow as tf
 
+from tensorflow.contrib import layers
+from tensorflow.contrib.framework import add_arg_scope
+from tensorflow.contrib.framework import arg_scope
 from tensorflow.contrib.slim.nets import resnet_utils
 from tensorflow.contrib.slim.nets import resnet_v1
 from tensorflow.contrib.slim.nets import resnet_v2
 
-resnet_utils = tf.contrib.slim.nets.resnet_utils
-resnet_v1 = tf.contrib.slim.nets.resnet_v1
-resnet_v2 = tf.contrib.slim.nets.resnet_v2
-
-arg_scope = tf.contrib.framework.arg_scope
-add_arg_scope = tf.contrib.framework.add_arg_scope
 
 FLAGS = flags.FLAGS
 
@@ -200,7 +197,7 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
                                     expected_first_shape, expected_conv2_shape):
     alternate_num_outputs = 7
     decorator = ops.ConfigurableOps(parameterization=parameterization)
-    with arg_scope([tf.contrib.layers.conv2d], padding='VALID'):
+    with arg_scope([layers.conv2d], padding='VALID'):
       first_out = decorator.conv2d(
           self.inputs,
           num_outputs=alternate_num_outputs,
@@ -220,9 +217,9 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
     alternate_num_outputs = 12
     parameterization = {'first/Conv2D': first_outputs}
     decorator = ops.ConfigurableOps(parameterization=parameterization)
-    explicit = tf.contrib.layers.conv2d(
+    explicit = layers.conv2d(
         self.inputs, first_outputs, 3, scope='first')
-    with arg_scope([tf.contrib.layers.conv2d], reuse=True):
+    with arg_scope([layers.conv2d], reuse=True):
       decorated = decorator.conv2d(
           self.inputs,
           num_outputs=alternate_num_outputs,
@@ -409,7 +406,7 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
       decorator_regular_output = decorator_pool_fn(self.inputs, **pool_kwargs)
       decorator_zero_output = decorator_pool_fn(empty, **pool_kwargs)
 
-      tf_pool_fn = getattr(tf.contrib.layers, fn_name)
+      tf_pool_fn = getattr(layers, fn_name)
       tf_output = tf_pool_fn(self.inputs, **pool_kwargs)
 
       self.assertAllEqual(decorator_regular_output, tf_output)
@@ -420,7 +417,7 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
     kwargs = dict(center=False, scale=False)
     decorator_regular_output = decorator.batch_norm(self.inputs, **kwargs)
     decorator_zero_output = decorator.batch_norm(ops.VANISHED, **kwargs)
-    tf_output = tf.contrib.layers.batch_norm(self.inputs, **kwargs)
+    tf_output = layers.batch_norm(self.inputs, **kwargs)
 
     self.assertAllEqual(decorator_regular_output, tf_output)
     self.assertTrue(ops.is_vanished(decorator_zero_output))
@@ -431,9 +428,9 @@ class Fake(object):
   # TODO(e1): Replace with an actual test module.
 
   def __init__(self):
-    self.conv2d = tf.contrib.layers.conv2d
-    self.fully_connected = tf.contrib.layers.fully_connected
-    self.separable_conv2d = tf.contrib.layers.separable_conv2d
+    self.conv2d = layers.conv2d
+    self.fully_connected = layers.fully_connected
+    self.separable_conv2d = layers.separable_conv2d
     self.concat = tf.concat
 
 
@@ -442,8 +439,8 @@ class FakeConv2DMissing(object):
   # TODO(e1): Replace with an actual test module.
 
   def __init__(self):
-    self.fully_connected = tf.contrib.layers.fully_connected
-    self.separable_conv2d = tf.contrib.layers.separable_conv2d
+    self.fully_connected = layers.fully_connected
+    self.separable_conv2d = layers.separable_conv2d
 
 
 class HijackerTest(parameterized.TestCase, tf.test.TestCase):
@@ -514,18 +511,18 @@ class HijackerTest(parameterized.TestCase, tf.test.TestCase):
 
   def testRecover(self):
     # If this test does not work well, then it might have some bizarre effect on
-    # other tests as it changes the functions in tf.contrib.layers
+    # other tests as it changes the functions in layers
     decorator = ops.ConfigurableOps()
-    true_separable_conv2d = tf.contrib.layers.separable_conv2d
-    original_dict = ops.hijack_module_functions(decorator, tf.contrib.layers)
+    true_separable_conv2d = layers.separable_conv2d
+    original_dict = ops.hijack_module_functions(decorator, layers)
 
     self.assertEqual(true_separable_conv2d, original_dict['separable_conv2d'])
     # Makes sure hijacking worked.
     self.assertNotEqual(true_separable_conv2d,
-                        tf.contrib.layers.separable_conv2d)
+                        layers.separable_conv2d)
     # Recovers original ops
-    ops.recover_module_functions(original_dict, tf.contrib.layers)
-    self.assertEqual(true_separable_conv2d, tf.contrib.layers.separable_conv2d)
+    ops.recover_module_functions(original_dict, layers)
+    self.assertEqual(true_separable_conv2d, layers.separable_conv2d)
 
   @parameterized.named_parameters(('_v1', 'resnet_v1'), ('_v2', 'resnet_v2'))
   def testResnet(self, resnet_version):

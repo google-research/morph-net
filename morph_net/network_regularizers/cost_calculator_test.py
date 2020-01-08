@@ -16,8 +16,8 @@ from morph_net.network_regularizers import resource_function
 from morph_net.testing import add_concat_model_stub
 import tensorflow as tf
 
-arg_scope = tf.contrib.framework.arg_scope
-layers = tf.contrib.layers
+from tensorflow.contrib import layers
+from tensorflow.contrib.framework import arg_scope
 
 
 class CostCalculatorTest(parameterized.TestCase, tf.test.TestCase):

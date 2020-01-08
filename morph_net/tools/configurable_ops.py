@@ -49,7 +49,8 @@ import json
 from enum import Enum
 
 import tensorflow as tf
-
+from tensorflow.contrib import framework
+from tensorflow.contrib import layers
 gfile = tf.gfile  # Aliase needed for mock.
 
 VANISHED = 0.0
@@ -80,14 +81,14 @@ class FallbackRule(Enum):
 
 
 DEFAULT_FUNCTION_DICT = {
-    'fully_connected': tf.contrib.layers.fully_connected,
-    'conv2d': tf.contrib.layers.conv2d,
-    'separable_conv2d': tf.contrib.layers.separable_conv2d,
+    'fully_connected': layers.fully_connected,
+    'conv2d': layers.conv2d,
+    'separable_conv2d': layers.separable_conv2d,
     'concat': tf.concat,
     'add_n': tf.add_n,
-    'avg_pool2d': tf.contrib.layers.avg_pool2d,
-    'max_pool2d': tf.contrib.layers.max_pool2d,
-    'batch_norm': tf.contrib.layers.batch_norm,
+    'avg_pool2d': layers.avg_pool2d,
+    'max_pool2d': layers.max_pool2d,
+    'batch_norm': layers.batch_norm,
 }
 
 # Maps function names to the suffix of the name of the regularized ops.
@@ -164,7 +165,7 @@ class ConfigurableOps(object):
     """Returns the parameterization dict mapping op names to num_outputs."""
     return self._parameterization
 
-  @tf.contrib.framework.add_arg_scope
+  @framework.add_arg_scope
   def conv2d(self, *args, **kwargs):
     """Masks num_outputs from the function pointed to by 'conv2d'.
 
@@ -187,7 +188,7 @@ class ConfigurableOps(object):
     fn, suffix = self._get_function_and_suffix('conv2d')
     return self._mask(fn, suffix, *args, **kwargs)
 
-  @tf.contrib.framework.add_arg_scope
+  @framework.add_arg_scope
   def fully_connected(self, *args, **kwargs):
     """Masks NUM_OUTPUTS from the function pointed to by 'fully_connected'.
 
@@ -214,7 +215,7 @@ class ConfigurableOps(object):
     fn, suffix = self._get_function_and_suffix('fully_connected')
     return self._mask(fn, suffix, *args, **kwargs)
 
-  @tf.contrib.framework.add_arg_scope
+  @framework.add_arg_scope
   def separable_conv2d(self, *args, **kwargs):
     """Masks NUM_OUTPUTS from the function pointed to by 'separable_conv2d'.
 
@@ -320,17 +321,17 @@ class ConfigurableOps(object):
   def add_n(self, *args, **kwargs):
     return self._pass_through_mask_list('add_n', 'inputs', *args, **kwargs)
 
-  @tf.contrib.framework.add_arg_scope
+  @framework.add_arg_scope
   def avg_pool2d(self, *args, **kwargs):
     return self._pass_through_mask(
         self._function_dict['avg_pool2d'], *args, **kwargs)
 
-  @tf.contrib.framework.add_arg_scope
+  @framework.add_arg_scope
   def max_pool2d(self, *args, **kwargs):
     return self._pass_through_mask(
         self._function_dict['max_pool2d'], *args, **kwargs)
 
-  @tf.contrib.framework.add_arg_scope
+  @framework.add_arg_scope
   def batch_norm(self, *args, **kwargs):
     return self._pass_through_mask(
         self._function_dict['batch_norm'], *args, **kwargs)
