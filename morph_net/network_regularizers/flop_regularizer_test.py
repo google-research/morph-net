@@ -11,11 +11,13 @@ from morph_net.network_regularizers import resource_function
 from morph_net.testing import dummy_decorator
 
 import numpy as np
+import tensorflow.compat.v1 as tf
 
-import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import slim as contrib_slim
 from tensorflow.contrib.slim.nets import resnet_v1
 
-slim = tf.contrib.slim
+slim = contrib_slim
 
 _coeff = resource_function.flop_coeff
 NUM_CHANNELS = 3
@@ -799,13 +801,12 @@ class GroupLassoFlopRegTest(tf.test.TestCase):
     tf.set_random_seed(1234)
     # Create test networks with tf.contrib.layers.fully_connected and initialize
     # the variables.
-    with slim.arg_scope(
-        [tf.contrib.layers.fully_connected],
-        weights_initializer=tf.random_normal_initializer,
-        biases_initializer=tf.random_normal_initializer):
+    with slim.arg_scope([contrib_layers.fully_connected],
+                        weights_initializer=tf.random_normal_initializer,
+                        biases_initializer=tf.random_normal_initializer):
       x = tf.constant(1.0, shape=[2, 6], name='x', dtype=tf.float32)
-      net = tf.contrib.layers.fully_connected(x, 4, scope='matmul1')
-      net = tf.contrib.layers.fully_connected(net, 1, scope='matmul2')
+      net = contrib_layers.fully_connected(x, 4, scope='matmul1')
+      net = contrib_layers.fully_connected(net, 1, scope='matmul2')
       name_to_variable = {v.op.name: v for v in tf.global_variables()}
     with self.cached_session():
       tf.global_variables_initializer().run()

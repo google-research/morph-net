@@ -7,10 +7,11 @@ from absl.testing import parameterized
 from morph_net.network_regularizers import resource_function
 import numpy as np
 import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
 # pylint: disable=g-direct-tensorflow-import
 from tensorflow.python.framework import ops
 
-layers = tf.contrib.layers
+layers = contrib_layers
 
 
 class ResourceFunctionTest(parameterized.TestCase, tf.test.TestCase):

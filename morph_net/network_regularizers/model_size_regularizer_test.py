@@ -8,8 +8,9 @@ from morph_net.network_regularizers import model_size_regularizer
 from morph_net.network_regularizers import resource_function
 from morph_net.testing import dummy_decorator
 import tensorflow as tf
+from tensorflow.contrib import slim as contrib_slim
 
-slim = tf.contrib.slim
+slim = contrib_slim
 
 _coeff = resource_function.num_weights_coeff
 NUM_CHANNELS = 3

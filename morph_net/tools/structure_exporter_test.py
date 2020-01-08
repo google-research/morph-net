@@ -14,10 +14,11 @@ from morph_net.framework import generic_regularizers
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.tools import structure_exporter as se
 import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
 
 
 FLAGS = flags.FLAGS
-layers = tf.contrib.layers
+layers = contrib_layers
 
 
 def _alive_from_file(filename):

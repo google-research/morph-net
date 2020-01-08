@@ -8,8 +8,9 @@ from absl.testing import parameterized
 from morph_net.network_regularizers import activation_regularizer
 import numpy as np
 import tensorflow as tf
+from tensorflow.contrib import slim as contrib_slim
 
-slim = tf.contrib.slim
+slim = contrib_slim
 
 
 class ActivationLossTest(parameterized.TestCase, tf.test.TestCase):

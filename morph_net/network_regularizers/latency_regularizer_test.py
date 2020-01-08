@@ -9,11 +9,13 @@ from morph_net.network_regularizers import latency_regularizer
 from morph_net.network_regularizers import model_size_regularizer
 from morph_net.network_regularizers import resource_function
 import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import slim as contrib_slim
 
 
 from tensorflow.contrib.slim.nets import inception
 
-slim = tf.contrib.slim
+slim = contrib_slim
 
 NUM_CHANNELS = 3
 HARDWARE = 'P100'
@@ -234,11 +236,11 @@ class LatencyRegularizerTest(parameterized.TestCase, tf.test.TestCase):
   def testInceptionV2_TotalCost(self):
     conv_params = {
         'activation_fn': tf.nn.relu6,
-        'weights_regularizer': tf.contrib.layers.l2_regularizer(0.00004),
+        'weights_regularizer': contrib_layers.l2_regularizer(0.00004),
         'weights_initializer': tf.random_normal_initializer(stddev=0.03),
         'trainable': True,
         'biases_initializer': tf.constant_initializer(0.0),
-        'normalizer_fn': tf.contrib.layers.batch_norm,
+        'normalizer_fn': contrib_layers.batch_norm,
         'normalizer_params': {
             'is_training': False,
             'decay': 0.9997,
