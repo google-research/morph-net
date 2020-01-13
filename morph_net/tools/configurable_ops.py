@@ -285,7 +285,7 @@ class ConfigurableOps(object):
 
     # Support for tf.contrib.layers and tf.layers API.
     op_scope = kwargs.get('scope') or kwargs.get('name')
-    current_scope = tf.contrib.framework.get_name_scope() or ''
+    current_scope = framework.get_name_scope() or ''
     if current_scope and not current_scope.endswith('/'):
       current_scope += '/'
     op_name = ''.join([current_scope, op_scope, '/', suffix])
@@ -518,4 +518,3 @@ def decorator_from_parameterization_file(
     parameterization = json.loads(f.read())
     return ConfigurableOps(
         parameterization=parameterization, fallback_rule=fallback_rule)
-

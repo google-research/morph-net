@@ -29,9 +29,9 @@ from __future__ import print_function
 
 from morph_net.testing import op_regularizer_stub
 import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
 
-
-layers = tf.contrib.layers
+layers = contrib_layers
 
 ALIVE_STUB = {
     'conv1': [False, True, True],

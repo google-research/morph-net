@@ -24,9 +24,9 @@ from __future__ import print_function
 
 from morph_net.framework import generic_regularizers
 import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
 
-
-layers = tf.contrib.layers
+layers = contrib_layers
 
 
 class OpRegularizerStub(generic_regularizers.OpRegularizer):

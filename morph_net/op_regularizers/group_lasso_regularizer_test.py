@@ -8,8 +8,10 @@ from absl.testing import parameterized
 from morph_net.op_regularizers import group_lasso_regularizer
 import numpy as np
 import tensorflow as tf
+from tensorflow.contrib import framework as contrib_framework
+from tensorflow.contrib import layers as contrib_layers
 
-layers = tf.contrib.layers
+layers = contrib_layers
 
 ALIVE_THRESHOLD = 1.0
 
@@ -26,7 +28,7 @@ class GroupLassoRegularizerTest(parameterized.TestCase, tf.test.TestCase):
   def setUp(self):
     tf.reset_default_graph()
     tf.set_random_seed(7907)
-    with tf.contrib.framework.arg_scope(
+    with contrib_framework.arg_scope(
         [layers.conv2d, layers.conv2d_transpose],
         weights_initializer=tf.random_normal_initializer):
       self.BuildModel()
@@ -80,7 +82,7 @@ class GroupLassoRegularizerMatMulTest(parameterized.TestCase, tf.test.TestCase):
   def setUp(self):
     tf.reset_default_graph()
     tf.set_random_seed(7907)
-    with tf.contrib.framework.arg_scope(
+    with contrib_framework.arg_scope(
         [layers.fully_connected],
         weights_initializer=tf.random_normal_initializer):
       # Build the model.
