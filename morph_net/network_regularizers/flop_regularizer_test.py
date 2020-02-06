@@ -656,7 +656,7 @@ class GammaConv3DTest(parameterized.TestCase, tf.test.TestCase):
                           raw_cost * np.mean(gamma_val))
 
 
-class GroupLassoFlopRegTest(tf.test.TestCase):
+class GroupLassoFlopRegTest(parameterized.TestCase, tf.test.TestCase):
 
   def assertNearRelatively(self, expected, actual):
     self.assertNear(expected, actual, expected * 1e-6)
@@ -730,13 +730,15 @@ class GroupLassoFlopRegTest(tf.test.TestCase):
       self.assertNearRelatively(expected_reg_term,
                                 flop_reg.get_regularization_term().eval())
 
-  def testFlopRegularizerWithMatMul(self):
-    """Test the MatMul op regularizer with FLOP network regularizer.
+  @parameterized.named_parameters(
+      ('_matmul', False),
+      ('_slim', True),
+  )
+  def testFlopRegularizerWithMatMul(self, use_contrib):
+    """Test the MatMul op regularizer with FLOP network regularizer."""
 
-    Set up a two layer fully connected network.
-    """
+    # Set up a two layer fully connected network.
     tf.reset_default_graph()
-    tf.set_random_seed(1234)
     # Create the variables, and corresponding values.
     x = tf.constant(1.0, shape=[2, 6], name='x', dtype=tf.float32)
     w = tf.get_variable('w', shape=(6, 4), dtype=tf.float32)
@@ -747,17 +749,37 @@ class GroupLassoFlopRegTest(tf.test.TestCase):
     b_value = np.arange(4).reshape(4).astype('float32')
     w2_value = np.arange(21, 25).reshape((4, 1)).astype('float32')
     b2_value = np.arange(1).astype('float32')
+    fc1_name = 'matmul1/MatMul'
+    fc2_name = 'matmul2/MatMul'
+
     # Build the test network model.
-    net = tf.nn.relu(tf.matmul(x, w, name='matmul1') + b)
-    output = tf.nn.relu(tf.matmul(net, w2, name='matmul2') + b2)
-    # Assign values to network parameters.
-    with self.cached_session() as session:
-      session.run([
-          w.assign(w_value),
-          b.assign(b_value),
-          w2.assign(w2_value),
-          b2.assign(b2_value)
-      ])
+    if use_contrib:
+      net = contrib_layers.fully_connected(
+          x,
+          4,
+          scope='matmul1',
+          weights_initializer=tf.constant_initializer(w_value),
+          biases_initializer=tf.constant_initializer(b_value))
+      output = contrib_layers.fully_connected(
+          net,
+          1,
+          scope='matmul2',
+          weights_initializer=tf.constant_initializer(w2_value),
+          biases_initializer=tf.constant_initializer(b2_value))
+      with self.cached_session():
+        tf.global_variables_initializer().run()
+    else:
+      net = tf.nn.relu(tf.matmul(x, w, name=fc1_name) + b)
+      output = tf.nn.relu(tf.matmul(net, w2, name=fc2_name) + b2)
+      # Assign values to network parameters.
+      with self.cached_session() as session:
+        session.run([
+            w.assign(w_value),
+            b.assign(b_value),
+            w2.assign(w2_value),
+            b2.assign(b2_value)
+        ])
+
     # Create FLOPs network regularizer.
     threshold = 32.0
     flop_reg = flop_regularizer.GroupLassoFlopsRegularizer([output.op],
@@ -777,79 +799,14 @@ class GroupLassoFlopRegTest(tf.test.TestCase):
     matmul1_live_output = sum(expected_reg_vector1 > threshold)
     matmul2_live_output = sum(expected_reg_vector2 > threshold)
     expected_flop_cost = (
-        _coeff(_get_op('matmul1')) * matmul1_live_input * matmul1_live_output +
-        _coeff(_get_op('matmul2')) * matmul1_live_output * matmul2_live_output)
+        _coeff(_get_op(fc1_name)) * matmul1_live_input * matmul1_live_output +
+        _coeff(_get_op(fc2_name)) * matmul1_live_output * matmul2_live_output)
     regularizer1 = np.sum(expected_reg_vector1)
     regularizer2 = np.sum(expected_reg_vector2)
     expected_reg_term = (
-        _coeff(_get_op('matmul1')) * matmul1_live_input * regularizer1 +
-        _coeff(_get_op('matmul2')) * (matmul1_live_output * regularizer2 +
-                                      matmul2_live_output * regularizer1))
-    with self.cached_session() as session:
-      self.assertEqual(
-          round(flop_reg.get_cost().eval()), round(expected_flop_cost))
-      self.assertNearRelatively(flop_reg.get_regularization_term().eval(),
-                                expected_reg_term)
-
-  def testFlopRegularizerWithContribFC(self):
-    """Test MatMul Flop regularizer with tf.contrib.fully_connected layer.
-
-    The structure of the fully connected network used in this test is the same
-    with that used in testFlopRegularizerWithMatMul.
-    """
-    tf.reset_default_graph()
-    tf.set_random_seed(1234)
-    # Create test networks with tf.contrib.layers.fully_connected and initialize
-    # the variables.
-    with slim.arg_scope([contrib_layers.fully_connected],
-                        weights_initializer=tf.random_normal_initializer,
-                        biases_initializer=tf.random_normal_initializer):
-      x = tf.constant(1.0, shape=[2, 6], name='x', dtype=tf.float32)
-      net = contrib_layers.fully_connected(x, 4, scope='matmul1')
-      net = contrib_layers.fully_connected(net, 1, scope='matmul2')
-      name_to_variable = {v.op.name: v for v in tf.global_variables()}
-    with self.cached_session():
-      tf.global_variables_initializer().run()
-
-    # Create FLOPs network regularizer.
-    threshold = 0.9
-    flop_reg = flop_regularizer.GroupLassoFlopsRegularizer(
-        [net.op], threshold, 0)
-    with self.cached_session() as session:
-      evaluated_vars = session.run(name_to_variable)
-
-    # Compute the regularizer vector for each layer.
-    def group_norm(weights, axis=(0, 1, 2)):  # pylint: disable=invalid-name
-      return np.sqrt(np.mean(weights**2, axis=axis))
-    regularizer_vec = {
-        'matmul1': group_norm(evaluated_vars['matmul1/weights'], axis=(0,)),
-        'matmul2': group_norm(evaluated_vars['matmul2/weights'], axis=(0,))
-    }
-
-    # Sanity check to make sure that not all outputs are alive or dead.
-    total_outputs = (
-        regularizer_vec['matmul1'].shape[0] +
-        regularizer_vec['matmul2'].shape[0])
-    total_alive = sum(
-        [np.sum(val > threshold) for val in regularizer_vec.values()])
-    assert total_alive > 0, ('All outputs are dead. Decrease the threshold.')
-    assert total_alive < total_outputs, (
-        'All outputs are alive. Increase the threshold.')
-
-    # Compute the expected flop cost and regularization term. The L2 norm of
-    # columns in weight matrix of layer matmul1 is [2.15381098, 2.57671237,
-    # 2.12560201, 2.2081387] and that of layer matmul2 is [1.72404861]. With
-    # threshold = 2.2, there are two outputs in matmul1 layer are alive.
-    matmul1_live_input = 6
-    matmul1_live_output = sum(regularizer_vec['matmul1'] > threshold)
-    expected_flop_cost = (
-        _coeff(_get_op('matmul1/MatMul')) * matmul1_live_input *
-        matmul1_live_output)
-    regularizer1 = np.sum(regularizer_vec['matmul1'])
-    regularizer2 = np.sum(regularizer_vec['matmul2'])
-    expected_reg_term = (
-        _coeff(_get_op('matmul1/MatMul')) * matmul1_live_input * regularizer1 +
-        _coeff(_get_op('matmul2/MatMul')) * matmul1_live_output * regularizer2)
+        _coeff(_get_op(fc1_name)) * matmul1_live_input * regularizer1 +
+        _coeff(_get_op(fc2_name)) * (matmul1_live_output * regularizer2 +
+                                     matmul2_live_output * regularizer1))
     with self.cached_session() as session:
       self.assertEqual(
           round(flop_reg.get_cost().eval()), round(expected_flop_cost))
