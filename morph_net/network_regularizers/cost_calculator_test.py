@@ -14,7 +14,7 @@ from morph_net.framework import output_non_passthrough_op_handler
 from morph_net.network_regularizers import cost_calculator as cc
 from morph_net.network_regularizers import resource_function
 from morph_net.testing import add_concat_model_stub
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from tensorflow.contrib import layers
 from tensorflow.contrib.framework import arg_scope

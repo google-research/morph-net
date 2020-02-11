@@ -28,7 +28,7 @@ from __future__ import division
 from __future__ import print_function
 
 from morph_net.testing import op_regularizer_stub
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers as contrib_layers
 
 layers = contrib_layers

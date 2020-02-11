@@ -13,7 +13,7 @@ from absl.testing import parameterized
 
 from morph_net.tools import configurable_ops as ops
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from tensorflow.contrib import layers
 from tensorflow.contrib.framework import add_arg_scope

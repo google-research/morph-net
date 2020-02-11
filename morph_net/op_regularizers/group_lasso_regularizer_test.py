@@ -7,7 +7,7 @@ from __future__ import print_function
 from absl.testing import parameterized
 from morph_net.op_regularizers import group_lasso_regularizer
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import framework as contrib_framework
 from tensorflow.contrib import layers as contrib_layers
 

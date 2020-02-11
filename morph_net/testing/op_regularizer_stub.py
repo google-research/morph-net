@@ -23,7 +23,7 @@ from __future__ import division
 from __future__ import print_function
 
 from morph_net.framework import generic_regularizers
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers as contrib_layers
 
 layers = contrib_layers

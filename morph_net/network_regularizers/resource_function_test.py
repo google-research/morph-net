@@ -6,7 +6,7 @@ from __future__ import print_function
 from absl.testing import parameterized
 from morph_net.network_regularizers import resource_function
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers as contrib_layers
 # pylint: disable=g-direct-tensorflow-import
 from tensorflow.python.framework import ops

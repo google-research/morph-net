@@ -13,7 +13,7 @@ from absl.testing import parameterized
 from morph_net.framework import generic_regularizers
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.tools import structure_exporter as se
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers as contrib_layers
 
 

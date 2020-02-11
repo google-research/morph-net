@@ -7,7 +7,7 @@ from absl.testing import parameterized
 from morph_net.network_regularizers import model_size_regularizer
 from morph_net.network_regularizers import resource_function
 from morph_net.testing import dummy_decorator
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import slim as contrib_slim
 
 slim = contrib_slim

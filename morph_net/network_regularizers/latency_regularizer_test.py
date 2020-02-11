@@ -8,7 +8,7 @@ from morph_net.network_regularizers import flop_regularizer
 from morph_net.network_regularizers import latency_regularizer
 from morph_net.network_regularizers import model_size_regularizer
 from morph_net.network_regularizers import resource_function
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers as contrib_layers
 from tensorflow.contrib import slim as contrib_slim
 
