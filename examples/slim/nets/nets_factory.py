@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 import functools
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from nets import resnet_v1
 from nets import resnet_v2
