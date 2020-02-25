@@ -32,7 +32,7 @@ import contextlib2
 
 import PIL.Image
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from datasets import dataset_utils
 

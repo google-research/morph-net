@@ -32,7 +32,7 @@ import os
 import random
 import sys
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from datasets import dataset_utils
 
