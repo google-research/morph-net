@@ -41,6 +41,7 @@ py_library(
     name = "ladder_model_stub",
     testonly = 1,
     srcs = ["ladder_model_stub.py"],
+    srcs_version = "PY2AND3",
     deps = [
         ":op_regularizer_stub",
         "//third_party/py/tensorflow",
