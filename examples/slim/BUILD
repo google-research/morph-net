@@ -35,8 +35,10 @@ sh_binary(
 py_binary(
     name = "build_imagenet_data",
     srcs = ["datasets/build_imagenet_data.py"],
-    python_version = "PY2",
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
+        "//third_party/py/six",
         # "//numpy",
         # "//tensorflow",
     ],
