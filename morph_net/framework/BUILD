@@ -16,6 +16,7 @@ pytype_library(
 py_library(
     name = "batch_norm_source_op_handler",
     srcs = ["batch_norm_source_op_handler.py"],
+    tags = ["notap"],
     deps = [
         ":grouping_op_handler",
         ":tpu_util",

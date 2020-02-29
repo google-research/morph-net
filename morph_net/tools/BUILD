@@ -51,6 +51,7 @@ py_test(
         "configurable_ops_test.py",
     ],
     python_version = "PY2",
+    tags = ["notap"],
     deps = [
         ":configurable_ops",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
