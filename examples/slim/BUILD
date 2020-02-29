@@ -1,6 +1,8 @@
 # Description:
 #   Contains files for loading, training and evaluating TF-Slim-based models.
 
+load("//devtools/python/blaze:python3.bzl", "py2and3_test")
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -168,18 +170,20 @@ py_library(
 py_library(
     name = "model_deploy",
     srcs = ["deployment/model_deploy.py"],
+    srcs_version = "PY2AND3",
     deps = [
+        "//third_party/py/six",
         # "//tensorflow",
     ],
 )
 
-py_test(
+py2and3_test(
     name = "model_deploy_test",
     srcs = ["deployment/model_deploy_test.py"],
-    python_version = "PY2",
     srcs_version = "PY2AND3",
     deps = [
         ":model_deploy",
+        "//third_party/py/six",
         # "//numpy",
         # "//tensorflow",
     ],
