@@ -48,7 +48,7 @@ import collections
 import json
 from enum import Enum
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import framework
 from tensorflow.contrib import layers
 gfile = tf.gfile  # Aliase needed for mock.
