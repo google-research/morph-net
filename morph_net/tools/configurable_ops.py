@@ -48,10 +48,10 @@ import collections
 import json
 from enum import Enum
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import framework
 from tensorflow.contrib import layers
-gfile = tf.gfile  # Aliase needed for mock.
+# gfile = tf.gfile  # Aliase needed for mock.
 
 VANISHED = 0.0
 NUM_OUTPUTS = 'num_outputs'
@@ -514,7 +514,7 @@ def decorator_from_parameterization_file(
   Returns:
     An ConfigurableOps instance with the parameterization from `filename`.
   """
-  with gfile.Open(filename, 'r') as f:
+  with tf.gfile.Open(filename, 'r') as f:
     parameterization = json.loads(f.read())
     return ConfigurableOps(
         parameterization=parameterization, fallback_rule=fallback_rule)
