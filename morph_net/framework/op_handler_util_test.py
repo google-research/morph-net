@@ -60,7 +60,6 @@ class OpHandlerUtilTest(tf.test.TestCase):
     self.gamma_op = g.get_operation_by_name('conv1/BatchNorm/gamma/read')
     self.beta_op = g.get_operation_by_name('conv1/BatchNorm/beta/read')
     self.decay_op = g.get_operation_by_name('conv1/BatchNorm/Const')
-    self.epsilon_op = g.get_operation_by_name('conv1/BatchNorm/Const_1')
     self.mean_op = g.get_operation_by_name(
         'conv1/BatchNorm/AssignMovingAvg/sub_1')
     self.std_op = g.get_operation_by_name(
@@ -115,7 +114,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
     self.mock_op_reg_manager.is_passthrough.side_effect = is_passthrough
     self.mock_op_reg_manager.ops = [
         self.batch_norm_op, self.gamma_op, self.beta_op, self.decay_op,
-        self.epsilon_op, self.mean_op, self.std_op, self.conv_op, self.relu_op,
+        self.mean_op, self.std_op, self.conv_op, self.relu_op,
         self.relu2_op, self.relu3_op, self.relu4_op, self.unfused_batch_norm_op,
         self.concat_op]
 
@@ -129,7 +128,6 @@ class OpHandlerUtilTest(tf.test.TestCase):
                                               self.mock_op_reg_manager)
     self.assertEqual(expected_inputs, input_ops)
     self.assertNotIn(self.decay_op, input_ops)
-    self.assertNotIn(self.epsilon_op, input_ops)
 
   def testGetOutputOps(self):
     # For batch norm, the expected outputs are mean, std, and ReLU.
@@ -149,7 +147,6 @@ class OpHandlerUtilTest(tf.test.TestCase):
         self.gamma_op: [orm.OpSlice(self.gamma_op, None)],
         self.beta_op: [orm.OpSlice(self.beta_op, None)],
         self.decay_op: [orm.OpSlice(self.decay_op, None)],
-        self.epsilon_op: [orm.OpSlice(self.epsilon_op, None)],
     }
 
     # Only batch norm and conv ops have groups.
@@ -159,9 +156,9 @@ class OpHandlerUtilTest(tf.test.TestCase):
     }
 
     all_ops = [self.batch_norm_op, self.conv_op, self.gamma_op, self.beta_op,
-               self.decay_op, self.epsilon_op]
+               self.decay_op]
     # Batch norm and conv ops have groups.  The other ops do not have groups.
-    expected_ops = [self.gamma_op, self.beta_op, self.decay_op, self.epsilon_op]
+    expected_ops = [self.gamma_op, self.beta_op, self.decay_op]
     self.assertEqual(
         expected_ops,
         op_handler_util.get_ops_without_groups(
@@ -171,7 +168,7 @@ class OpHandlerUtilTest(tf.test.TestCase):
     self._passthrough_ops = (self.gamma_op, self.decay_op, self.std_op)
 
     all_ops = [self.batch_norm_op, self.conv_op, self.gamma_op, self.beta_op,
-               self.decay_op, self.epsilon_op, self.mean_op]
+               self.decay_op, self.mean_op]
     expected_ops = [self.gamma_op, self.decay_op]
 
     self.assertListEqual(
