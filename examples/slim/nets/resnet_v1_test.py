@@ -18,11 +18,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
-import tensorflow as tf
-
 from nets import resnet_utils
 from nets import resnet_v1
+import numpy as np
+from six.moves import range
+from six.moves import zip
+import tensorflow as tf
 
 slim = tf.contrib.slim
 
@@ -185,7 +186,7 @@ class ResnetUtilsTest(tf.test.TestCase):
         'tiny/block2/unit_2/bottleneck_v1/conv1',
         'tiny/block2/unit_2/bottleneck_v1/conv2',
         'tiny/block2/unit_2/bottleneck_v1/conv3']
-    self.assertItemsEqual(expected, end_points.keys())
+    self.assertItemsEqual(expected, list(end_points.keys()))
 
   def _stack_blocks_nondense(self, net, blocks):
     """A simplified ResNet Block stacker without output stride control."""
@@ -392,7 +393,7 @@ class ResnetCompleteNetworkTest(tf.test.TestCase):
       expected.append('resnet/block%d' % block)
     expected.extend(['global_pool', 'resnet/logits', 'resnet/spatial_squeeze',
                      'predictions'])
-    self.assertItemsEqual(end_points.keys(), expected)
+    self.assertItemsEqual(list(end_points.keys()), expected)
 
   def testClassificationShapes(self):
     global_pool = True

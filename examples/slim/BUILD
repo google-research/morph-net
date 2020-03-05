@@ -1,6 +1,8 @@
 # Description:
 #   Contains files for loading, training and evaluating TF-Slim-based models.
 
+load("//devtools/python/blaze:python3.bzl", "py2and3_test")
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -706,16 +708,16 @@ py_library(
     ],
 )
 
-py_test(
+py2and3_test(
     name = "resnet_v1_test",
     size = "medium",
     srcs = ["nets/resnet_v1_test.py"],
-    python_version = "PY2",
     shard_count = 2,
     srcs_version = "PY2AND3",
     deps = [
         ":resnet_utils",
         ":resnet_v1",
+        "//third_party/py/six",
         # "//numpy",
         # "//tensorflow",
     ],
