@@ -65,18 +65,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
     self.beta_op_group = orm.OpGroup(
         self.beta_op_slice, omit_source_op_slices=[self.beta_op_slice])
 
-    self.mean_op = g.get_operation_by_name(
-        'conv1/BatchNorm/AssignMovingAvg/sub_1')
-    self.mean_op_slice = orm.OpSlice(self.mean_op, orm.Slice(0, 5))
-    self.mean_op_group = orm.OpGroup(
-        self.mean_op_slice, omit_source_op_slices=[self.mean_op_slice])
-
-    self.std_op = g.get_operation_by_name(
-        'conv1/BatchNorm/AssignMovingAvg_1/sub_1')
-    self.std_op_slice = orm.OpSlice(self.std_op, orm.Slice(0, 5))
-    self.std_op_group = orm.OpGroup(
-        self.std_op_slice, omit_source_op_slices=[self.std_op_slice])
-
     # Create custom mapping of OpSlice and OpGroup in manager.
     self.mock_op_reg_manager = mock.create_autospec(orm.OpRegularizerManager)
 
@@ -91,7 +79,7 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
     self.mock_op_reg_manager.is_source_op.return_value = False
     self.mock_op_reg_manager.ops = [
         self.batch_norm_op, self.conv_op, self.relu_op, self.gamma_op,
-        self.beta_op, self.mean_op, self.std_op]
+        self.beta_op]
 
   def testAssignGrouping_NoNeighborGroups(self):
     self.op_slice_dict = {
@@ -100,8 +88,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         self.relu_op: [self.relu_op_slice],
         self.gamma_op: [self.gamma_op_slice],
         self.beta_op: [self.beta_op_slice],
-        self.mean_op: [self.mean_op_slice],
-        self.std_op: [self.std_op_slice],
     }
 
     # No neighbor ops have groups.
@@ -128,7 +114,7 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
 
     # Verify manager processes grouping for input and output ops.
     self.mock_op_reg_manager.process_ops.assert_called_once_with(
-        [self.relu_op, self.mean_op, self.std_op, self.conv_op, self.gamma_op,
+        [self.relu_op, self.conv_op, self.gamma_op,
          self.beta_op])
     self.mock_op_reg_manager.process_ops_last.assert_called_once_with(
         [self.batch_norm_op])
@@ -140,8 +126,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         self.relu_op: [self.relu_op_slice],
         self.gamma_op: [self.gamma_op_slice],
         self.beta_op: [self.beta_op_slice],
-        self.mean_op: [self.mean_op_slice],
-        self.std_op: [self.std_op_slice],
     }
 
     # All ops have groups.
@@ -151,8 +135,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         self.relu_op_slice: self.relu_op_group,
         self.gamma_op_slice: self.gamma_op_group,
         self.beta_op_slice: self.beta_op_group,
-        self.mean_op_slice: self.mean_op_group,
-        self.std_op_slice: self.std_op_group,
     }
 
     # Call handler to assign grouping.
@@ -167,8 +149,7 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
 
     # Verify manager groups batch norm with outputs and inputs.
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
-        [mock.call([self.batch_norm_op_slice, self.relu_op_slice,
-                    self.mean_op_slice, self.std_op_slice]),
+        [mock.call([self.batch_norm_op_slice, self.relu_op_slice]),
          mock.call([self.batch_norm_op_slice, self.conv_op_slice,
                     self.gamma_op_slice, self.beta_op_slice])])
 
@@ -208,28 +189,12 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
     beta_op_group2 = orm.OpGroup(
         beta_op_slice_2_3, omit_source_op_slices=[beta_op_slice_2_3])
 
-    mean_op_slice_0_2 = orm.OpSlice(self.mean_op, orm.Slice(0, 2))
-    mean_op_slice_2_3 = orm.OpSlice(self.mean_op, orm.Slice(2, 1))
-    mean_op_group1 = orm.OpGroup(
-        mean_op_slice_0_2, omit_source_op_slices=[mean_op_slice_0_2])
-    mean_op_group2 = orm.OpGroup(
-        mean_op_slice_2_3, omit_source_op_slices=[mean_op_slice_2_3])
-
-    std_op_slice_0_2 = orm.OpSlice(self.std_op, orm.Slice(0, 2))
-    std_op_slice_2_3 = orm.OpSlice(self.std_op, orm.Slice(2, 1))
-    std_op_group1 = orm.OpGroup(
-        std_op_slice_0_2, omit_source_op_slices=[std_op_slice_0_2])
-    std_op_group2 = orm.OpGroup(
-        std_op_slice_2_3, omit_source_op_slices=[std_op_slice_2_3])
-
     self.op_slice_dict = {
         self.batch_norm_op: [batch_norm_op_slice_0_2, batch_norm_op_slice_2_3],
         self.conv_op: [conv_op_slice_0_2, conv_op_slice_2_3],
         self.relu_op: [relu_op_slice_0_2, relu_op_slice_2_3],
         self.gamma_op: [gamma_op_slice_0_2, gamma_op_slice_2_3],
         self.beta_op: [beta_op_slice_0_2, beta_op_slice_2_3],
-        self.mean_op: [mean_op_slice_0_2, mean_op_slice_2_3],
-        self.std_op: [std_op_slice_0_2, std_op_slice_2_3],
     }
 
     # All OpSlice have groups.
@@ -244,10 +209,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         gamma_op_slice_2_3: gamma_op_group2,
         beta_op_slice_0_2: beta_op_group1,
         beta_op_slice_2_3: beta_op_group2,
-        mean_op_slice_0_2: mean_op_group1,
-        mean_op_slice_2_3: mean_op_group2,
-        std_op_slice_0_2: std_op_group1,
-        std_op_slice_2_3: std_op_group2,
     }
 
     # Call handler to assign grouping.
@@ -262,12 +223,10 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
 
     # Verify manager groups batch norm with outputs and inputs by slice.
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
-        [mock.call([batch_norm_op_slice_0_2, relu_op_slice_0_2,
-                    mean_op_slice_0_2, std_op_slice_0_2]),
+        [mock.call([batch_norm_op_slice_0_2, relu_op_slice_0_2]),
          mock.call([batch_norm_op_slice_0_2, conv_op_slice_0_2,
                     gamma_op_slice_0_2, beta_op_slice_0_2]),
-         mock.call([batch_norm_op_slice_2_3, relu_op_slice_2_3,
-                    mean_op_slice_2_3, std_op_slice_2_3]),
+         mock.call([batch_norm_op_slice_2_3, relu_op_slice_2_3]),
          mock.call([batch_norm_op_slice_2_3, conv_op_slice_2_3,
                     gamma_op_slice_2_3, beta_op_slice_2_3])])
 
@@ -282,8 +241,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         self.relu_op: [self.batch_norm_op_slice],
         self.gamma_op: [self.batch_norm_op_slice],
         self.beta_op: [self.batch_norm_op_slice],
-        self.mean_op: [self.batch_norm_op_slice],
-        self.std_op: [self.batch_norm_op_slice],
     }
 
     # All ops have the same group.
@@ -320,8 +277,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         self.relu_op: [self.relu_op_slice],
         self.gamma_op: [self.gamma_op_slice],
         self.beta_op: [self.beta_op_slice],
-        self.mean_op: [self.mean_op_slice],
-        self.std_op: [self.std_op_slice],
     }
 
     self.op_group_dict = {
@@ -353,9 +308,6 @@ class BatchNormSourceOpHandlerTest(tf.test.TestCase):
         [self.batch_norm_op_slice, self.conv_op_slice, self.gamma_op_slice,
          self.beta_op_slice])
 
-    # Verify manager adds ungrouped output ops to queue.
-    self.mock_op_reg_manager.process_ops.assert_called_once_with(
-        [self.mean_op, self.std_op])
     self.mock_op_reg_manager.process_ops_last.assert_not_called()
 
   def testCreateRegularizer(self):

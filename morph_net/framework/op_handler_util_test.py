@@ -59,11 +59,6 @@ class OpHandlerUtilTest(tf.test.TestCase):
 
     self.gamma_op = g.get_operation_by_name('conv1/BatchNorm/gamma/read')
     self.beta_op = g.get_operation_by_name('conv1/BatchNorm/beta/read')
-    self.decay_op = g.get_operation_by_name('conv1/BatchNorm/Const')
-    self.mean_op = g.get_operation_by_name(
-        'conv1/BatchNorm/AssignMovingAvg/sub_1')
-    self.std_op = g.get_operation_by_name(
-        'conv1/BatchNorm/AssignMovingAvg_1/sub_1')
 
     self.relu_op = g.get_operation_by_name('conv1/Relu')
     self.relu_op_slice = orm.OpSlice(self.relu_op, None)
@@ -113,8 +108,8 @@ class OpHandlerUtilTest(tf.test.TestCase):
     self.mock_op_reg_manager.get_op_group.side_effect = get_op_group
     self.mock_op_reg_manager.is_passthrough.side_effect = is_passthrough
     self.mock_op_reg_manager.ops = [
-        self.batch_norm_op, self.gamma_op, self.beta_op, self.decay_op,
-        self.mean_op, self.std_op, self.conv_op, self.relu_op,
+        self.batch_norm_op, self.gamma_op, self.beta_op,
+        self.conv_op, self.relu_op,
         self.relu2_op, self.relu3_op, self.relu4_op, self.unfused_batch_norm_op,
         self.concat_op]
 
@@ -127,11 +122,10 @@ class OpHandlerUtilTest(tf.test.TestCase):
     input_ops = op_handler_util.get_input_ops(self.batch_norm_op,
                                               self.mock_op_reg_manager)
     self.assertEqual(expected_inputs, input_ops)
-    self.assertNotIn(self.decay_op, input_ops)
 
   def testGetOutputOps(self):
     # For batch norm, the expected outputs are mean, std, and ReLU.
-    expected_outputs = [self.relu_op, self.mean_op, self.std_op]
+    expected_outputs = [self.relu_op]
 
     # Check for expected output ops.
     self.assertEqual(
@@ -146,7 +140,6 @@ class OpHandlerUtilTest(tf.test.TestCase):
         self.conv_op: [self.conv_op_slice],
         self.gamma_op: [orm.OpSlice(self.gamma_op, None)],
         self.beta_op: [orm.OpSlice(self.beta_op, None)],
-        self.decay_op: [orm.OpSlice(self.decay_op, None)],
     }
 
     # Only batch norm and conv ops have groups.
@@ -155,21 +148,19 @@ class OpHandlerUtilTest(tf.test.TestCase):
         self.conv_op_slice: self.conv_op_group
     }
 
-    all_ops = [self.batch_norm_op, self.conv_op, self.gamma_op, self.beta_op,
-               self.decay_op]
+    all_ops = [self.batch_norm_op, self.conv_op, self.gamma_op, self.beta_op]
     # Batch norm and conv ops have groups.  The other ops do not have groups.
-    expected_ops = [self.gamma_op, self.beta_op, self.decay_op]
+    expected_ops = [self.gamma_op, self.beta_op]
     self.assertEqual(
         expected_ops,
         op_handler_util.get_ops_without_groups(
             all_ops, self.mock_op_reg_manager))
 
   def testRemoveNonPassthroughOps(self):
-    self._passthrough_ops = (self.gamma_op, self.decay_op, self.std_op)
+    self._passthrough_ops = (self.gamma_op,)
 
-    all_ops = [self.batch_norm_op, self.conv_op, self.gamma_op, self.beta_op,
-               self.decay_op, self.mean_op]
-    expected_ops = [self.gamma_op, self.decay_op]
+    all_ops = [self.batch_norm_op, self.conv_op, self.gamma_op, self.beta_op]
+    expected_ops = [self.gamma_op]
 
     self.assertListEqual(
         expected_ops,
