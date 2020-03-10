@@ -60,14 +60,6 @@ class GroupingOpHandlerTest(tf.test.TestCase):
     self.beta_op = g.get_operation_by_name('conv1/BatchNorm/beta/read')
     self.beta_op_slice = orm.OpSlice(self.beta_op, orm.Slice(0, 5))
 
-    self.mean_op = g.get_operation_by_name(
-        'conv1/BatchNorm/AssignMovingAvg/sub_1')
-    self.mean_op_slice = orm.OpSlice(self.mean_op, orm.Slice(0, 5))
-
-    self.std_op = g.get_operation_by_name(
-        'conv1/BatchNorm/AssignMovingAvg_1/sub_1')
-    self.std_op_slice = orm.OpSlice(self.std_op, orm.Slice(0, 5))
-
     # Create mock OpRegularizerManager with custom mapping of OpSlice and
     # OpGroup.
     self.mock_op_reg_manager = mock.create_autospec(orm.OpRegularizerManager)
@@ -78,8 +70,6 @@ class GroupingOpHandlerTest(tf.test.TestCase):
         self.relu_op: [self.relu_op_slice],
         self.gamma_op: [self.gamma_op_slice],
         self.beta_op: [self.beta_op_slice],
-        self.mean_op: [self.mean_op_slice],
-        self.std_op: [self.std_op_slice],
     }
     def get_op_slices(op):
       return self.op_slice_dict.get(op)
@@ -92,7 +82,7 @@ class GroupingOpHandlerTest(tf.test.TestCase):
     self.mock_op_reg_manager.is_source_op.return_value = False
     self.mock_op_reg_manager.ops = [
         self.batch_norm_op, self.conv_op, self.relu_op, self.gamma_op,
-        self.beta_op, self.mean_op, self.std_op]
+        self.beta_op]
 
   def testAssignGrouping_NoNeighborGroups(self):
     # No ops have groups.
@@ -109,39 +99,30 @@ class GroupingOpHandlerTest(tf.test.TestCase):
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Initial slice data.
          mock.call(self.batch_norm_op),
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Reslicing.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.batch_norm_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Refreshing slice data.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
-         mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op)])
+         mock.call(self.relu_op)])
 
     # Verify manager does not group.
     self.mock_op_reg_manager.group_op_slices.assert_not_called()
 
     # Verify manager processes grouping for Conv2D, ReLU, and batch norm ops.
     self.mock_op_reg_manager.process_ops.assert_called_once_with(
-        [self.relu_op, self.mean_op, self.std_op, self.conv_op, self.gamma_op,
-         self.beta_op])
+        [self.relu_op, self.conv_op, self.gamma_op, self.beta_op])
     self.mock_op_reg_manager.process_ops_last.assert_called_once_with(
         [self.batch_norm_op])
 
@@ -167,43 +148,35 @@ class GroupingOpHandlerTest(tf.test.TestCase):
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Initial slice data.
          mock.call(self.batch_norm_op),
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Reslicing.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.batch_norm_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Refreshing slice data.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Group batch norm op.
          mock.call(self.batch_norm_op)])
 
     # Verify manager groups batch norm with input ops.
-    self.mock_op_reg_manager.group_op_slices.assert_called_once_with(
-        [self.batch_norm_op_slice, self.conv_op_slice, self.gamma_op_slice,
-         self.beta_op_slice])
+    self.mock_op_reg_manager.group_op_slices.assert_has_calls(
+        [mock.call([self.batch_norm_op_slice, self.relu_op_slice]),
+         mock.call([self.batch_norm_op_slice, self.conv_op_slice,
+                    self.gamma_op_slice, self.beta_op_slice])])
 
     # Verify manager processes grouping for mean_op and std_op which do not have
     # groups.
-    self.mock_op_reg_manager.process_ops.assert_called_once_with(
-        [self.mean_op, self.std_op])
+    self.mock_op_reg_manager.process_ops.assert_not_called()
     self.mock_op_reg_manager.process_ops_last.assert_not_called()
 
   def testAssignGrouping_AllOutputsGrouped(self):
@@ -213,8 +186,6 @@ class GroupingOpHandlerTest(tf.test.TestCase):
         self.conv_op_slice: self.conv_op_group,
         self.relu_op_slice: self.relu_op_group,
         self.gamma_op_slice: self.conv_op_group,
-        self.mean_op_slice: self.relu_op_group,
-        self.std_op_slice: self.relu_op_group,
     }
 
     # Call handler to assign grouping.
@@ -228,31 +199,23 @@ class GroupingOpHandlerTest(tf.test.TestCase):
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Initial slice data.
          mock.call(self.batch_norm_op),
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Reslicing.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.batch_norm_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Refreshing slice data.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
-         mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op)])
+         mock.call(self.relu_op)])
 
     # Verify manager does not group.
     self.mock_op_reg_manager.group_op_slices.assert_not_called()
@@ -271,8 +234,6 @@ class GroupingOpHandlerTest(tf.test.TestCase):
         self.relu_op_slice: self.relu_op_group,
         self.gamma_op_slice: self.conv_op_group,
         self.beta_op_slice: self.conv_op_group,
-        self.mean_op_slice: self.relu_op_group,
-        self.std_op_slice: self.relu_op_group,
     }
 
     # Call handler to assign grouping.
@@ -286,38 +247,29 @@ class GroupingOpHandlerTest(tf.test.TestCase):
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Initial slice data.
          mock.call(self.batch_norm_op),
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Reslicing.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.batch_norm_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Refreshing slice data.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Group batch norm op.
          mock.call(self.batch_norm_op)])
 
     # Verify manager groups batch norm with inputs and outputs.
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
-        [mock.call([self.batch_norm_op_slice, self.relu_op_slice,
-                    self.mean_op_slice, self.std_op_slice]),
+        [mock.call([self.batch_norm_op_slice, self.relu_op_slice]),
          mock.call([self.batch_norm_op_slice, self.conv_op_slice,
                     self.gamma_op_slice, self.beta_op_slice])])
 
@@ -333,8 +285,6 @@ class GroupingOpHandlerTest(tf.test.TestCase):
         self.relu_op_slice: self.batch_norm_op_group,
         self.gamma_op_slice: self.batch_norm_op_group,
         self.beta_op_slice: self.batch_norm_op_group,
-        self.mean_op_slice: self.batch_norm_op_group,
-        self.std_op_slice: self.batch_norm_op_group,
     }
 
     # Call handler to assign grouping.
@@ -348,31 +298,23 @@ class GroupingOpHandlerTest(tf.test.TestCase):
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Initial slice data.
          mock.call(self.batch_norm_op),
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Reslicing.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.batch_norm_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Refreshing slice data.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Group batch norm op.
          mock.call(self.batch_norm_op)])
 
@@ -400,8 +342,6 @@ class GroupingOpHandlerTest(tf.test.TestCase):
         self.relu_op_slice: self.relu_op_group,
         self.gamma_op_slice: self.conv_op_group,
         self.beta_op_slice: self.conv_op_group,
-        self.mean_op_slice: self.relu_op_group,
-        self.std_op_slice: self.relu_op_group,
     }
 
     # Call handler to assign grouping.
@@ -415,37 +355,27 @@ class GroupingOpHandlerTest(tf.test.TestCase):
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.relu_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Initial slice data.
          mock.call(self.batch_norm_op),
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Reslicing.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
          mock.call(self.batch_norm_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Refreshing slice data.
          mock.call(self.conv_op),
          mock.call(self.gamma_op),
          mock.call(self.beta_op),
-         mock.call(self.mean_op),
-         mock.call(self.std_op),
          # Group batch norm op.
          mock.call(self.batch_norm_op)])
 
     # Verify manager groups batch norm with inputs and outputs.  ReLU is not
     # part of the grouping.
     self.mock_op_reg_manager.group_op_slices.assert_has_calls(
-        [mock.call([self.batch_norm_op_slice, self.mean_op_slice,
-                    self.std_op_slice]),
-         mock.call([self.batch_norm_op_slice, self.conv_op_slice,
+        [mock.call([self.batch_norm_op_slice, self.conv_op_slice,
                     self.gamma_op_slice, self.beta_op_slice])])
 
     # Verify manager does not process any additional ops.
@@ -454,12 +384,11 @@ class GroupingOpHandlerTest(tf.test.TestCase):
 
   def testGetInputOutputOpSlices(self):
     input_ops = [self.conv_op, self.gamma_op, self.beta_op]
-    output_ops = [self.mean_op, self.std_op, self.relu_op]
+    output_ops = [self.relu_op]
 
     expected_input_op_slices = [
         [self.conv_op_slice], [self.gamma_op_slice], [self.beta_op_slice]]
-    expected_output_op_slices = [
-        [self.mean_op_slice], [self.std_op_slice], [self.relu_op_slice]]
+    expected_output_op_slices = [[self.relu_op_slice]]
 
     # Instantiate handler.
     handler = grouping_op_handler.GroupingOpHandler()
