@@ -1,6 +1,6 @@
 load("//devtools/python/blaze:strict.bzl", "py_strict_test")
 load("//devtools/python/blaze:pytype.bzl", "pytype_library")
-load("//devtools/python/blaze:python3.bzl", "py2and3_test")
+load("//devtools/python/blaze:python3.bzl", "py2and3_strict_test", "py2and3_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -391,10 +391,9 @@ py2and3_test(
     ],
 )
 
-py_strict_test(
+py2and3_strict_test(
     name = "op_handlers_test",
     srcs = ["op_handlers_test.py"],
-    python_version = "PY2",
     deps = [
         ":op_handlers",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
