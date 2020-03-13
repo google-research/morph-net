@@ -123,7 +123,7 @@ class StructureExporter(object):
     Args:
       f: a file object where alive counts are saved.
     """
-    f.write(format_structure(self.get_alive_counts()))
+    f.write(format_structure(self.get_alive_counts()))  # pytype: disable=wrong-arg-types
 
   def create_file_and_save_alive_counts(self, base_dir: Text,
                                         global_step: int) -> None:
