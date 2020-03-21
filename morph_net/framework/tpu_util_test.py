@@ -79,15 +79,30 @@ class TpuUtilTest(parameterized.TestCase, tf.test.TestCase):
     self.assertEqual(tpu_util.maybe_convert_to_variable(relu), relu)
 
   def test_write_to_variable(self):
-    with tf.variable_scope(''):
-      foo = tf.constant(0.)
-      tpu_util.write_to_variable(foo)
+    foo = tf.constant(0., name='foo')
+    tpu_util.write_to_variable(foo)
+
+    with self.assertRaises(ValueError):
+      tpu_util.write_to_variable(foo, fail_if_exists=True)
+
+    # Variable sharing behavior should be dictated by `fail_if_exists` which
+    # overrides the effect of outer scopes.
     with tf.variable_scope('', reuse=True):
-      bar = tf.constant(0.)
+      # should fail to return existing variable even though reuse=True
+      with self.assertRaises(ValueError):
+        tpu_util.write_to_variable(foo, fail_if_exists=True)
+
+    with tf.variable_scope('', reuse=False):
+      # should return existing variable even though reuse=False
+      foo_copy = tpu_util.write_to_variable(foo, fail_if_exists=False)
+      self.assertEqual(tpu_util.var_store[foo], tpu_util.var_store[foo_copy])
+      self.assertLen(set(tpu_util.var_store.values()), 1)
+
+    with tf.variable_scope('', reuse=True):
+      # should create new variable even though reuse=True
+      bar = tf.constant(0., name='bar')
       tpu_util.write_to_variable(bar)
-    with tf.variable_scope('', reuse=tf.compat.v1.AUTO_REUSE):
-      zee = tf.constant(0.)
-      tpu_util.write_to_variable(zee)
+      self.assertLen(set(tpu_util.var_store.values()), 2)
 
 if __name__ == '__main__':
   tf.test.main()

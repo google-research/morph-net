@@ -92,31 +92,23 @@ def maybe_convert_to_variable(tensor):
 
 
 var_store = {}
+top_level_scope = tf.get_variable_scope()
 
 
 def write_to_variable(tensor, fail_if_exists=True):
   """Saves a tensor for later retrieval on CPU."""
   # Only relevant for debugging.
-  debug_name = 'tpu_util__' + tensor.name.split(':')[0].split('/')[-1]
+  debug_name = 'tpu_util__' + tensor.name.split(':')[0]
 
-  if fail_if_exists:
-    # Note: reuse cannot be changed from True to False, so we just check if
-    # the variable exists.
-    with tf.variable_scope('', reuse=True):
-      try:
-        tf.get_variable(debug_name)
-      except ValueError:
-        pass  # Variable with name=debug_name does not exist; proceed.
-      else:
-        raise ValueError('Variable %s already exists!' % debug_name)
-
-  with tf.variable_scope('', reuse=tf.compat.v1.AUTO_REUSE):
+  reuse = False if fail_if_exists else tf.compat.v1.AUTO_REUSE
+  with tf.variable_scope(top_level_scope, reuse=reuse):
     variable = tf.get_variable(
         name=debug_name,
         shape=tensor.shape,
         dtype=tensor.dtype,
         trainable=False,
         use_resource=True)
+
   var_store[tensor] = variable
   with tf.control_dependencies([variable.assign(tensor)]):
     tensor_copy = tf.identity(tensor)
