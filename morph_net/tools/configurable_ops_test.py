@@ -419,7 +419,9 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
     decorator_zero_output = decorator.batch_norm(ops.VANISHED, **kwargs)
     tf_output = layers.batch_norm(self.inputs, **kwargs)
 
-    self.assertAllEqual(decorator_regular_output, tf_output)
+    with self.cached_session():
+      tf.global_variables_initializer().run()
+      self.assertAllEqual(decorator_regular_output, tf_output)
     self.assertTrue(ops.is_vanished(decorator_zero_output))
 
 
