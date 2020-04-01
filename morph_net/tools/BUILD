@@ -41,6 +41,7 @@ py_library(
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
+        "//third_party/tensorflow/contrib/slim",
     ],
 )
 

@@ -14,6 +14,7 @@ from absl.testing import parameterized
 from morph_net.tools import configurable_ops as ops
 
 import tensorflow.compat.v1 as tf
+import tensorflow.contrib as tf_contrib
 
 from tensorflow.contrib import layers
 from tensorflow.contrib.framework import add_arg_scope
@@ -423,6 +424,71 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
       tf.global_variables_initializer().run()
       self.assertAllEqual(decorator_regular_output, tf_output)
     self.assertTrue(ops.is_vanished(decorator_zero_output))
+
+  @parameterized.named_parameters(
+      ('_SlimLayers', tf_contrib.slim.conv2d, 'num_outputs', 'Conv'),
+      ('_ContribLayers', tf_contrib.layers.conv2d, 'num_outputs', 'Conv'),
+      ('_TfLayer', tf.layers.conv2d, 'filters', 'conv2d'))
+  def testDefaultScopes_Conv(
+      self, conv_fn, num_outputs_kwarg, expected_op_scope):
+    inputs = tf.ones([1, 3, 3, 2])
+    parameterization = {
+        '{}/Conv2D'.format(expected_op_scope): 5
+    }
+    decorator = ops.ConfigurableOps(
+        parameterization=parameterization, function_dict={'conv2d': conv_fn})
+    _ = decorator.conv2d(inputs, **{num_outputs_kwarg: 8, 'kernel_size': 2})
+    self.assertDictEqual(parameterization, decorator.constructed_ops)
+
+  @parameterized.named_parameters(
+      ('_SlimLayers',
+       tf_contrib.slim.fully_connected, 'num_outputs', 'fully_connected'),
+      ('_ContribLayers',
+       tf_contrib.layers.fully_connected, 'num_outputs', 'fully_connected'),
+      ('_TfLayer',
+       tf.layers.dense, 'units', 'dense'))
+  def testDefaultScopes_Dense(
+      self, dense_fn, num_outputs_kwarg, expected_op_scope):
+    inputs = tf.ones([1, 2])
+    parameterization = {
+        '{}/MatMul'.format(expected_op_scope): 5
+    }
+    decorator = ops.ConfigurableOps(
+        parameterization=parameterization,
+        function_dict={'fully_connected': dense_fn})
+    _ = decorator.fully_connected(inputs, **{num_outputs_kwarg: 8})
+    self.assertDictEqual(parameterization, decorator.constructed_ops)
+
+  def testDefaultScopesRepeated(self):
+    inputs = tf.ones([1, 3, 3, 2])
+    parameterization = {
+        's1/SeparableConv2d/separable_conv2d': 1,
+        's1/SeparableConv2d_1/separable_conv2d': 2,
+        's1/s2/SeparableConv2d/separable_conv2d': 3,
+        's1/s2/SeparableConv2d_1/separable_conv2d': 4,
+    }
+    decorator = ops.ConfigurableOps(
+        parameterization=parameterization,
+        function_dict={'separable_conv2d': tf_contrib.slim.separable_conv2d})
+
+    with tf.variable_scope('s1'):
+      # first call in s1: op scope should be `s1/SeparableConv2d`
+      _ = decorator.separable_conv2d(inputs, num_outputs=8, kernel_size=2)
+
+      with tf.variable_scope('s2'):
+        # first call in s2: op scope should be `s1/s2/SeparableConv2d`
+        _ = decorator.separable_conv2d(inputs, num_outputs=8, kernel_size=2)
+
+        # second call in s2: op scope should be `s1/s2/SeparableConv2d_1`
+        _ = decorator.separable_conv2d(inputs, num_outputs=8, kernel_size=2)
+
+      # second call in s1: op scope should be `s1/SeparableConv2d_1`
+      _ = decorator.separable_conv2d(inputs, num_outputs=8, kernel_size=2)
+
+    conv_op_names = [op.name for op in tf.get_default_graph().get_operations()
+                     if op.name.endswith('separable_conv2d')]
+    self.assertCountEqual(parameterization, conv_op_names)
+    self.assertDictEqual(parameterization, decorator.constructed_ops)
 
 
 class Fake(object):

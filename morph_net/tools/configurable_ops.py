@@ -45,16 +45,67 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
+import copy
 import json
 from enum import Enum
 
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import layers as tf_layers
 from tensorflow.contrib import framework
-from tensorflow.contrib import layers
+from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import slim as slim_layers
 # gfile = tf.gfile  # Aliase needed for mock.
 
 VANISHED = 0.0
-NUM_OUTPUTS = 'num_outputs'
+_DEFAULT_NUM_OUTPUTS_KWARG = 'num_outputs'
+
+_DEFAULT_FUNCTION_DICT = {
+    'fully_connected': contrib_layers.fully_connected,
+    'conv2d': contrib_layers.conv2d,
+    'separable_conv2d': contrib_layers.separable_conv2d,
+    'concat': tf.concat,
+    'add_n': tf.add_n,
+    'avg_pool2d': contrib_layers.avg_pool2d,
+    'max_pool2d': contrib_layers.max_pool2d,
+    'batch_norm': contrib_layers.batch_norm,
+}
+
+_OP_SCOPE_DEFAULTS = {
+    tf_layers.conv2d: 'conv2d',
+    slim_layers.conv2d: 'Conv',
+    contrib_layers.conv2d: 'Conv',
+
+    tf_layers.separable_conv2d: 'separable_conv2d',
+    slim_layers.separable_conv2d: 'SeparableConv2d',
+    contrib_layers.separable_conv2d: 'SeparableConv2d',
+
+    tf_layers.dense: 'dense',
+    slim_layers.fully_connected: 'fully_connected',
+    contrib_layers.fully_connected: 'fully_connected',
+}
+
+# Maps function names to the suffix of the name of the regularized ops.
+_SUFFIX_DICT = {
+    'fully_connected': 'MatMul',
+    'conv2d': 'Conv2D',
+    'separable_conv2d': 'separable_conv2d',
+}
+
+
+def get_function_dict(overrides=None):
+  """Get mapping from function name to function for ConfigurableOps.
+
+  Args:
+    overrides: Dict: str -> function. Optionally replace entries in
+      `_DEFAULT_FUNCTION_DICT`.
+
+  Returns:
+    Dict: function name (str) to function.
+  """
+  overrides = overrides or {}
+  function_dict = copy.deepcopy(_DEFAULT_FUNCTION_DICT)
+  function_dict.update(overrides)
+  return function_dict
 
 
 def is_vanished(maybe_tensor):
@@ -78,25 +129,6 @@ class FallbackRule(Enum):
   pass_through = 'pass_through'
   strict = 'strict'
   zero = 'zero'
-
-
-DEFAULT_FUNCTION_DICT = {
-    'fully_connected': layers.fully_connected,
-    'conv2d': layers.conv2d,
-    'separable_conv2d': layers.separable_conv2d,
-    'concat': tf.concat,
-    'add_n': tf.add_n,
-    'avg_pool2d': layers.avg_pool2d,
-    'max_pool2d': layers.max_pool2d,
-    'batch_norm': layers.batch_norm,
-}
-
-# Maps function names to the suffix of the name of the regularized ops.
-SUFFIX_DICT = {
-    'fully_connected': 'MatMul',
-    'conv2d': 'Conv2D',
-    'separable_conv2d': 'separable_conv2d',
-}
 
 
 class ConfigurableOps(object):
@@ -134,7 +166,7 @@ class ConfigurableOps(object):
         integer which is the target NUM_OUTPUTS.
       function_dict: A dict between names of ops (strings) and functions
         which accept num_outputs as the second argument. If None defaults to
-        DEFAULT_FUNCTION_DICT.
+        _DEFAULT_FUNCTION_DICT.
       fallback_rule: A `FallbackRule` enum which controls fallback behavior:
           * 'pass_through' provided NUM_OUTPUTS is passed to decorated
             function (default).
@@ -152,13 +184,16 @@ class ConfigurableOps(object):
             isinstance(fallback_rule, str)):
       raise ValueError('fallback_rule must be a string or FallbackRule Enum')
 
-    self._function_dict = function_dict or DEFAULT_FUNCTION_DICT
-    self._suffix_dict = SUFFIX_DICT
+    self._function_dict = function_dict or _DEFAULT_FUNCTION_DICT
+    self._suffix_dict = _SUFFIX_DICT
     self._constructed_ops = collections.OrderedDict()
     if isinstance(fallback_rule, str):
       fallback_rule = FallbackRule[fallback_rule]  # Converts from string.
     self._default_to_zero = fallback_rule == FallbackRule.zero
     self._strict = fallback_rule == FallbackRule.strict
+
+    # To keep track of the number of identical scopes encountered
+    self._scope_counts = {}
 
   @property
   def parameterization(self):
@@ -235,16 +270,17 @@ class ConfigurableOps(object):
     Raises:
       ValueError: If kwargs does not contain a key named 'scope'.
     """
-    num_outputs = _get_from_args_or_kwargs(NUM_OUTPUTS, 1, args, kwargs,
-                                           False)
+    # This function actually only decorates the num_outputs of the Conv2D after
+    # the depthwise convolution, as the former does not have any free params.
+    fn, suffix = self._get_function_and_suffix('separable_conv2d')
+    num_outputs_kwarg_name = self._get_num_outputs_kwarg_name(fn)
+    num_outputs = _get_from_args_or_kwargs(
+        num_outputs_kwarg_name, 1, args, kwargs, False)
     if num_outputs is None:
       tf.logging.warning(
           'Trying to decorate separable_conv2d with num_outputs = None')
-      kwargs[NUM_OUTPUTS] = None
-    # This function actually only decorates the num_outputs of the Conv2D after
-    # the depthwise convolution, as the former does not have any free params.
+      kwargs[num_outputs_kwarg_name] = None
 
-    fn, suffix = self._get_function_and_suffix('separable_conv2d')
     return self._mask(fn, suffix, *args, **kwargs)
 
   def _mask(self, function, suffix, *args, **kwargs):
@@ -262,7 +298,7 @@ class ConfigurableOps(object):
 
     Args:
       function: A callable function to mask the NUM_OUTPUTS parameter from.
-        Examples for functions are in DEFAULT_FUNCTION_DICT.
+        Examples for functions are in _DEFAULT_FUNCTION_DICT.
         The callable function must accept a NUM_OUTPUTS parameter as the
         second argument.
       suffix: A string with the suffix of the op name.
@@ -277,22 +313,42 @@ class ConfigurableOps(object):
     Raises:
       ValueError: If kwargs does not contain a key named 'scope'.
     """
-    if ('scope' not in kwargs) and ('name' not in kwargs):
-      raise ValueError('kwargs must contain key \'scope\' or \'name\'')
     inputs = args[0] if args else kwargs.pop('inputs')
     if is_vanished(inputs):
       return VANISHED
 
-    # Support for tf.contrib.layers and tf.layers API.
-    op_scope = kwargs.get('scope') or kwargs.get('name')
     current_scope = framework.get_name_scope() or ''
     if current_scope and not current_scope.endswith('/'):
       current_scope += '/'
-    op_name = ''.join([current_scope, op_scope, '/', suffix])
+
+    op_scope = kwargs.get('scope') or kwargs.get('name')
+    if op_scope:
+      if op_scope.endswith('/'):
+        raise ValueError(
+            'Scope `{}` ends with `/` which leads to unexpected '
+            'behavior.'.format(op_scope))
+      full_scope = current_scope + op_scope
+    else:
+      # Use default scope, optionally appending a unique ID if scope exists
+      if function not in _OP_SCOPE_DEFAULTS:
+        raise ValueError(
+            'No `scope` or `name` found in kwargs, and no default scope '
+            'defined for {}'.format(_get_function_name(function)))
+      op_scope = _OP_SCOPE_DEFAULTS[function]
+      full_scope = current_scope + op_scope
+      if full_scope in self._scope_counts:
+        new_scope = full_scope + '_' + str(self._scope_counts[full_scope])
+        self._scope_counts[full_scope] += 1
+        full_scope = new_scope
+      else:
+        self._scope_counts[full_scope] = 1
+
+    op_name = full_scope + '/' + suffix
 
     # Assumes `inputs` is the first argument and `num_outputs` is the second
     # argument.
-    num_outputs = self._parse_num_outputs(op_name, args, kwargs)
+    num_outputs = self._parse_num_outputs(
+        op_name, self._get_num_outputs_kwarg_name(function), args, kwargs)
     args = args[2:]  # Possibly and empty list of < 3 positional args are used.
 
     self._insert_to_parameterization_log(op_name, num_outputs)
@@ -336,7 +392,16 @@ class ConfigurableOps(object):
     return self._pass_through_mask(
         self._function_dict['batch_norm'], *args, **kwargs)
 
-  def _parse_num_outputs(self, op_name, args, kwargs):
+  def _get_num_outputs_kwarg_name(self, function):
+    """Gets the `num_outputs`-equivalent kwarg for a supported function."""
+    alt_num_outputs_kwarg = {
+        tf_layers.conv2d: 'filters',
+        tf_layers.separable_conv2d: 'filters',
+        tf_layers.dense: 'units',
+    }
+    return alt_num_outputs_kwarg.get(function, _DEFAULT_NUM_OUTPUTS_KWARG)
+
+  def _parse_num_outputs(self, op_name, num_outputs_kwarg_name, args, kwargs):
     """Computes the target NUM_OUTPUTS and adjusts kwargs in place.
 
     Will try to extract the number of outputs from the op_name's
@@ -346,6 +411,8 @@ class ConfigurableOps(object):
 
     Args:
       op_name: A string, the name of the op to get NUM_OUTPUTS for.
+      num_outputs_kwarg_name: A string, the name of the `num_outputs`-equivalent
+        kwarg.
       args: Position arguments for the callable. Assumes that NUM_OUTPUTS
       position is 1.
       kwargs: key word arguments for the callable.
@@ -361,8 +428,9 @@ class ConfigurableOps(object):
       raise KeyError('op_name \"%s\" not found in parameterization' % op_name)
 
     # Assumes that the position of num_outputs is 1.
-    base_num_outputs = _get_from_args_or_kwargs(NUM_OUTPUTS, 1, args, kwargs)
-    kwargs.pop(NUM_OUTPUTS, None)  # Removes num_outputs from kwargs if there.
+    base_num_outputs = _get_from_args_or_kwargs(
+        num_outputs_kwarg_name, 1, args, kwargs)
+    kwargs.pop(num_outputs_kwarg_name, None)  # Removes num_outputs from kwargs.
 
     default_num_outputs = 0 if self._default_to_zero else base_num_outputs
     return self._parameterization.get(op_name, default_num_outputs)
@@ -423,6 +491,11 @@ def _get_from_args_or_kwargs(name, index, args, kwargs, is_required=True):
     return None
 
 
+def _get_function_name(function):
+  """Get a descriptive identifier for `function`."""
+  return '{}.{}'.format(function.__module__, function.__name__)
+
+
 def hijack_module_functions(configurable_ops, module):
   """Hijacks the functions from module using configurable_ops.
 
@@ -458,7 +531,7 @@ def hijack_module_functions(configurable_ops, module):
 
   Args:
     configurable_ops: An ConfigurableOps object, to use functions as defined in
-    'DEFAULT_FUNCTION_DICT'.
+    '_DEFAULT_FUNCTION_DICT'.
     module: A module name to override its functions.
 
   Returns:
@@ -480,7 +553,7 @@ def hijack_module_functions(configurable_ops, module):
       originals[attr] = getattr(module, attr)
       setattr(module, attr, getattr(configurable_ops, attr))
 
-  for fn in DEFAULT_FUNCTION_DICT:
+  for fn in _DEFAULT_FUNCTION_DICT:
     maybe_setattr(fn)
   return originals
 
@@ -490,7 +563,7 @@ def recover_module_functions(originals, module):
 
   Args:
     originals: Dict of functions to recover. Assumes keys are a contained in
-    'DEFAULT_FUNCTION_DICT'.
+    '_DEFAULT_FUNCTION_DICT'.
     module: A module name to recover its functions.
 
   """
@@ -499,7 +572,7 @@ def recover_module_functions(originals, module):
 
 
 def decorator_from_parameterization_file(
-    filename, fallback_rule=FallbackRule.pass_through):
+    filename, fallback_rule=FallbackRule.pass_through, **kwargs):
   """Create a ConfigurableOps from a parameterization file.
 
     Loads a json parameterization file from disk
@@ -510,6 +583,7 @@ def decorator_from_parameterization_file(
     filename: Path to a parameterization file in json format.
     fallback_rule: A `FallbackRule` enum which controls fallback behavior
       (see __init__ for more detail.)
+    **kwargs: Miscellaneous args for ConfigurableOps.
 
   Returns:
     An ConfigurableOps instance with the parameterization from `filename`.
@@ -517,4 +591,5 @@ def decorator_from_parameterization_file(
   with tf.gfile.Open(filename, 'r') as f:
     parameterization = json.loads(f.read())
     return ConfigurableOps(
-        parameterization=parameterization, fallback_rule=fallback_rule)
+        parameterization=parameterization, fallback_rule=fallback_rule,
+        **kwargs)
