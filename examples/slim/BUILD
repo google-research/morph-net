@@ -14,6 +14,7 @@ exports_files(["LICENSE"])
 py_library(
     name = "dataset_utils",
     srcs = ["datasets/dataset_utils.py"],
+    srcs_version = "PY2AND3",
     deps = [
         "//third_party/py/six",
         # "//tensorflow",
@@ -170,9 +171,6 @@ py_library(
 py_library(
     name = "model_deploy",
     srcs = ["deployment/model_deploy.py"],
-    deps = [
-        # "//tensorflow",
-    ],
 )
 
 py_test(
@@ -180,11 +178,7 @@ py_test(
     srcs = ["deployment/model_deploy_test.py"],
     python_version = "PY2",
     srcs_version = "PY2AND3",
-    deps = [
-        ":model_deploy",
-        # "//numpy",
-        # "//tensorflow",
-    ],
+    deps = [":model_deploy"],
 )
 
 py_library(
@@ -215,7 +209,9 @@ py_library(
 py_library(
     name = "vgg_preprocessing",
     srcs = ["preprocessing/vgg_preprocessing.py"],
+    srcs_version = "PY2AND3",
     deps = [
+        "//third_party/py/six",
         # "//tensorflow",
     ],
 )
@@ -743,8 +739,6 @@ py_test(
     deps = [
         ":resnet_utils",
         ":resnet_v2",
-        # "//numpy",
-        # "//tensorflow",
     ],
 )
 

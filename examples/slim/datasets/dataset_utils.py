@@ -21,6 +21,7 @@ import os
 import sys
 import tarfile
 
+from six.moves import range
 from six.moves import urllib
 import tensorflow.compat.v1 as tf
 
@@ -165,7 +166,7 @@ def read_label_file(dataset_dir, filename=LABELS_FILENAME):
   with tf.gfile.Open(labels_filename, 'rb') as f:
     lines = f.read().decode()
   lines = lines.split('\n')
-  lines = filter(None, lines)
+  lines = [_f for _f in lines if _f]
 
   labels_to_class_names = {}
   for line in lines:
