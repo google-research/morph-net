@@ -45,13 +45,12 @@ py_library(
     ],
 )
 
-py_test(
+py2and3_test(
     name = "configurable_ops_test",
     size = "medium",
     srcs = [
         "configurable_ops_test.py",
     ],
-    python_version = "PY2",
     tags = ["notap"],
     deps = [
         ":configurable_ops",
