@@ -191,6 +191,7 @@ class ConfigurableOps(object):
       fallback_rule = FallbackRule[fallback_rule]  # Converts from string.
     self._default_to_zero = fallback_rule == FallbackRule.zero
     self._strict = fallback_rule == FallbackRule.strict
+    self.default_scope_to_counts_map = {}
 
     # To keep track of the number of identical scopes encountered
     self._scope_counts = {}
@@ -317,6 +318,8 @@ class ConfigurableOps(object):
     if is_vanished(inputs):
       return VANISHED
 
+    # Support for tf.contrib.layers and tf.layers API.
+    op_scope = kwargs.get('scope')
     current_scope = framework.get_name_scope() or ''
     if current_scope and not current_scope.endswith('/'):
       current_scope += '/'
