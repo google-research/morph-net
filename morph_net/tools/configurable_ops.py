@@ -59,7 +59,7 @@ from tensorflow.contrib import slim as slim_layers
 VANISHED = 0.0
 _DEFAULT_NUM_OUTPUTS_KWARG = 'num_outputs'
 
-_DEFAULT_FUNCTION_DICT = {
+DEFAULT_FUNCTION_DICT = {
     'fully_connected': contrib_layers.fully_connected,
     'conv2d': contrib_layers.conv2d,
     'separable_conv2d': contrib_layers.separable_conv2d,
@@ -97,13 +97,13 @@ def get_function_dict(overrides=None):
 
   Args:
     overrides: Dict: str -> function. Optionally replace entries in
-      `_DEFAULT_FUNCTION_DICT`.
+      `DEFAULT_FUNCTION_DICT`.
 
   Returns:
     Dict: function name (str) to function.
   """
   overrides = overrides or {}
-  function_dict = copy.deepcopy(_DEFAULT_FUNCTION_DICT)
+  function_dict = copy.deepcopy(DEFAULT_FUNCTION_DICT)
   function_dict.update(overrides)
   return function_dict
 
@@ -166,7 +166,7 @@ class ConfigurableOps(object):
         integer which is the target NUM_OUTPUTS.
       function_dict: A dict between names of ops (strings) and functions
         which accept num_outputs as the second argument. If None defaults to
-        _DEFAULT_FUNCTION_DICT.
+        DEFAULT_FUNCTION_DICT.
       fallback_rule: A `FallbackRule` enum which controls fallback behavior:
           * 'pass_through' provided NUM_OUTPUTS is passed to decorated
             function (default).
@@ -184,7 +184,7 @@ class ConfigurableOps(object):
             isinstance(fallback_rule, str)):
       raise ValueError('fallback_rule must be a string or FallbackRule Enum')
 
-    self._function_dict = function_dict or _DEFAULT_FUNCTION_DICT
+    self._function_dict = function_dict or DEFAULT_FUNCTION_DICT
     self._suffix_dict = _SUFFIX_DICT
     self._constructed_ops = collections.OrderedDict()
     if isinstance(fallback_rule, str):
@@ -299,7 +299,7 @@ class ConfigurableOps(object):
 
     Args:
       function: A callable function to mask the NUM_OUTPUTS parameter from.
-        Examples for functions are in _DEFAULT_FUNCTION_DICT.
+        Examples for functions are in DEFAULT_FUNCTION_DICT.
         The callable function must accept a NUM_OUTPUTS parameter as the
         second argument.
       suffix: A string with the suffix of the op name.
@@ -534,7 +534,7 @@ def hijack_module_functions(configurable_ops, module):
 
   Args:
     configurable_ops: An ConfigurableOps object, to use functions as defined in
-    '_DEFAULT_FUNCTION_DICT'.
+    'DEFAULT_FUNCTION_DICT'.
     module: A module name to override its functions.
 
   Returns:
@@ -556,7 +556,7 @@ def hijack_module_functions(configurable_ops, module):
       originals[attr] = getattr(module, attr)
       setattr(module, attr, getattr(configurable_ops, attr))
 
-  for fn in _DEFAULT_FUNCTION_DICT:
+  for fn in DEFAULT_FUNCTION_DICT:
     maybe_setattr(fn)
   return originals
 
@@ -566,7 +566,7 @@ def recover_module_functions(originals, module):
 
   Args:
     originals: Dict of functions to recover. Assumes keys are a contained in
-    '_DEFAULT_FUNCTION_DICT'.
+    'DEFAULT_FUNCTION_DICT'.
     module: A module name to recover its functions.
 
   """
