@@ -121,7 +121,8 @@ def is_vanished(maybe_tensor):
   Returns:
     A boolean, whether maybe_tensor is a tensor.
   """
-  return maybe_tensor == VANISHED or maybe_tensor is None
+  return (isinstance(maybe_tensor, float) and
+          maybe_tensor == VANISHED) or maybe_tensor is None
 
 
 class FallbackRule(Enum):
