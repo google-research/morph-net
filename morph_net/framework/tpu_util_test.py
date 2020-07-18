@@ -104,5 +104,11 @@ class TpuUtilTest(parameterized.TestCase, tf.test.TestCase):
       tpu_util.write_to_variable(bar)
       self.assertLen(set(tpu_util.var_store.values()), 2)
 
+  def test_write_to_variable_check_inputs(self):
+    variable = tf.get_variable('x', shape=[1], dtype=tf.float32)
+    with self.assertRaises(ValueError):
+      tpu_util.write_to_variable(variable)
+
+
 if __name__ == '__main__':
   tf.test.main()

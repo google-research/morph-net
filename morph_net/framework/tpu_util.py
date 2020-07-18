@@ -97,6 +97,9 @@ top_level_scope = tf.get_variable_scope()
 
 def write_to_variable(tensor, fail_if_exists=True):
   """Saves a tensor for later retrieval on CPU."""
+  if not isinstance(tensor, tf.Tensor):
+    raise ValueError('Expected tf.Tensor but got {}'.format(type(tensor)))
+
   # Only relevant for debugging.
   debug_name = 'tpu_util__' + tensor.name.split(':')[0]
 
