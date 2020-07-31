@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import functools
 import json
 import os
 
@@ -12,8 +13,10 @@ from absl import flags
 from absl.testing import parameterized
 
 from morph_net.tools import configurable_ops as ops
+from morph_net.tools import test_module as tm
 
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1.keras import layers as keras_layers
 import tensorflow.contrib as tf_contrib
 
 from tensorflow.contrib import layers
@@ -50,6 +53,313 @@ def mock_concat(*args, **kwargs):
 @add_arg_scope
 def mock_add_n(*args, **kwargs):
   return {'mock_name': 'myaddn', 'args': args, 'kwargs': kwargs}
+
+
+class ConfigurableKerasLayersTest(parameterized.TestCase, tf.test.TestCase):
+
+  def setUp(self):
+    super(ConfigurableKerasLayersTest, self).setUp()
+    tf.reset_default_graph()
+    self.inputs_shape = [1, 10, 10, 3]
+    self.inputs = tf.ones(self.inputs_shape, dtype=tf.float32)
+
+  def testConfigurableConv2DFunctionality(self):
+    out = ops.ConfigurableConv2D(filters=5, kernel_size=2)(self.inputs)
+    expected = keras_layers.Conv2D(filters=5, kernel_size=2)(self.inputs)
+    self.assertAllEqual(out.shape, expected.shape)
+    self.assertIn('configurable_conv2d/ConfigurableConv2D',
+                  [op.name for op in tf.get_default_graph().get_operations()])
+
+  def testConfigurableSeparableConv2DFunctionality(self):
+    out = ops.ConfigurableSeparableConv2D(filters=5, kernel_size=2)(self.inputs)
+    expected = keras_layers.SeparableConv2D(filters=5, kernel_size=2)(
+        self.inputs)
+    self.assertAllEqual(out.shape, expected.shape)
+    self.assertIn('configurable_separable_conv2d/separable_conv2d',
+                  [op.name for op in tf.get_default_graph().get_operations()])
+
+  def testConfigurableDenseFunctionality(self):
+    out = ops.ConfigurableDense(units=5)(self.inputs)
+    expected = keras_layers.Dense(units=5)(self.inputs)
+    self.assertAllEqual(out.shape, expected.shape)
+    self.assertIn('configurable_dense/Tensordot/MatMul',
+                  [op.name for op in tf.get_default_graph().get_operations()])
+
+  def testConfigurableConv2DParameterization(self):
+    # with default name
+    conv1 = ops.ConfigurableConv2D(
+        parameterization={'configurable_conv2d/ConfigurableConv2D': 1},
+        filters=10, kernel_size=3)
+    out1 = conv1(self.inputs)
+    self.assertEqual(1, out1.shape.as_list()[-1])
+
+    # with custom name
+    conv2 = ops.ConfigurableConv2D(
+        parameterization={'conv2/ConfigurableConv2D': 2}, filters=10,
+        kernel_size=3, name='conv2')
+    out2 = conv2(self.inputs)
+    self.assertEqual(2, out2.shape.as_list()[-1])
+
+  def testConfigurableSeparableConv2DParameterization(self):
+    # with default name
+    conv1 = ops.ConfigurableSeparableConv2D(
+        parameterization={'configurable_separable_conv2d/separable_conv2d': 1},
+        filters=10, kernel_size=3)
+    out1 = conv1(self.inputs)
+    self.assertEqual(1, out1.shape.as_list()[-1])
+
+    # with custom name
+    conv2 = ops.ConfigurableSeparableConv2D(
+        parameterization={'sep_conv/separable_conv2d': 2}, filters=10,
+        kernel_size=3, name='sep_conv')
+    out2 = conv2(self.inputs)
+    self.assertEqual(2, out2.shape.as_list()[-1])
+
+  def testConfigurableDenseParameterization(self):
+    # with default name
+    dense1 = ops.ConfigurableDense(
+        parameterization={'configurable_dense/Tensordot/MatMul': 1}, units=10)
+    out1 = dense1(self.inputs)
+    self.assertEqual(1, out1.shape.as_list()[-1])
+
+    # with custom name
+    dense2 = ops.ConfigurableDense(
+        parameterization={'fc/Tensordot/MatMul': 2}, units=10, name='fc')
+    out2 = dense2(self.inputs)
+    self.assertEqual(2, out2.shape.as_list()[-1])
+
+  def testParameterizeDuplicateNames(self):
+    parameterization = {
+        'conv1/ConfigurableConv2D': 1,
+        'conv1_1/ConfigurableConv2D': 2,
+        'configurable_conv2d/ConfigurableConv2D': 3,
+        'configurable_conv2d_1/ConfigurableConv2D': 4,
+    }
+    conv1 = ops.ConfigurableConv2D(
+        parameterization=parameterization, filters=10, kernel_size=3,
+        name='conv1')
+    conv1_1 = ops.ConfigurableConv2D(
+        parameterization=parameterization, filters=10, kernel_size=3,
+        name='conv1')
+    conv_default_name = ops.ConfigurableConv2D(
+        parameterization=parameterization, filters=10, kernel_size=3)
+    conv_default_name_1 = ops.ConfigurableConv2D(
+        parameterization=parameterization, filters=10, kernel_size=3)
+
+    out = conv1(self.inputs)
+    self.assertEqual(1, out.shape.as_list()[-1])
+    out = conv1_1(self.inputs)
+    self.assertEqual(2, out.shape.as_list()[-1])
+    out = conv_default_name(self.inputs)
+    self.assertEqual(3, out.shape.as_list()[-1])
+    out = conv_default_name_1(self.inputs)
+    self.assertEqual(4, out.shape.as_list()[-1])
+
+  def testParameterizeNamesWithSlashes(self):
+    conv1 = ops.ConfigurableConv2D(
+        parameterization={'name/with/slashes/ConfigurableConv2D': 1,},
+        filters=10, kernel_size=3, name='name/with/slashes')
+    out1 = conv1(self.inputs)
+    self.assertEqual(out1.shape.as_list()[-1], 1)
+
+    conv2 = ops.ConfigurableConv2D(
+        parameterization={'name//with///multislash/ConfigurableConv2D': 2},
+        filters=10, kernel_size=3, name='name//with///multislash')
+    out2 = conv2(self.inputs)
+    self.assertEqual(out2.shape.as_list()[-1], 2)
+
+    # When Keras calls tf.variable_scope with N trailing slashes,
+    # tf.variable_scope will create a scope with N-1 trailing slashes.
+    conv3 = ops.ConfigurableConv2D(
+        parameterization={'name/ends/with/slashes//ConfigurableConv2D': 3},
+        filters=10, kernel_size=3, name='name/ends/with/slashes///')
+    out3 = conv3(self.inputs)
+    self.assertEqual(3, out3.shape.as_list()[-1])
+
+  def testStrictness(self):
+    parameterization = {
+        'unused_conv/Conv2D': 2,
+    }
+    conv_not_strict = ops.ConfigurableConv2D(
+        parameterization=parameterization, is_strict=False, filters=10,
+        kernel_size=3)
+    conv_strict = ops.ConfigurableConv2D(
+        parameterization=parameterization, is_strict=True, filters=10,
+        kernel_size=3)
+
+    # extra ops in the parameterization are ok
+    out = conv_not_strict(self.inputs)
+    self.assertEqual(10, out.shape.as_list()[-1])
+
+    # when strict=True, all ops in the parameterization must be used
+    with self.assertRaises(KeyError):
+      out = conv_strict(self.inputs)
+
+  def testConfigurableConv2DAlternateOpSuffixes(self):
+    # ConfigurableConv2D accepts both 'Conv2D' and 'ConfigurableConv2D' as op
+    # suffixes in the parameterization to be compatible with structures learned
+    # using keras.layers.Conv2D or ConfigurableConv2D.
+    valid_parameterization_1 = {
+        'conv1/Conv2D': 1,
+    }
+    out1 = ops.ConfigurableConv2D(
+        parameterization=valid_parameterization_1, filters=10, kernel_size=3,
+        name='conv1')(self.inputs)
+    self.assertEqual(out1.shape.as_list()[-1], 1)
+
+    valid_parameterization_2 = {
+        'conv2/ConfigurableConv2D': 2,
+    }
+    out2 = ops.ConfigurableConv2D(
+        parameterization=valid_parameterization_2, filters=10, kernel_size=3,
+        name='conv2')(self.inputs)
+    self.assertEqual(out2.shape.as_list()[-1], 2)
+
+    # Only one op suffix variant should exist in the parameterization.
+    bad_parameterization = {
+        'conv3/Conv2D': 1,
+        'conv3/ConfigurableConv2D': 2
+    }
+    with self.assertRaises(KeyError):
+      _ = ops.ConfigurableConv2D(
+          parameterization=bad_parameterization, filters=10, kernel_size=3,
+          name='conv3')(self.inputs)
+
+  def testHijackingImportedLayerLib(self):
+    parameterization = {'conv/Conv2D': 1}
+    module = tm.layers
+    _, original_layers = ops.hijack_keras_module(parameterization, module)
+    out = tm.build_simple_keras_model(self.inputs)
+    ops.recover_module_functions(original_layers, module)
+    self.assertEqual(out.shape.as_list()[-1], 1)
+
+  def testHijackingImportedKerasLib(self):
+    parameterization = {'conv/Conv2D': 1}
+    module = tm.keras.layers
+    _, original_layers = ops.hijack_keras_module(parameterization, module)
+    out = tm.build_simple_keras_model_from_keras_lib(self.inputs)
+    ops.recover_module_functions(original_layers, module)
+    self.assertEqual(out.shape.as_list()[-1], 1)
+
+  def testHijackingLocalAliases(self):
+    parameterization = {'conv/Conv2D': 1}
+    module = tm
+    _, original_layers = ops.hijack_keras_module(parameterization, module)
+    out = tm.build_simple_keras_model_from_local_aliases(self.inputs)
+    ops.recover_module_functions(original_layers, module)
+    self.assertEqual(out.shape.as_list()[-1], 1)
+
+  def testConstructedOps(self):
+    parameterization = {
+        'conv/Conv2D': 1,
+        'sep_conv/separable_conv2d': 2,
+        'dense/Tensordot/MatMul': 3,
+    }
+    module = tm
+    constructed_ops, original_layers = ops.hijack_keras_module(
+        parameterization, module)
+    out = tm.build_model_with_all_configurable_types(self.inputs)
+    ops.recover_module_functions(original_layers, module)
+    self.assertEqual(out.shape.as_list()[-1], 3)
+    self.assertDictEqual(constructed_ops, parameterization)
+
+  def _hijack_and_recover(self, parameterization, **kwargs):
+    module = tm
+    _, original_layers = ops.hijack_keras_module(
+        parameterization, module, **kwargs)
+    out = tm.build_model_with_all_configurable_types(self.inputs)
+    ops.recover_module_functions(original_layers, module)
+    return out
+
+  def testRemoveCommonPrefix_SinglePrefix(self):
+    parameterization = {
+        'morphnet/conv/Conv2D': 1,
+        'morphnet/sep_conv/separable_conv2d': 2,
+        'morphnet/dense/Tensordot/MatMul': 3,
+    }
+    output = self._hijack_and_recover(
+        parameterization, remove_common_prefix=True)
+
+    # 'morphnet' prefix is removed and the network is correctly parameterized
+    self.assertEqual(output.shape.as_list()[-1], 3)
+
+  def testRemoveCommonPrefix_MultiPrefix(self):
+    parameterization = {
+        'multiple/common/prefixes/conv/Conv2D': 1,
+        'multiple/common/prefixes/sep_conv/separable_conv2d': 2,
+        'multiple/common/prefixes/dense/Tensordot/MatMul': 3,
+    }
+    output = self._hijack_and_recover(
+        parameterization, remove_common_prefix=True)
+
+    # only the first scope is removed and the network is not parameterized
+    self.assertEqual(output.shape.as_list()[-1], 10)
+
+  def testKeepFirstChannelAlive(self):
+    parameterization = {
+        'conv/Conv2D': 1,
+        'sep_conv/separable_conv2d': 0,  # would disconnect the network
+        'dense/Tensordot/MatMul': 3,
+    }
+    output = self._hijack_and_recover(
+        parameterization, keep_first_channel_alive=True)
+    self.assertEqual(output.shape.as_list()[-1], 3)
+
+  @parameterized.named_parameters(
+      ('BatchNormalization', keras_layers.BatchNormalization, {}),
+      ('Activation', keras_layers.Activation, {'activation': tf.nn.relu}),
+      ('UpSampling2D', keras_layers.UpSampling2D, {}))
+  def testPassThroughSingleInput(self, keras_layer_class, kwargs):
+    pass_through_layer = functools.partial(
+        ops.PassThroughKerasLayerWrapper,
+        keras_layer_class=keras_layer_class)
+    output = pass_through_layer(**kwargs)(self.inputs)
+    expected = keras_layer_class(**kwargs)(self.inputs)
+    with self.cached_session():
+      tf.global_variables_initializer().run()
+      self.assertAllClose(output.eval(), expected.eval())
+
+    output_vanished = pass_through_layer(**kwargs)(ops.VANISHED)
+    self.assertEqual(output_vanished, ops.VANISHED)
+
+  @parameterized.named_parameters(
+      ('Add', keras_layers.Add),
+      ('Concatenate', keras_layers.Concatenate),
+      ('Multiply', keras_layers.Multiply))
+  def testPassThroughMerge(self, keras_layer_class):
+    pass_through_layer = functools.partial(
+        ops.PassThroughKerasLayerWrapper,
+        keras_layer_class=keras_layer_class)
+    output = pass_through_layer()([self.inputs, 2 * self.inputs])
+    expected = keras_layer_class()([self.inputs, 2 * self.inputs])
+    self.assertAllEqual(output, expected)
+
+    some_ops_vanished = pass_through_layer()(
+        [self.inputs, ops.VANISHED, 2 * self.inputs])
+    expected = keras_layer_class()([self.inputs, 2 * self.inputs])
+    self.assertAllEqual(some_ops_vanished, expected)
+
+    all_ops_vanished = pass_through_layer()([ops.VANISHED, ops.VANISHED])
+    self.assertEqual(all_ops_vanished, ops.VANISHED)
+
+  def testPassThroughHijacking(self):
+    parameterization = {
+        'conv1/Conv2D': 0,  # followed by BatchNorm, Activation, Add and Concat
+        'conv2/Conv2D': 1,
+    }
+    module = tm.layers
+    _, original_layers = ops.hijack_keras_module(
+        parameterization, module, keep_first_channel_alive=False)
+
+    # output = Concat([branch1, branch2, branch1 + branch2]).
+    # if branch1 vanishes, output should have only 2 channels.
+    output, branch1, branch2 = tm.build_two_branch_model(self.inputs)
+
+    ops.recover_module_functions(original_layers, module)
+
+    self.assertEqual(branch1, ops.VANISHED)
+    self.assertEqual(branch2.shape.as_list(), [1, 8, 8, 1])
+    self.assertEqual(output.shape.as_list(), [1, 8, 8, 2])
 
 
 class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):

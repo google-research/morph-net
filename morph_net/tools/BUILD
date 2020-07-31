@@ -37,6 +37,7 @@ py_library(
         "configurable_ops.py",
     ],
     deps = [
+        ":structure_exporter",
         "//third_party/py/enum",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -54,6 +55,7 @@ py2and3_test(
     tags = ["notap"],
     deps = [
         ":configurable_ops",
+        ":test_module",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/flags",
         "//third_party/py/absl/testing:parameterized",
@@ -63,4 +65,10 @@ py2and3_test(
         "//third_party/tensorflow/contrib/slim",
         "//third_party/tensorflow/contrib/slim:nets",
     ],
+)
+
+py_library(
+    name = "test_module",
+    srcs = ["test_module.py"],
+    deps = ["//third_party/py/tensorflow"],
 )
