@@ -307,6 +307,56 @@ py2and3_test(
     ],
 )
 
+py_library(
+    name = "logistic_sigmoid_source_op_handler",
+    srcs = ["logistic_sigmoid_source_op_handler.py"],
+    deps = [
+        "//third_party/py/morph_net/framework:grouping_op_handler",
+        "//third_party/py/morph_net/framework:tpu_util",
+        "//third_party/py/morph_net/op_regularizers:prob_gating_regularizer",
+    ],
+)
+
+py2and3_test(
+    name = "logistic_sigmoid_source_op_handler_test",
+    srcs = ["logistic_sigmoid_source_op_handler_test.py"],
+    deps = [
+        ":logistic_sigmoid_source_op_handler",
+        "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//testing/pybase:parameterized",
+        "//third_party/py/mock",
+        "//third_party/py/morph_net/framework:op_regularizer_manager",
+        "//third_party/py/morph_net/probabilistic_gating:activation_gating",
+        "//third_party/py/scipy",
+        "//third_party/py/tensorflow",
+        "//third_party/tensorflow/contrib/framework:framework_py",
+        "//third_party/tensorflow/contrib/layers:layers_py",
+    ],
+)
+
+py_library(
+    name = "probabilistic_grouping_regularizer",
+    srcs = ["probabilistic_grouping_regularizer.py"],
+    deps = [
+        "//third_party/py/morph_net/framework:generic_regularizers",
+        "//third_party/py/tensorflow",
+    ],
+)
+
+py2and3_test(
+    name = "probabilistic_grouping_regularizer_test",
+    srcs = ["probabilistic_grouping_regularizer_test.py"],
+    deps = [
+        ":probabilistic_grouping_regularizer",
+        "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/morph_net/framework:grouping_regularizers",
+        "//third_party/py/morph_net/testing:op_regularizer_stub",
+        "//third_party/py/numpy",
+        "//third_party/py/tensorflow",
+    ],
+)
+
 py2and3_test(
     name = "op_handler_decorator_test",
     srcs = ["op_handler_decorator_test.py"],

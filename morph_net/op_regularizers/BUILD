@@ -38,3 +38,13 @@ py2and3_test(
         "//third_party/tensorflow/contrib/layers:layers_py",
     ],
 )
+
+py_library(
+    name = "prob_gating_regularizer",
+    srcs = ["prob_gating_regularizer.py"],
+    deps = [
+        "//third_party/py/morph_net/framework:generic_regularizers",
+        "//third_party/py/morph_net/framework:tpu_util",
+        "//third_party/py/tensorflow",
+    ],
+)
