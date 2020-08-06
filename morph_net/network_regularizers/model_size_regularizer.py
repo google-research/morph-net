@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 # [internal] enable type annotations
 from __future__ import print_function
+from typing import Text, Type, List
 
 from morph_net.framework import batch_norm_source_op_handler
 from morph_net.framework import conv2d_transpose_source_op_handler as conv2d_transpose_handler
@@ -14,9 +15,26 @@ from morph_net.framework import op_handler_decorator
 from morph_net.framework import op_handlers
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.network_regularizers import cost_calculator
+from morph_net.network_regularizers import logistic_sigmoid_regularizer
 from morph_net.network_regularizers import resource_function
 import tensorflow.compat.v1 as tf
-from typing import Text, Type, List
+
+
+class LogisticSigmoidModelSizeRegularizer(
+    logistic_sigmoid_regularizer.LogisticSigmoidRegularizer):
+  """A LogisticSigmoidRegularizer that targets model size."""
+
+  def get_calculator(self):
+    return cost_calculator.CostCalculator(
+        self._manager, resource_function.model_size_function)
+
+  @property
+  def name(self):
+    return 'LogisticSigmoidModelSize'
+
+  @property
+  def cost_name(self):
+    return 'ModelSize'
 
 
 class GammaModelSizeRegularizer(generic_regularizers.NetworkRegularizer):

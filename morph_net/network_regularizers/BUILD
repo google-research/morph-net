@@ -69,6 +69,7 @@ pytype_library(
     srcs = ["flop_regularizer.py"],
     deps = [
         ":cost_calculator",
+        ":logistic_sigmoid_regularizer",
         ":resource_function",
         "//third_party/py/morph_net/framework:batch_norm_source_op_handler",
         "//third_party/py/morph_net/framework:conv2d_transpose_source_op_handler",
@@ -92,6 +93,7 @@ py2and3_test(
         "//learning/brain/contrib/slim/nets:resnet_v1",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/morph_net/probabilistic_gating:activation_gating",
         "//third_party/py/morph_net/testing:dummy_decorator",
         "//third_party/py/numpy",
         "//third_party/py/tensorflow",
@@ -143,6 +145,7 @@ pytype_library(
     srcs = ["model_size_regularizer.py"],
     deps = [
         ":cost_calculator",
+        ":logistic_sigmoid_regularizer",
         ":resource_function",
         "//third_party/py/morph_net/framework:batch_norm_source_op_handler",
         "//third_party/py/morph_net/framework:conv2d_transpose_source_op_handler",
@@ -192,5 +195,36 @@ py2and3_test(
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/layers:layers_py",
         "//third_party/tensorflow/python:framework_for_generated_wrappers",
+    ],
+)
+
+pytype_library(
+    name = "logistic_sigmoid_regularizer",
+    srcs = ["logistic_sigmoid_regularizer.py"],
+    deps = [
+        "//third_party/py/morph_net/framework:generic_regularizers",
+        "//third_party/py/morph_net/framework:logistic_sigmoid_source_op_handler",
+        "//third_party/py/morph_net/framework:op_handler_decorator",
+        "//third_party/py/morph_net/framework:op_handlers",
+        "//third_party/py/morph_net/framework:op_regularizer_manager",
+        "//third_party/py/morph_net/framework:probabilistic_grouping_regularizer",
+        "//third_party/py/six",
+        "//third_party/py/tensorflow",
+    ],
+)
+
+py_test(
+    name = "logistic_sigmoid_regularizers_test",
+    srcs = ["logistic_sigmoid_regularizers_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":flop_regularizer",
+        ":logistic_sigmoid_regularizer",
+        ":model_size_regularizer",
+        "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/morph_net/network_regularizers:resource_function",
+        "//third_party/py/morph_net/probabilistic_gating:activation_gating",
+        "//third_party/py/tensorflow",
     ],
 )
