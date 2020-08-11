@@ -1,5 +1,4 @@
 load("//devtools/python/blaze:pytype.bzl", "pytype_library")
-load("//devtools/python/blaze:python3.bzl", "py2and3_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -23,9 +22,11 @@ pytype_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "activation_regularizer_test",
     srcs = ["activation_regularizer_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":activation_regularizer",
         ":resource_function",
@@ -44,9 +45,11 @@ pytype_library(
     deps = ["//third_party/py/tensorflow"],
 )
 
-py2and3_test(
+py_test(
     name = "cost_calculator_test",
     srcs = ["cost_calculator_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":cost_calculator",
         ":resource_function",
@@ -83,10 +86,12 @@ pytype_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "flop_regularizer_test",
     srcs = ["flop_regularizer_test.py"],
+    python_version = "PY3",
     shard_count = 2,
+    srcs_version = "PY3",
     deps = [
         ":flop_regularizer",
         ":resource_function",
@@ -121,10 +126,12 @@ pytype_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "latency_regularizer_test",
     srcs = ["latency_regularizer_test.py"],
+    python_version = "PY3",
     shard_count = 4,
+    srcs_version = "PY3",
     deps = [
         ":flop_regularizer",
         ":latency_regularizer",
@@ -159,9 +166,11 @@ pytype_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "model_size_regularizer_test",
     srcs = ["model_size_regularizer_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":model_size_regularizer",
         ":resource_function",
@@ -184,9 +193,11 @@ pytype_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "resource_function_test",
     srcs = ["resource_function_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":resource_function",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2

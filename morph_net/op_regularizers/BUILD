@@ -1,5 +1,3 @@
-load("//devtools/python/blaze:python3.bzl", "py2and3_test")
-
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
@@ -25,9 +23,11 @@ py_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "group_lasso_regularizer_test",
     srcs = ["group_lasso_regularizer_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":group_lasso_regularizer",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2

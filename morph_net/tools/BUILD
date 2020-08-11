@@ -1,4 +1,3 @@
-load("//devtools/python/blaze:python3.bzl", "py2and3_test")
 load("//devtools/python/blaze:pytype.bzl", "pytype_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -16,9 +15,11 @@ pytype_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "structure_exporter_test",
     srcs = ["structure_exporter_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":structure_exporter",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -46,12 +47,14 @@ py_library(
     ],
 )
 
-py2and3_test(
+py_test(
     name = "configurable_ops_test",
     size = "medium",
     srcs = [
         "configurable_ops_test.py",
     ],
+    python_version = "PY3",
+    srcs_version = "PY3",
     tags = ["notap"],
     deps = [
         ":configurable_ops",
