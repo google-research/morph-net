@@ -97,7 +97,7 @@ class LogisticSigmoidGating(tf.keras.layers.Layer):
       if self.global_step is None:
         raise ValueError('Must provide global_step if decaying temperature.')
       self.temperature = self.temperature * (
-          0.1 ** (self.global_step / float(self.annealing_rate)))
+          0.1 ** (tf.to_float(self.global_step) / float(self.annealing_rate)))
 
   def build(self, activation_shape):
     """Instantiate the mask variables (logits)."""
