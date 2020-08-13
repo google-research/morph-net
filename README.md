@@ -6,7 +6,12 @@
 
 MorphNet is a method for learning deep network structure during training. The
 key principle is continuous relaxation of the network-structure learning
-problem. Specifically, activation sparsity is induced by adding regularizers
+problem. In short, the MorphNet regularizer pushes the influence of filters down,
+and once they are small enough, the corresponding output channels are marked
+for removal from the network.
+
+
+Specifically, activation sparsity is induced by adding regularizers
 that target the consumption of specific resources such as FLOPs or model size.
 When the regularizer loss is added to the training loss and their sum is
 minimized via stochastic gradient descent or a similar optimizer, the learning
@@ -14,15 +19,12 @@ problem becomes a constrained optimization of the structure of the network,
 under the constraint represented by the regularizer. The method was first
 introduced in our [CVPR 2018](http://cvpr2018.thecvf.com/), paper "[MorphNet: Fast & Simple Resource-Constrained Learning of
 Deep Network Structure](https://arxiv.org/abs/1711.06798)". A overview of the
-approach as well as new device-specific latency regularizers were prestend in
-[GTC 2019](https://gputechconf2019.smarteventscloud.com/connect/sessionDetail.ww?SESSION_ID=272314)
+approach as well as device-specific latency regularizers were prestend in
+[GTC 2019](https://gputechconf2019.smarteventscloud.com/connect/sessionDetail.ww?SESSION_ID=272314).  [[slides](g3doc//MorphNet_GTC2019.pdf "GTC Slides"), recording: [YouTube](https://youtu.be/UvTXhTvJ_wM), [GTC on-demand](https://on-demand.gputechconf.com/gtc/2019/video/_/S9645/)].
 
-
-[[slides](g3doc//MorphNet_GTC2019.pdf "GTC Slides"), recording: [YouTube](https://youtu.be/UvTXhTvJ_wM), [GTC on-demand](https://on-demand.gputechconf.com/gtc/2019/video/_/S9645/)].
-
-In short, the MorphNet regularizer pushes weights down, and once they are small
-enough, the corresponding output channels are marked for removal from the
-network.
+**NEW:** FiGS, is a probabilistic approach to channel regularization that we introduced
+in [Fine-Grained Stochastic Architecture Search](https://arxiv.org/pdf/2006.09581.pdf).
+It outperforms our previous regularizers and can be used as either a pruning algorithm or a full fledged Differentiable Architecture Search method.
 
 ## Usage
 
@@ -42,12 +44,20 @@ To use MorphNet, you must:
     based on
 
     *   your target cost (e.g., FLOPs, latency)
-    *   your network architecture: use `Gamma` regularizer if the seed network
-        has BatchNorm; use `GroupLasso` otherwise.
+    *   Your ability to add new layers to your model:
+        * If possible, add
+          our probabilistic gating operation after any layer you wish to prune, and
+          use the `LogisticSigmoid` regularizers.
+        * If you are unable to add new layers, select regularizer type based on
+          your network architecture: use `Gamma` regularizer if the seed network
+          has BatchNorm; use `GroupLasso` otherwise.
 
     Note: If you use BatchNorm, you must enable the scale parameters (“gamma
     variables”), i.e., by setting `scale=True` if you are using
     `tf.keras.layers.BatchNormalization`.
+
+    Note: If you are using `LogisticSigmoid` don't forget to add the
+    probabilistic gating op! See below for example.
 
 2.  Initialize the regularizer with a threshold and the output boundary ops and
     (optionally) the input boundary ops of your model.
@@ -116,14 +126,18 @@ BatchNorm.
 
 Regularizer classes can be found under `network_regularizers/` directory. They
 are named by the algorithm they use and the target cost they attempt to
-minimize. For example, `GammaFlopsRegularizer` uses the batch norm gamma in
-order to regularize the FLOP cost.
+minimize. For example, `LogisticSigmoidFlopsRegularizer` uses a
+Logistic-Sigmoid probabilistic method to to regularize the FLOP cost
+and `GammaModelSizeRegularizer` uses the batch norm gamma in
+order to regularize the model size cost.
 
 ### Regularizer Algorithms
 
-* *GroupLasso* is designed for models without batch norm.
-* *Gamma* is designed for
-models with batch norm; it requires that batch norm scale is enabled.
+* **[NEW] LogisticSigmoid** is designed to control any model type, but requires
+  adding simple `gating layers` to your model.
+* **GroupLasso** is designed for models without batch norm.
+* **Gamma** is designed for models with batch norm; it requires that batch
+   norm scale is enabled.
 
 ### Regularizer Target Costs
 
@@ -138,20 +152,37 @@ on the specific hardware characteristics.
 
 The example below demonstrates how to use MorphNet to reduce the number of FLOPs
 in your model. In this example, the regularizer will traverse the graph
-starting with `logits`, and will not go past any op whose name matches the regex
-`/images.*`; this allows to specify the subgraph for MorphNet to optimize.
+starting with `logits`, and will not go past any op that is earlier in the graph
+than the `inputs` or `labels`; this allows to specify the subgraph for MorphNet to optimize.
 
+#TODO Add Keras example.
 ```python
 from morph_net.network_regularizers import flop_regularizer
 from morph_net.tools import structure_exporter
 
-inputs, labels = preprocessor()
-logits = build_model(inputs, labels, ...)
+def build_model(inputs, labels, is_training, ...):
+  gated_relu = activation_gating.gated_relu_activation()
 
-network_regularizer = flop_regularizer.GammaFlopsRegularizer(
+  net = tf.layers.conv2d(inputs, kernel=[5, 5], num_outputs=256)
+  net = gated_relu(net, is_training=is_training)
+
+  ...
+  ...
+
+  net = tf.layers.conv2d(net, kernel=[3, 3], num_outputs=1024)
+  net = gated_relu(net, is_training=is_training)
+
+  logits = tf.reduce_mean(net, [1, 2])
+  logits = tf.layers.dense(logits, units=1024)
+  return logits
+
+inputs, labels = preprocessor()
+logits = build_model(inputs, labels, is_training=True, ...)
+
+network_regularizer = flop_regularizer.LogisticSigmoidFlopsRegularizer(
     output_boundary=[logits.op],
     input_boundary=[inputs.op, labels.op],
-    gamma_threshold=1e-3
+    alive_threshold=0.1  # Value in [0, 1]. This default works well for most cases.
 )
 regularization_strength = 1e-10
 regularizer_loss = (network_regularizer.get_regularization_term() * regularization_strength)
@@ -180,7 +211,7 @@ FLOP count. If `regularization_strength` is large enough, the FLOP count will
 collapse to zero. Conversely, if it is small enough, the FLOP count will remain
 at its initial value and the network structure will not vary. The
 `regularization_strength` parameter is your knob to control where you want to be
-on the price-performance curve. The `gamma_threshold` parameter is used for
+on the price-performance curve. The `alive_threshold` parameter is used for
 determining when an activation is alive.
 
 ### Extracting the Architecture Learned by MorphNet

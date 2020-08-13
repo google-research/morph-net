@@ -258,6 +258,33 @@ def gated_batch_norm(gating_fn=logistic_sigmoid_gating,
       **kwargs_for_gating_fn)
 
 
+def gated_relu_activation(gating_fn=logistic_sigmoid_gating,
+                          axis=3,
+                          is_training=True,
+                          **kwargs_for_gating_fn):
+  """Adds probabilistic gating to ReLU activation.
+
+  Example:
+  gated_relu = activation_gating.gated_relu_activation()
+    activation = tf.layers.conv2d(inputs, kernel=[3,3], num_outputs=6)
+    gated_activation = gated_relu(activation, is_training=True)
+
+  Args:
+    gating_fn: Gating function to use. Default: logistic_sigmoid_gating.
+    axis: The axis on which to gate. E.g. if activation is a [b, w, h, C] tensor
+      and axis=3, the mask tensor will be of shape [1, 1, 1, C].
+    is_training: If False, no sampling is done. Gating is deterministically
+      performed if the learned log_odds_ratio > 0 (probability > 50%).
+    **kwargs_for_gating_fn: Keyword args to pass into gating function.
+
+  Returns:
+    A callable that computes y = gating_fn(tf.nn.relu(x))
+  """
+  return add_gating_to_fn(
+      tf.nn.relu, gating_fn=gating_fn, axis=axis, is_training=is_training,
+      **kwargs_for_gating_fn)
+
+
 def add_gating_to_fn(
     fn, gating_fn=logistic_sigmoid_gating, axis=3,
     is_training=True, **kwargs_for_gating_fn):
