@@ -113,6 +113,7 @@ pytype_library(
     srcs = ["latency_regularizer.py"],
     deps = [
         ":cost_calculator",
+        ":logistic_sigmoid_regularizer",
         ":resource_function",
         "//third_party/py/morph_net/framework:batch_norm_source_op_handler",
         "//third_party/py/morph_net/framework:conv2d_transpose_source_op_handler",
