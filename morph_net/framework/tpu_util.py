@@ -1,9 +1,5 @@
 """Utility functions for handling TPU graphs."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import contextlib2
 import tensorflow.compat.v1 as tf
 
@@ -33,12 +29,19 @@ def is_on_cpu():
 
 
 def get_variable_name(read_variable_op):
+  """Obtains the name of the variable corresponding to ReadVariableOp."""
   assert read_variable_op.type == 'ReadVariableOp'
   op = read_variable_op
-  while op.type != 'VarHandleOp':
+  # Depending on whether we're on TPU or CPU, and whether control flow v2 is
+  # enabled, the graph will have different structure. This loop is written to
+  # support all known cases.
+  while True:
+    if op.type == 'VarHandleOp':
+      return op.name
+    if op.type == 'Placeholder':
+      return op.name.split('/ReadVariableOp/')[1]
     assert len(op.inputs) == 1
     op = op.inputs[0].op
-  return op.name
 
 
 def maybe_convert_to_variable(tensor):
@@ -89,7 +92,17 @@ def maybe_convert_to_variable(tensor):
       raise ValueError('Variable %s is in GraphDef but not in the live graph.')
     assert len(matched_vars) == 1
     return matched_vars[0]
-
+    # graph = tensor.graph
+    # dir_path = '/cns/iz-d/home/pkchtmp/'
+    # filename = f'graph_{time.time()}_{uuid.uuid4()}.pbtxt'
+    # user = 'pkch'
+    # tf.train.write_graph(graph, dir_path, filename)
+    # url = upload_graph.UploadGraph(
+    #     pbtxt=os.path.join(dir_path, filename),
+    #     user=user)
+    # with tf.gfile.Open(os.path.join(dir_path, 'graph_url.txt'), 'w') as fp:
+    #   fp.write(url)
+    # raise ValueError(url)
 
 var_store = {}
 top_level_scope = tf.get_variable_scope()
