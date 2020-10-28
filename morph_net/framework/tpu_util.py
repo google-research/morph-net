@@ -1,9 +1,5 @@
 """Utility functions for handling TPU graphs."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import contextlib2
 import tensorflow.compat.v1 as tf
 
@@ -33,12 +29,19 @@ def is_on_cpu():
 
 
 def get_variable_name(read_variable_op):
+  """Obtains the name of the variable corresponding to ReadVariableOp."""
   assert read_variable_op.type == 'ReadVariableOp'
   op = read_variable_op
-  while op.type != 'VarHandleOp':
+  # Depending on whether we're on TPU or CPU, and whether control flow v2 is
+  # enabled, the graph will have different structure. This loop is written to
+  # support all known cases.
+  while True:
+    if op.type == 'VarHandleOp':
+      return op.name
+    if op.type == 'Placeholder':
+      return op.name.split('/ReadVariableOp/')[1]
     assert len(op.inputs) == 1
     op = op.inputs[0].op
-  return op.name
 
 
 def maybe_convert_to_variable(tensor):
