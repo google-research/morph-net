@@ -2,8 +2,16 @@
 
 [TOC]
 
-## What is MorphNet?
+## New: FiGS: Fine-Grained Stochastic Architecture Search
+FiGS, is a probabilistic approach to channel regularization that we introduced
+in [Fine-Grained Stochastic Architecture Search](https://arxiv.org/pdf/2006.09581.pdf).
+It outperforms our previous regularizers and can be used as either a pruning algorithm or
+a full fledged Differentiable Architecture Search method. This is the recommended
+way to apply MorphNet. In the below documentation it is
+referred to as the `LogisticSigmoid` regularizer.
 
+
+## What is MorphNet?
 MorphNet is a method for learning deep network structure during training. The
 key principle is continuous relaxation of the network-structure learning
 problem. In short, the MorphNet regularizer pushes the influence of filters down,
@@ -21,10 +29,9 @@ introduced in our [CVPR 2018](http://cvpr2018.thecvf.com/), paper "[MorphNet: Fa
 Deep Network Structure](https://arxiv.org/abs/1711.06798)". A overview of the
 approach as well as device-specific latency regularizers were prestend in
 [GTC 2019](https://gputechconf2019.smarteventscloud.com/connect/sessionDetail.ww?SESSION_ID=272314).  [[slides](g3doc//MorphNet_GTC2019.pdf "GTC Slides"), recording: [YouTube](https://youtu.be/UvTXhTvJ_wM), [GTC on-demand](https://on-demand.gputechconf.com/gtc/2019/video/_/S9645/)].
+Our new, probabilistic, approach to pruning is called FiGS, and is detailed in
+[Fine-Grained Stochastic Architecture Search](https://arxiv.org/pdf/2006.09581.pdf).
 
-**NEW:** FiGS, is a probabilistic approach to channel regularization that we introduced
-in [Fine-Grained Stochastic Architecture Search](https://arxiv.org/pdf/2006.09581.pdf).
-It outperforms our previous regularizers and can be used as either a pruning algorithm or a full fledged Differentiable Architecture Search method.
 
 ## Usage
 
@@ -45,12 +52,12 @@ To use MorphNet, you must:
 
     *   your target cost (e.g., FLOPs, latency)
     *   Your ability to add new layers to your model:
-        * If possible, add
+        * Add
           our probabilistic gating operation after any layer you wish to prune, and
-          use the `LogisticSigmoid` regularizers.
+          use the `LogisticSigmoid` regularizers. **\[recommended\]**
         * If you are unable to add new layers, select regularizer type based on
           your network architecture: use `Gamma` regularizer if the seed network
-          has BatchNorm; use `GroupLasso` otherwise.
+          has BatchNorm; use `GroupLasso` otherwise \[deprecated\].
 
     Note: If you use BatchNorm, you must enable the scale parameters (“gamma
     variables”), i.e., by setting `scale=True` if you are using
@@ -155,7 +162,7 @@ in your model. In this example, the regularizer will traverse the graph
 starting with `logits`, and will not go past any op that is earlier in the graph
 than the `inputs` or `labels`; this allows to specify the subgraph for MorphNet to optimize.
 
-#TODO Add Keras example.
+<!-- TODO Add Keras example. -->
 ```python
 from morph_net.network_regularizers import flop_regularizer
 from morph_net.tools import structure_exporter
