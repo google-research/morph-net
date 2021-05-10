@@ -6,7 +6,6 @@ py_library(
     name = "gamma_l1_regularizer",
     srcs = ["gamma_l1_regularizer.py"],
     deps = [
-        "//pyglib/logging",
         "//third_party/py/morph_net/framework:generic_regularizers",
         "//third_party/py/morph_net/framework:tpu_util",
         "//third_party/py/tensorflow:tensorflow_google",
