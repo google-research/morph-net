@@ -6,7 +6,7 @@ from __future__ import division
 from __future__ import print_function
 
 import abc
-from typing import Type, List
+from typing import List, Optional, Type
 
 from morph_net.framework import generic_regularizers
 from morph_net.framework import logistic_sigmoid_source_op_handler as ls_handler
@@ -23,17 +23,17 @@ import tensorflow.compat.v1 as tf
 class LogisticSigmoidRegularizer(generic_regularizers.NetworkRegularizer):
   """Base class for NetworkRegularizers that use probabilistic sampling."""
 
-  def __init__(
-      self,
-      output_boundary: List[tf.Operation],
-      regularize_on_mask=True,
-      alive_threshold=0.1,
-      mask_as_alive_vector=True,
-      regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
-      decorator_parameters=None,
-      input_boundary: List[tf.Operation] = None,
-      force_group=None,
-      regularizer_blacklist=None):
+  def __init__(self,
+               output_boundary: List[tf.Operation],
+               regularize_on_mask=True,
+               alive_threshold=0.1,
+               mask_as_alive_vector=True,
+               regularizer_decorator: Optional[Type[
+                   generic_regularizers.OpRegularizer]] = None,
+               decorator_parameters=None,
+               input_boundary: Optional[List[tf.Operation]] = None,
+               force_group=None,
+               regularizer_blacklist=None):
     """Creates a LogisticSigmoidFlopsRegularizer object.
 
     Args:

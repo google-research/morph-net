@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 # [internal] enable type annotations
 from __future__ import print_function
-from typing import Text, Type, List
+from typing import List, Optional, Text, Type
 
 from morph_net.framework import batch_norm_source_op_handler
 from morph_net.framework import conv2d_transpose_source_op_handler as conv2d_transpose_handler
@@ -40,15 +40,15 @@ class LogisticSigmoidModelSizeRegularizer(
 class GammaModelSizeRegularizer(generic_regularizers.NetworkRegularizer):
   """A NetworkRegularizer that targets model size using Gamma L1."""
 
-  def __init__(
-      self,
-      output_boundary: List[tf.Operation],
-      gamma_threshold,
-      regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
-      decorator_parameters=None,
-      input_boundary: List[tf.Operation] = None,
-      force_group=None,
-      regularizer_blacklist=None):
+  def __init__(self,
+               output_boundary: List[tf.Operation],
+               gamma_threshold,
+               regularizer_decorator: Optional[Type[
+                   generic_regularizers.OpRegularizer]] = None,
+               decorator_parameters=None,
+               input_boundary: Optional[List[tf.Operation]] = None,
+               force_group=None,
+               regularizer_blacklist=None):
     """Creates a GammaModelSizeRegularizer object.
 
     Args:
@@ -112,16 +112,16 @@ class GammaModelSizeRegularizer(generic_regularizers.NetworkRegularizer):
 class GroupLassoModelSizeRegularizer(generic_regularizers.NetworkRegularizer):
   """A NetworkRegularizer that targets model size using L1 group lasso."""
 
-  def __init__(
-      self,
-      output_boundary: List[tf.Operation],
-      threshold,
-      l1_fraction=0.0,
-      regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
-      decorator_parameters=None,
-      input_boundary: List[tf.Operation] = None,
-      force_group: List[Text] = None,
-      regularizer_blacklist: List[Text] = None):
+  def __init__(self,
+               output_boundary: List[tf.Operation],
+               threshold,
+               l1_fraction=0.0,
+               regularizer_decorator: Optional[Type[
+                   generic_regularizers.OpRegularizer]] = None,
+               decorator_parameters=None,
+               input_boundary: Optional[List[tf.Operation]] = None,
+               force_group: Optional[List[Text]] = None,
+               regularizer_blacklist: Optional[List[Text]] = None):
     """Creates a GroupLassoModelSizeRegularizer object.
 
     Args:

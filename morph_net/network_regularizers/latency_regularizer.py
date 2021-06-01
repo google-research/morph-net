@@ -1,6 +1,6 @@
 """A NetworkRegularizer that targets inference latency."""
 
-from typing import Type, List
+from typing import List, Optional, Type
 
 from morph_net.framework import batch_norm_source_op_handler
 from morph_net.framework import conv2d_transpose_source_op_handler as conv2d_transpose_handler
@@ -52,19 +52,19 @@ class LogisticSigmoidLatencyRegularizer(
         regularized. See op_regularizer_manager for more detail.
   """
 
-  def __init__(
-      self,
-      output_boundary: List[tf.Operation],
-      hardware,
-      batch_size=1,
-      regularize_on_mask=True,
-      alive_threshold=0.1,
-      mask_as_alive_vector=True,
-      regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
-      decorator_parameters=None,
-      input_boundary: List[tf.Operation] = None,
-      force_group=None,
-      regularizer_blacklist=None):
+  def __init__(self,
+               output_boundary: List[tf.Operation],
+               hardware,
+               batch_size=1,
+               regularize_on_mask=True,
+               alive_threshold=0.1,
+               mask_as_alive_vector=True,
+               regularizer_decorator: Optional[Type[
+                   generic_regularizers.OpRegularizer]] = None,
+               decorator_parameters=None,
+               input_boundary: Optional[List[tf.Operation]] = None,
+               force_group=None,
+               regularizer_blacklist=None):
 
     self._hardware = hardware
     self._batch_size = batch_size
@@ -97,17 +97,17 @@ class LogisticSigmoidLatencyRegularizer(
 class GammaLatencyRegularizer(generic_regularizers.NetworkRegularizer):
   """A NetworkRegularizer that targets latency using Gamma L1."""
 
-  def __init__(
-      self,
-      output_boundary: List[tf.Operation],
-      gamma_threshold,
-      hardware,
-      batch_size=1,
-      regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
-      decorator_parameters=None,
-      input_boundary: List[tf.Operation] = None,
-      force_group=None,
-      regularizer_blacklist=None) -> None:
+  def __init__(self,
+               output_boundary: List[tf.Operation],
+               gamma_threshold,
+               hardware,
+               batch_size=1,
+               regularizer_decorator: Optional[Type[
+                   generic_regularizers.OpRegularizer]] = None,
+               decorator_parameters=None,
+               input_boundary: Optional[List[tf.Operation]] = None,
+               force_group=None,
+               regularizer_blacklist=None) -> None:
     """Creates a GammaLatencyRegularizer object.
 
     Latency cost and regularization loss is calculated for a specified hardware

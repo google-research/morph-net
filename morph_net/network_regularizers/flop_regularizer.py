@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 # [internal] enable type annotations
 from __future__ import print_function
-from typing import Type, List
+from typing import List, Optional, Type
 
 from morph_net.framework import batch_norm_source_op_handler
 from morph_net.framework import conv2d_transpose_source_op_handler as conv2d_transpose_handler
@@ -40,15 +40,15 @@ class LogisticSigmoidFlopsRegularizer(
 class GammaFlopsRegularizer(generic_regularizers.NetworkRegularizer):
   """A NetworkRegularizer that targets FLOPs using Gamma L1 as OpRegularizer."""
 
-  def __init__(
-      self,
-      output_boundary: List[tf.Operation],
-      gamma_threshold,
-      regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
-      decorator_parameters=None,
-      input_boundary: List[tf.Operation] = None,
-      force_group=None,
-      regularizer_blacklist=None):
+  def __init__(self,
+               output_boundary: List[tf.Operation],
+               gamma_threshold,
+               regularizer_decorator: Optional[Type[
+                   generic_regularizers.OpRegularizer]] = None,
+               decorator_parameters=None,
+               input_boundary: Optional[List[tf.Operation]] = None,
+               force_group=None,
+               regularizer_blacklist=None):
     """Creates a GammaFlopsRegularizer object.
 
     Args:
@@ -113,16 +113,16 @@ class GammaFlopsRegularizer(generic_regularizers.NetworkRegularizer):
 class GroupLassoFlopsRegularizer(generic_regularizers.NetworkRegularizer):
   """A NetworkRegularizer that targets FLOPs using L1 group lasso."""
 
-  def __init__(
-      self,
-      output_boundary: List[tf.Operation],
-      threshold,
-      l1_fraction=0,
-      regularizer_decorator: Type[generic_regularizers.OpRegularizer] = None,
-      decorator_parameters=None,
-      input_boundary: List[tf.Operation] = None,
-      force_group=None,
-      regularizer_blacklist=None):
+  def __init__(self,
+               output_boundary: List[tf.Operation],
+               threshold,
+               l1_fraction=0,
+               regularizer_decorator: Optional[Type[
+                   generic_regularizers.OpRegularizer]] = None,
+               decorator_parameters=None,
+               input_boundary: Optional[List[tf.Operation]] = None,
+               force_group=None,
+               regularizer_blacklist=None):
     """Creates a GroupLassoFlopsRegularizer object.
 
     Args:
