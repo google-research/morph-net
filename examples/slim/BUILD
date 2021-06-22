@@ -273,7 +273,6 @@ py_library(
     name = "alexnet",
     srcs = ["nets/alexnet.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -347,7 +346,6 @@ py_library(
     name = "i3d",
     srcs = ["nets/i3d.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":i3d_utils",
         ":s3dg",
@@ -372,7 +370,6 @@ py_library(
     name = "i3d_utils",
     srcs = ["nets/i3d_utils.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -381,7 +378,6 @@ py_library(
 py_library(
     name = "inception",
     srcs = ["nets/inception.py"],
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         ":inception_resnet_v2",
@@ -396,7 +392,6 @@ py_library(
     name = "inception_utils",
     srcs = ["nets/inception_utils.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -405,7 +400,6 @@ py_library(
 py_library(
     name = "inception_v1",
     srcs = ["nets/inception_v1.py"],
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         ":inception_utils",
@@ -417,7 +411,6 @@ py_library(
     name = "inception_v2",
     srcs = ["nets/inception_v2.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":inception_utils",
         # "//tensorflow",
@@ -427,7 +420,6 @@ py_library(
 py_library(
     name = "inception_v3",
     srcs = ["nets/inception_v3.py"],
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         ":inception_utils",
@@ -439,7 +431,6 @@ py_library(
     name = "inception_v4",
     srcs = ["nets/inception_v4.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":inception_utils",
         # "//tensorflow",
@@ -449,7 +440,6 @@ py_library(
 py_library(
     name = "inception_resnet_v2",
     srcs = ["nets/inception_resnet_v2.py"],
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         # "//tensorflow",
@@ -537,7 +527,6 @@ py_library(
     name = "mobilenet_v1",
     srcs = ["nets/mobilenet_v1.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -546,7 +535,6 @@ py_library(
 py_library(
     name = "mobilenet_v2",
     srcs = glob(["nets/mobilenet/*.py"]),
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         # "//tensorflow",
@@ -615,7 +603,6 @@ py_library(
     name = "nasnet_utils",
     srcs = ["nets/nasnet/nasnet_utils.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -624,7 +611,6 @@ py_library(
 py_library(
     name = "nasnet",
     srcs = ["nets/nasnet/nasnet.py"],
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         ":nasnet_utils",
@@ -661,7 +647,6 @@ py_library(
     name = "pnasnet",
     srcs = ["nets/nasnet/pnasnet.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":nasnet",
         ":nasnet_utils",
@@ -686,7 +671,6 @@ py_library(
     name = "overfeat",
     srcs = ["nets/overfeat.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -708,7 +692,6 @@ py_library(
     name = "pix2pix",
     srcs = ["nets/pix2pix.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -729,7 +712,6 @@ py_library(
     name = "resnet_utils",
     srcs = ["nets/resnet_utils.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         # "//tensorflow",
     ],
@@ -738,7 +720,6 @@ py_library(
 py_library(
     name = "resnet_v1",
     srcs = ["nets/resnet_v1.py"],
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         ":resnet_utils",
@@ -766,7 +747,6 @@ py_library(
     name = "resnet_v2",
     srcs = ["nets/resnet_v2.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":resnet_utils",
         # "//tensorflow",
@@ -792,7 +772,6 @@ py_library(
     name = "s3dg",
     srcs = ["nets/s3dg.py"],
     srcs_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":i3d_utils",
         # "//tensorflow",
@@ -815,7 +794,6 @@ py_test(
 py_library(
     name = "vgg",
     srcs = ["nets/vgg.py"],
-    srcs_version = "PY3",
     srcs_version = "PY3",
     deps = [
         # "//tensorflow",
