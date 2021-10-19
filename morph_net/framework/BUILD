@@ -260,7 +260,6 @@ py_library(
         ":grouping_regularizers",
         ":op_handler_util",
         "//third_party/py/tensorflow",
-        "//third_party/py/typing",
     ],
 )
 
