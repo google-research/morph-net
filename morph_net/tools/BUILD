@@ -39,7 +39,6 @@ py_library(
     ],
     deps = [
         ":structure_exporter",
-        "//third_party/py/enum",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
