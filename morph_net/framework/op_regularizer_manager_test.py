@@ -319,12 +319,12 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
         mul0 = layers.conv2d(inputs, num_outputs, kernel_size, scope='conv1')
         mul1 = layers.conv2d(inputs, num_outputs, kernel_size,
                              activation_fn=tf.nn.sigmoid, scope='conv2')
-        prev1 = np.prod([mul0, mul1])
+        prev1 = mul0 * mul1
       with tf.variable_scope('parallel', reuse=tf.AUTO_REUSE):
         mul0_1 = layers.conv2d(prev1, num_outputs, kernel_size, scope='conv1')
         mul1_1 = layers.conv2d(prev1, num_outputs, kernel_size,
                                activation_fn=tf.nn.sigmoid, scope='conv2')
-      prev2 = np.prod([mul0_1, mul1_1])
+      prev2 = mul0_1 * mul1_1
       prev3 = prev2 + 0.0
       # This hack produces the desired grouping due to variable reuse.
       # prev3 = prev2 + 0.0 * (mul0 + mul1 + mul0_1 + mul1_1)
