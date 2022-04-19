@@ -1,4 +1,3 @@
-# Lint as: python3
 """Tests for network_regularizers.flop_regularizer."""
 
 from __future__ import absolute_import

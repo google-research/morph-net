@@ -1,4 +1,3 @@
-# Lint as: python3
 """Tests for morph_net.framework.tpu_util."""
 
 from __future__ import absolute_import
