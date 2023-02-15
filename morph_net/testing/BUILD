@@ -1,4 +1,7 @@
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//third_party/py/morph_net:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 licenses(["notice"])
 

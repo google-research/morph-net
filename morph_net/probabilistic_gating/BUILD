@@ -1,6 +1,9 @@
 # load("//devtools/python/blaze:strict.bzl", "py_strict_test")
 
-package(default_visibility = ["//visibility:public"])
+package(
+    default_applicable_licenses = ["//third_party/py/morph_net:license"],
+    default_visibility = ["//visibility:public"],
+)
 
 licenses(["notice"])
 

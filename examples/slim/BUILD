@@ -2,6 +2,7 @@
 #   Contains files for loading, training and evaluating TF-Slim-based models.
 
 package(
+    default_applicable_licenses = ["//third_party/py/morph_net:license"],
     default_visibility = ["//visibility:public"],
 )
 
