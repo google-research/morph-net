@@ -15,7 +15,7 @@ py_library(
         "//third_party/py/tensorflow",
         "//third_party/py/tensorflow_probability",
         "//third_party/tensorflow/contrib/layers:layers_py",
-        "//third_party/tensorflow/python:framework_for_generated_wrappers",
+        "//third_party/tensorflow/python/framework:for_generated_wrappers",
     ],
 )
 
