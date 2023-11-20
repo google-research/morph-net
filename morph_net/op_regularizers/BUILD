@@ -37,6 +37,7 @@ py_test(
         ":group_lasso_regularizer",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/numpy",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",

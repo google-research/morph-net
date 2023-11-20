@@ -30,6 +30,7 @@ py_test(
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/flags",
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/framework:generic_regularizers",
         "//third_party/py/morph_net/framework:op_regularizer_manager",
         "//third_party/py/tensorflow",
@@ -66,6 +67,7 @@ py_test(
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/flags",
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",

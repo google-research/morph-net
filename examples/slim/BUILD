@@ -195,6 +195,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":model_deploy",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//numpy",
         # "//tensorflow",
     ],
@@ -291,6 +292,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":alexnet",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -322,6 +324,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":cyclegan",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -343,6 +346,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":dcgan",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -367,6 +371,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":i3d",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -460,6 +465,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":inception",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//numpy",
         # "//tensorflow",
     ],
@@ -474,6 +480,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":inception",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//numpy",
         # "//tensorflow",
     ],
@@ -488,6 +495,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":inception",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//numpy",
         # "//tensorflow",
     ],
@@ -502,6 +510,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":inception",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -515,6 +524,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":inception",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -553,6 +563,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":mobilenet",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -575,6 +586,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":mobilenet_v1",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//numpy",
         # "//tensorflow",
     ],
@@ -631,6 +643,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":nasnet_utils",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -644,6 +657,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":nasnet",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -668,6 +682,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":pnasnet",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -689,6 +704,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":overfeat",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -709,6 +725,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":pix2pix",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -742,6 +759,7 @@ py_test(
     deps = [
         ":resnet_utils",
         ":resnet_v1",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/six",
         # "//numpy",
         # "//tensorflow",
@@ -768,6 +786,7 @@ py_test(
     deps = [
         ":resnet_utils",
         ":resnet_v2",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//numpy",
         # "//tensorflow",
     ],
@@ -792,6 +811,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":s3dg",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -813,6 +833,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":vgg",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -836,6 +857,7 @@ py_test(
     srcs_version = "PY3",
     deps = [
         ":nets_factory",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
     ],
 )
@@ -917,6 +939,7 @@ py_test(
     ],
     deps = [
         ":export_inference_graph_lib",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         # "//tensorflow",
         # "//tensorflow/python:platform",
     ],

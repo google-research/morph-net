@@ -37,6 +37,7 @@ py_test(
         ":batch_norm_source_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -63,6 +64,7 @@ py_test(
         ":concat_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -95,6 +97,7 @@ py_test(
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -125,6 +128,7 @@ py_test(
         ":depth_to_space_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
     ],
@@ -148,6 +152,7 @@ py_test(
         ":depthwise_convolution_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -184,6 +189,7 @@ py_test(
         ":grouping_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -209,6 +215,7 @@ py_test(
         ":leaf_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -249,6 +256,7 @@ py_test(
         ":op_handler_util",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -284,6 +292,7 @@ py_test(
         ":output_non_passthrough_op_handler",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/testing:add_concat_model_stub",
         "//third_party/py/morph_net/testing:grouping_concat_model_stub",
         "//third_party/py/numpy",
@@ -311,6 +320,7 @@ py_test(
         ":op_regularizer_manager",
         ":output_non_passthrough_op_handler",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
@@ -328,6 +338,7 @@ py_test(
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/tensorflow",
     ],
 )
@@ -351,6 +362,7 @@ py_test(
         ":logistic_sigmoid_source_op_handler",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//testing/pybase:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/mock",
         "//third_party/py/morph_net/framework:op_regularizer_manager",
         "//third_party/py/morph_net/probabilistic_gating:activation_gating",
@@ -379,6 +391,7 @@ py_test(
         ":probabilistic_grouping_regularizer",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/framework:grouping_regularizers",
         "//third_party/py/morph_net/testing:op_regularizer_stub",
         "//third_party/py/numpy",
@@ -397,6 +410,7 @@ py_test(
         ":op_handler_decorator",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/numpy",
         "//third_party/py/tensorflow",
     ],
@@ -447,6 +461,7 @@ py_test(
     deps = [
         ":concat_and_slice_regularizers",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/testing:op_regularizer_stub",
         "//third_party/py/tensorflow",
     ],
@@ -470,6 +485,7 @@ py_test(
         ":grouping_regularizers",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/testing:op_regularizer_stub",
         "//third_party/py/numpy",
         "//third_party/py/tensorflow",
@@ -484,6 +500,7 @@ py_strict_test(
     deps = [
         ":op_handlers",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/tensorflow",
     ],
 )
@@ -496,6 +513,7 @@ py_strict_test(
         ":tpu_util",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/slim",
     ],

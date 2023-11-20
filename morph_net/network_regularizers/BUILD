@@ -36,6 +36,7 @@ py_test(
         ":resource_function",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/testing:dummy_decorator",
         "//third_party/py/numpy",
         "//third_party/py/tensorflow",
@@ -59,6 +60,7 @@ py_test(
         ":resource_function",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/framework:batch_norm_source_op_handler",
         "//third_party/py/morph_net/framework:concat_op_handler",
         "//third_party/py/morph_net/framework:grouping_op_handler",
@@ -102,6 +104,7 @@ py_test(
         "//learning/brain/contrib/slim/nets:resnet_v1",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/probabilistic_gating:activation_gating",
         "//third_party/py/morph_net/testing:dummy_decorator",
         "//third_party/py/numpy",
@@ -145,6 +148,7 @@ py_test(
         "//learning/brain/contrib/slim/nets:inception",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/layers:layers_py",
         "//third_party/tensorflow/contrib/slim",
@@ -181,6 +185,7 @@ py_test(
         ":resource_function",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/testing:dummy_decorator",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/slim",
@@ -207,6 +212,7 @@ py_test(
         ":resource_function",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/numpy",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -239,6 +245,7 @@ py_test(
         ":model_size_regularizer",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
+        "//third_party/py/google/protobuf:use_fast_cpp_protos",  # Automatically added go/proto_python_upb_flip
         "//third_party/py/morph_net/network_regularizers:resource_function",
         "//third_party/py/morph_net/probabilistic_gating:activation_gating",
         "//third_party/py/tensorflow",
