@@ -1,5 +1,5 @@
-load("//third_party/bazel_rules/rules_python/python:py_test.bzl", "py_test")
 load("//devtools/python/blaze:pytype.bzl", "pytype_library")
+load("//third_party/bazel_rules/rules_python/python:py_test.bzl", "py_test")
 
 package(
     default_applicable_licenses = ["//third_party/py/morph_net:license"],
