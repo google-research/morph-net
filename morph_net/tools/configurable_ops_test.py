@@ -631,7 +631,7 @@ class ConfigurableOpsTest(parameterized.TestCase, tf.test.TestCase):
         num_outputs=default_num_outputs,
         kernel_size=3,
         scope='first')
-    with self.assertRaisesRegexp(
+    with self.assertRaisesRegex(
         KeyError, 'op_name \"second/Conv2D\" not found in parameterization'):
       decorator.conv2d(
           self.inputs,

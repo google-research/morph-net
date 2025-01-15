@@ -925,7 +925,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       c3 = layers.conv2d(concat, num_outputs=10, kernel_size=3, scope='conv3')
 
     # Verify force-group with multiple OpSlice raises ValueError.
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         ValueError,
         r'Cannot force-group ops with more than 1 OpSlice: \[u?\'concat\'\]',
         orm.OpRegularizerManager, [c3.op], self._default_op_handler_dict,
@@ -940,7 +940,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
       c3 = layers.conv2d(c2, num_outputs=9, kernel_size=3, scope='conv3')
 
     # Verify size mismatch raises ValueError.
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         ValueError,
         r'Cannot force-group ops with different sizes: \[.*\]',
         orm.OpRegularizerManager, [c3.op], self._default_op_handler_dict,
@@ -950,7 +950,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 3])
 
     # Verify that force_group string instead of a list raises exception.
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         TypeError,
         r'force_group must be a list of regex.',
         orm.OpRegularizerManager, [inputs.op], self._default_op_handler_dict,
@@ -1013,7 +1013,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
 
     # Verify that regularizer_blacklist string instead of a list raises
     # exception.
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         TypeError,
         r'regularizer_blacklist must be a list of regex.',
         orm.OpRegularizerManager, [inputs.op], self._default_op_handler_dict,
@@ -1023,7 +1023,7 @@ class OpRegularizerManagerTest(parameterized.TestCase, tf.test.TestCase):
     inputs = tf.zeros([2, 4, 4, 3])
 
     # Verify that reaching iteration limit raises exception.
-    self.assertRaisesRegexp(
+    self.assertRaisesRegex(
         RuntimeError,
         r'OpRegularizerManager could not handle ops:',
         orm.OpRegularizerManager, [inputs.op], self._default_op_handler_dict,
