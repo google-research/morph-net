@@ -12,7 +12,6 @@ licenses(["notice"])
 pytype_library(
     name = "structure_exporter",
     srcs = ["structure_exporter.py"],
-    srcs_version = "PY2AND3",
     deps = [
         "//third_party/py/morph_net/framework:op_regularizer_manager",
         "//third_party/py/numpy",
@@ -23,8 +22,6 @@ pytype_library(
 py_test(
     name = "structure_exporter_test",
     srcs = ["structure_exporter_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":structure_exporter",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -57,8 +54,6 @@ py_test(
     srcs = [
         "configurable_ops_test.py",
     ],
-    python_version = "PY3",
-    srcs_version = "PY3",
     tags = ["notap"],
     deps = [
         ":configurable_ops",

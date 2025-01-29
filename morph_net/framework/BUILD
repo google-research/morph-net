@@ -31,8 +31,6 @@ py_library(
 py_test(
     name = "batch_norm_source_op_handler_test",
     srcs = ["batch_norm_source_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":batch_norm_source_op_handler",
         ":op_regularizer_manager",
@@ -57,8 +55,6 @@ py_library(
 py_test(
     name = "concat_op_handler_test",
     srcs = ["concat_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":concat_op_handler",
         ":op_regularizer_manager",
@@ -88,8 +84,6 @@ py_library(
 py_test(
     name = "conv_source_op_handler_test",
     srcs = ["conv_source_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":conv_source_op_handler",
         ":op_regularizer_manager",
@@ -119,8 +113,6 @@ py_library(
 py_test(
     name = "depth_to_space_op_handler_test",
     srcs = ["depth_to_space_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":depth_to_space_op_handler",
         ":op_regularizer_manager",
@@ -142,8 +134,6 @@ py_library(
 py_test(
     name = "depthwise_convolution_op_handler_test",
     srcs = ["depthwise_convolution_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":depthwise_convolution_op_handler",
         ":op_regularizer_manager",
@@ -178,8 +168,6 @@ py_library(
 py_test(
     name = "grouping_op_handler_test",
     srcs = ["grouping_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":grouping_op_handler",
         ":op_regularizer_manager",
@@ -203,8 +191,6 @@ py_library(
 py_test(
     name = "leaf_op_handler_test",
     srcs = ["leaf_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":leaf_op_handler",
         ":op_regularizer_manager",
@@ -243,8 +229,6 @@ py_library(
 py_test(
     name = "op_handler_util_test",
     srcs = ["op_handler_util_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":op_handler_util",
         ":op_regularizer_manager",
@@ -271,8 +255,6 @@ py_library(
 py_test(
     name = "op_regularizer_manager_test",
     srcs = ["op_regularizer_manager_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":batch_norm_source_op_handler",
         ":concat_op_handler",
@@ -305,8 +287,6 @@ py_library(
 py_test(
     name = "output_non_passthrough_op_handler_test",
     srcs = ["output_non_passthrough_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":op_regularizer_manager",
         ":output_non_passthrough_op_handler",
@@ -321,8 +301,6 @@ py_test(
 py_test(
     name = "matmul_source_op_handler_test",
     srcs = ["matmul_source_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":matmul_source_op_handler",
         ":op_regularizer_manager",
@@ -345,8 +323,6 @@ py_library(
 py_test(
     name = "logistic_sigmoid_source_op_handler_test",
     srcs = ["logistic_sigmoid_source_op_handler_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":logistic_sigmoid_source_op_handler",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -373,8 +349,6 @@ py_library(
 py_test(
     name = "probabilistic_grouping_regularizer_test",
     srcs = ["probabilistic_grouping_regularizer_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":probabilistic_grouping_regularizer",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -389,8 +363,6 @@ py_test(
 py_test(
     name = "op_handler_decorator_test",
     srcs = ["op_handler_decorator_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":conv_source_op_handler",
         ":generic_regularizers",
@@ -442,8 +414,6 @@ py_library(
 py_test(
     name = "concat_and_slice_regularizers_test",
     srcs = ["concat_and_slice_regularizers_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":concat_and_slice_regularizers",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -464,8 +434,6 @@ py_library(
 py_test(
     name = "grouping_regularizers_test",
     srcs = ["grouping_regularizers_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":grouping_regularizers",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -479,8 +447,6 @@ py_test(
 py_strict_test(
     name = "op_handlers_test",
     srcs = ["op_handlers_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":op_handlers",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -491,7 +457,6 @@ py_strict_test(
 py_strict_test(
     name = "tpu_util_test",
     srcs = ["tpu_util_test.py"],
-    python_version = "PY3",
     deps = [
         ":tpu_util",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2

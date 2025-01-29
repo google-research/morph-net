@@ -25,7 +25,6 @@ py_library(
 py_test(
     name = "activation_gating_test",
     srcs = ["activation_gating_test.py"],
-    python_version = "PY3",
     deps = [
         ":activation_gating",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
