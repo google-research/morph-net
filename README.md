@@ -237,7 +237,8 @@ with tf.Session() as sess:
     _, structure_exporter_tensors = sess.run([train_op, exporter.tensors])
     if (step % 1000 == 0):
       exporter.populate_tensor_values(structure_exporter_tensors)
-      exporter.create_file_and_save_alive_counts(train_dir, step)
+      exporter.create_file_and_save_alive_counts(
+          os.path.join(train_dir, 'learned_structure'), step)
 ```
 
 ## Misc
