@@ -728,7 +728,7 @@ py_test(
 
 py_library(
     name = "nets_factory",
-    srcs = ["nets/nets_factory.py"],
+    srcs = ["nets/nets_factory1.py"],
     deps = [
         ":nets",
         # "//tensorflow",
