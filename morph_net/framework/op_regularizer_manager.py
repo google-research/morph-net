@@ -598,7 +598,10 @@ class OpRegularizerManager(object):
       input_boundary = set(input_boundary)
     else:
       input_boundary = set()
-    to_visit = list(output_boundary)
+    if isinstance(output_boundary, list):
+      to_visit = output_boundary
+    else:
+      to_visit = list(output_boundary)
     visited = set()
     while to_visit:
       # Get next op and mark as visited.
