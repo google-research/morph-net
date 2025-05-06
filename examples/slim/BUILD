@@ -4,6 +4,7 @@
 load("//third_party/bazel_rules/rules_python/python:py_binary.bzl", "py_binary")
 load("//third_party/bazel_rules/rules_python/python:py_library.bzl", "py_library")
 load("//third_party/bazel_rules/rules_python/python:py_test.bzl", "py_test")
+load("//third_party/bazel_rules/rules_shell/shell:sh_binary.bzl", "sh_binary")
 
 package(
     default_applicable_licenses = ["//third_party/py/morph_net:license"],
