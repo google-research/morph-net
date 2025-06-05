@@ -1,12 +1,12 @@
 """Utility functions for handling TPU graphs."""
 
-import contextlib2
+import contextlib
 import tensorflow.compat.v1 as tf
 
 _run_on_cpu = False
 
 
-@contextlib2.contextmanager
+@contextlib.contextmanager
 def run_on_cpu():
   """Provide a context for the code that needs to run on CPU.
 

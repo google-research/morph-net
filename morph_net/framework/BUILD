@@ -384,7 +384,6 @@ pytype_library(
     name = "tpu_util",
     srcs = ["tpu_util.py"],
     deps = [
-        "//third_party/py/contextlib2",
         "//third_party/py/tensorflow",
     ],
 )

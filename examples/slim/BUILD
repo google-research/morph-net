@@ -105,7 +105,7 @@ py_library(
     deps = [
         ":dataset_utils",
         "//third_party/py/PIL:pil",
-        "//third_party/py/contextlib2",
+
         # "//tensorflow",
     ],
 )
