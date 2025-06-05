@@ -24,17 +24,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import contextlib
 import hashlib
 import io
 import json
 import os
-import contextlib2
-
-import PIL.Image
-
-import tensorflow.compat.v1 as tf
 
 from datasets import dataset_utils
+import PIL.Image
+import tensorflow.compat.v1 as tf
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -200,8 +198,9 @@ def create_tf_record_for_visualwakewords_dataset(annotations_file, image_dir,
     output_path: Path to output tf.Record file.
     num_shards: number of output file shards.
   """
-  with contextlib2.ExitStack() as tf_record_close_stack, \
-      tf.gfile.GFile(annotations_file, 'r') as fid:
+  with contextlib.ExitStack() as tf_record_close_stack, tf.gfile.GFile(
+      annotations_file, 'r'
+  ) as fid:
     output_tfrecords = dataset_utils.open_sharded_output_tfrecords(
         tf_record_close_stack, output_path, num_shards)
     groundtruth_data = json.load(fid)
