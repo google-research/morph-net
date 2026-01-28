@@ -11,6 +11,7 @@ licenses(["notice"])
 py_library(
     name = "gamma_l1_regularizer",
     srcs = ["gamma_l1_regularizer.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/morph_net/framework:generic_regularizers",
         "//third_party/py/morph_net/framework:tpu_util",
@@ -21,6 +22,7 @@ py_library(
 py_library(
     name = "group_lasso_regularizer",
     srcs = ["group_lasso_regularizer.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/morph_net/framework:generic_regularizers",
         "//third_party/py/morph_net/framework:tpu_util",
@@ -45,6 +47,7 @@ py_test(
 py_library(
     name = "prob_gating_regularizer",
     srcs = ["prob_gating_regularizer.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/morph_net/framework:generic_regularizers",
         "//third_party/py/morph_net/framework:tpu_util",

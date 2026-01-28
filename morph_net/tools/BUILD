@@ -39,6 +39,7 @@ py_library(
     srcs = [
         "configurable_ops.py",
     ],
+    strict_deps = False,
     deps = [
         ":structure_exporter",
         "//third_party/py/tensorflow",
@@ -72,5 +73,6 @@ py_test(
 py_library(
     name = "test_module",
     srcs = ["test_module.py"],
+    strict_deps = False,
     deps = ["//third_party/py/tensorflow"],
 )

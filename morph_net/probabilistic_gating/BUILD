@@ -13,6 +13,7 @@ licenses(["notice"])
 py_library(
     name = "activation_gating",
     srcs = ["activation_gating.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/morph_net/framework:tpu_util",
         "//third_party/py/tensorflow",

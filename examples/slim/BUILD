@@ -16,6 +16,7 @@ licenses(["notice"])
 py_library(
     name = "dataset_utils",
     srcs = ["datasets/dataset_utils.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/six",
         # "//tensorflow",
@@ -48,6 +49,7 @@ py_binary(
 py_library(
     name = "download_and_convert_cifar10",
     srcs = ["datasets/download_and_convert_cifar10.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//numpy",
@@ -58,6 +60,7 @@ py_library(
 py_library(
     name = "download_and_convert_flowers",
     srcs = ["datasets/download_and_convert_flowers.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//tensorflow",
@@ -67,6 +70,7 @@ py_library(
 py_library(
     name = "download_and_convert_mnist",
     srcs = ["datasets/download_and_convert_mnist.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//numpy",
@@ -102,6 +106,7 @@ py_binary(
 py_library(
     name = "build_visualwakewords_data_lib",
     srcs = ["datasets/build_visualwakewords_data_lib.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         "//third_party/py/PIL:pil",
@@ -112,6 +117,7 @@ py_library(
 py_library(
     name = "cifar10",
     srcs = ["datasets/cifar10.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//tensorflow",
@@ -121,6 +127,7 @@ py_library(
 py_library(
     name = "flowers",
     srcs = ["datasets/flowers.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//tensorflow",
@@ -130,6 +137,7 @@ py_library(
 py_library(
     name = "imagenet",
     srcs = ["datasets/imagenet.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//tensorflow",
@@ -139,6 +147,7 @@ py_library(
 py_library(
     name = "mnist",
     srcs = ["datasets/mnist.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//tensorflow",
@@ -148,6 +157,7 @@ py_library(
 py_library(
     name = "visualwakewords",
     srcs = ["datasets/visualwakewords.py"],
+    strict_deps = False,
     deps = [
         ":dataset_utils",
         # "//tensorflow",
@@ -157,6 +167,7 @@ py_library(
 py_library(
     name = "dataset_factory",
     srcs = ["datasets/dataset_factory.py"],
+    strict_deps = False,
     deps = [
         ":cifar10",
         ":flowers",
@@ -169,6 +180,7 @@ py_library(
 py_library(
     name = "model_deploy",
     srcs = ["deployment/model_deploy.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -187,6 +199,7 @@ py_test(
 py_library(
     name = "cifarnet_preprocessing",
     srcs = ["preprocessing/cifarnet_preprocessing.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -195,6 +208,7 @@ py_library(
 py_library(
     name = "inception_preprocessing",
     srcs = ["preprocessing/inception_preprocessing.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
         # "//tensorflow/python:control_flow_ops",
@@ -204,6 +218,7 @@ py_library(
 py_library(
     name = "lenet_preprocessing",
     srcs = ["preprocessing/lenet_preprocessing.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -212,6 +227,7 @@ py_library(
 py_library(
     name = "vgg_preprocessing",
     srcs = ["preprocessing/vgg_preprocessing.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -220,6 +236,7 @@ py_library(
 py_library(
     name = "preprocessing_factory",
     srcs = ["preprocessing/preprocessing_factory.py"],
+    strict_deps = False,
     deps = [
         ":cifarnet_preprocessing",
         ":inception_preprocessing",
@@ -233,6 +250,7 @@ py_library(
 
 py_library(
     name = "nets",
+    strict_deps = False,
     deps = [
         ":alexnet",
         ":cifarnet",
@@ -255,6 +273,7 @@ py_library(
 py_library(
     name = "alexnet",
     srcs = ["nets/alexnet.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -273,6 +292,7 @@ py_test(
 py_library(
     name = "cifarnet",
     srcs = ["nets/cifarnet.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -281,6 +301,7 @@ py_library(
 py_library(
     name = "cyclegan",
     srcs = ["nets/cyclegan.py"],
+    strict_deps = False,
     deps = [
         # "//numpy",
         # "//tensorflow",
@@ -300,6 +321,7 @@ py_test(
 py_library(
     name = "dcgan",
     srcs = ["nets/dcgan.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -318,6 +340,7 @@ py_test(
 py_library(
     name = "i3d",
     srcs = ["nets/i3d.py"],
+    strict_deps = False,
     deps = [
         ":i3d_utils",
         ":s3dg",
@@ -339,6 +362,7 @@ py_test(
 py_library(
     name = "i3d_utils",
     srcs = ["nets/i3d_utils.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -347,6 +371,7 @@ py_library(
 py_library(
     name = "inception",
     srcs = ["nets/inception.py"],
+    strict_deps = False,
     deps = [
         ":inception_resnet_v2",
         ":inception_v1",
@@ -359,6 +384,7 @@ py_library(
 py_library(
     name = "inception_utils",
     srcs = ["nets/inception_utils.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -367,6 +393,7 @@ py_library(
 py_library(
     name = "inception_v1",
     srcs = ["nets/inception_v1.py"],
+    strict_deps = False,
     deps = [
         ":inception_utils",
         # "//tensorflow",
@@ -376,6 +403,7 @@ py_library(
 py_library(
     name = "inception_v2",
     srcs = ["nets/inception_v2.py"],
+    strict_deps = False,
     deps = [
         ":inception_utils",
         # "//tensorflow",
@@ -385,6 +413,7 @@ py_library(
 py_library(
     name = "inception_v3",
     srcs = ["nets/inception_v3.py"],
+    strict_deps = False,
     deps = [
         ":inception_utils",
         # "//tensorflow",
@@ -394,6 +423,7 @@ py_library(
 py_library(
     name = "inception_v4",
     srcs = ["nets/inception_v4.py"],
+    strict_deps = False,
     deps = [
         ":inception_utils",
         # "//tensorflow",
@@ -403,6 +433,7 @@ py_library(
 py_library(
     name = "inception_resnet_v2",
     srcs = ["nets/inception_resnet_v2.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -469,6 +500,7 @@ py_test(
 py_library(
     name = "lenet",
     srcs = ["nets/lenet.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -477,6 +509,7 @@ py_library(
 py_library(
     name = "mobilenet_v1",
     srcs = ["nets/mobilenet_v1.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -485,6 +518,7 @@ py_library(
 py_library(
     name = "mobilenet_v2",
     srcs = glob(["nets/mobilenet/*.py"]),
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -501,6 +535,7 @@ py_test(
 
 py_library(
     name = "mobilenet",
+    strict_deps = False,
     deps = [
         ":mobilenet_v1",
         ":mobilenet_v2",
@@ -544,6 +579,7 @@ py_binary(
 py_library(
     name = "nasnet_utils",
     srcs = ["nets/nasnet/nasnet_utils.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -552,6 +588,7 @@ py_library(
 py_library(
     name = "nasnet",
     srcs = ["nets/nasnet/nasnet.py"],
+    strict_deps = False,
     deps = [
         ":nasnet_utils",
         # "//tensorflow",
@@ -582,6 +619,7 @@ py_test(
 py_library(
     name = "pnasnet",
     srcs = ["nets/nasnet/pnasnet.py"],
+    strict_deps = False,
     deps = [
         ":nasnet",
         ":nasnet_utils",
@@ -603,6 +641,7 @@ py_test(
 py_library(
     name = "overfeat",
     srcs = ["nets/overfeat.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -621,6 +660,7 @@ py_test(
 py_library(
     name = "pix2pix",
     srcs = ["nets/pix2pix.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -638,6 +678,7 @@ py_test(
 py_library(
     name = "resnet_utils",
     srcs = ["nets/resnet_utils.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -646,6 +687,7 @@ py_library(
 py_library(
     name = "resnet_v1",
     srcs = ["nets/resnet_v1.py"],
+    strict_deps = False,
     deps = [
         ":resnet_utils",
         # "//tensorflow",
@@ -669,6 +711,7 @@ py_test(
 py_library(
     name = "resnet_v2",
     srcs = ["nets/resnet_v2.py"],
+    strict_deps = False,
     deps = [
         ":resnet_utils",
         # "//tensorflow",
@@ -691,6 +734,7 @@ py_test(
 py_library(
     name = "s3dg",
     srcs = ["nets/s3dg.py"],
+    strict_deps = False,
     deps = [
         ":i3d_utils",
         # "//tensorflow",
@@ -711,6 +755,7 @@ py_test(
 py_library(
     name = "vgg",
     srcs = ["nets/vgg.py"],
+    strict_deps = False,
     deps = [
         # "//tensorflow",
     ],
@@ -729,6 +774,7 @@ py_test(
 py_library(
     name = "nets_factory",
     srcs = ["nets/nets_factory.py"],
+    strict_deps = False,
     deps = [
         ":nets",
         # "//tensorflow",
@@ -749,6 +795,7 @@ py_test(
 py_library(
     name = "train_image_classifier_lib",
     srcs = ["train_image_classifier.py"],
+    strict_deps = False,
     deps = [
         ":dataset_factory",
         ":model_deploy",
@@ -771,6 +818,7 @@ py_binary(
 py_library(
     name = "eval_image_classifier_lib",
     srcs = ["eval_image_classifier.py"],
+    strict_deps = False,
     deps = [
         ":dataset_factory",
         ":nets_factory",
@@ -798,6 +846,7 @@ py_binary(
 py_library(
     name = "export_inference_graph_lib",
     srcs = ["export_inference_graph.py"],
+    strict_deps = False,
     deps = [
         ":dataset_factory",
         ":nets_factory",

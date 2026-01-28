@@ -20,6 +20,7 @@ pytype_library(
 py_library(
     name = "batch_norm_source_op_handler",
     srcs = ["batch_norm_source_op_handler.py"],
+    strict_deps = False,
     tags = ["notap"],
     deps = [
         ":grouping_op_handler",
@@ -45,6 +46,7 @@ py_test(
 py_library(
     name = "concat_op_handler",
     srcs = ["concat_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":grouping_op_handler",
         ":op_handler",
@@ -69,6 +71,7 @@ py_test(
 py_library(
     name = "constant_op_regularizer",
     srcs = ["constant_op_regularizer.py"],
+    strict_deps = False,
     deps = [
         ":generic_regularizers",
         "//third_party/py/tensorflow",
@@ -78,6 +81,7 @@ py_library(
 py_library(
     name = "conv_source_op_handler",
     srcs = ["conv_source_op_handler.py"],
+    strict_deps = False,
     deps = [":group_lasso_base_op_handler"],
 )
 
@@ -98,12 +102,14 @@ py_test(
 py_library(
     name = "conv2d_transpose_source_op_handler",
     srcs = ["conv2d_transpose_source_op_handler.py"],
+    strict_deps = False,
     deps = [":group_lasso_base_op_handler"],
 )
 
 py_library(
     name = "depth_to_space_op_handler",
     srcs = ["depth_to_space_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":op_handler",
         ":op_handler_util",
@@ -125,6 +131,7 @@ py_test(
 py_library(
     name = "depthwise_convolution_op_handler",
     srcs = ["depthwise_convolution_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":grouping_op_handler",
         ":op_handler_util",
@@ -148,6 +155,7 @@ py_test(
 py_library(
     name = "group_lasso_base_op_handler",
     srcs = ["group_lasso_base_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":op_handler",
         ":op_handler_util",
@@ -159,6 +167,7 @@ py_library(
 py_library(
     name = "grouping_op_handler",
     srcs = ["grouping_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":op_handler",
         ":op_handler_util",
@@ -182,6 +191,7 @@ py_test(
 py_library(
     name = "leaf_op_handler",
     srcs = ["leaf_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":op_handler",
         ":op_handler_util",
@@ -205,6 +215,7 @@ py_test(
 py_library(
     name = "matmul_source_op_handler",
     srcs = ["matmul_source_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":group_lasso_base_op_handler",
         "//third_party/py/tensorflow",
@@ -214,6 +225,7 @@ py_library(
 py_library(
     name = "op_handler",
     srcs = ["op_handler.py"],
+    strict_deps = False,
     deps = [
     ],
 )
@@ -221,6 +233,7 @@ py_library(
 py_library(
     name = "op_handler_util",
     srcs = ["op_handler_util.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/tensorflow",
     ],
@@ -243,6 +256,7 @@ py_test(
 py_library(
     name = "op_regularizer_manager",
     srcs = ["op_regularizer_manager.py"],
+    strict_deps = False,
     deps = [
         ":concat_and_slice_regularizers",
         ":constant_op_regularizer",
@@ -278,6 +292,7 @@ py_test(
 py_library(
     name = "output_non_passthrough_op_handler",
     srcs = ["output_non_passthrough_op_handler.py"],
+    strict_deps = False,
     deps = [
         ":op_handler",
         ":op_handler_util",
@@ -313,6 +328,7 @@ py_test(
 py_library(
     name = "logistic_sigmoid_source_op_handler",
     srcs = ["logistic_sigmoid_source_op_handler.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/morph_net/framework:grouping_op_handler",
         "//third_party/py/morph_net/framework:tpu_util",
@@ -340,6 +356,7 @@ py_test(
 py_library(
     name = "probabilistic_grouping_regularizer",
     srcs = ["probabilistic_grouping_regularizer.py"],
+    strict_deps = False,
     deps = [
         "//third_party/py/morph_net/framework:generic_regularizers",
         "//third_party/py/tensorflow",
@@ -404,6 +421,7 @@ pytype_library(
 py_library(
     name = "concat_and_slice_regularizers",
     srcs = ["concat_and_slice_regularizers.py"],
+    strict_deps = False,
     deps = [
         ":generic_regularizers",
         "//third_party/py/tensorflow",
@@ -424,6 +442,7 @@ py_test(
 py_library(
     name = "grouping_regularizers",
     srcs = ["grouping_regularizers.py"],
+    strict_deps = False,
     deps = [
         ":generic_regularizers",
         "//third_party/py/tensorflow",
