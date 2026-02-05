@@ -40,6 +40,7 @@ sh_binary(
 py_binary(
     name = "build_imagenet_data",
     srcs = ["datasets/build_imagenet_data.py"],
+    strict_deps = False,
     deps = [
         # "//numpy",
         # "//tensorflow",
@@ -81,6 +82,7 @@ py_library(
 py_binary(
     name = "download_and_convert_data",
     srcs = ["download_and_convert_data.py"],
+    strict_deps = False,
     deps = [
         ":download_and_convert_cifar10",
         ":download_and_convert_flowers",
@@ -97,6 +99,7 @@ sh_binary(
 py_binary(
     name = "build_visualwakewords_data",
     srcs = ["datasets/build_visualwakewords_data.py"],
+    strict_deps = False,
     deps = [
         ":build_visualwakewords_data_lib",
         # "//tensorflow",
@@ -557,6 +560,7 @@ py_test(
 py_binary(
     name = "mobilenet_v1_train",
     srcs = ["nets/mobilenet_v1_train.py"],
+    strict_deps = False,
     deps = [
         ":dataset_factory",
         ":mobilenet_v1",
@@ -568,6 +572,7 @@ py_binary(
 py_binary(
     name = "mobilenet_v1_eval",
     srcs = ["nets/mobilenet_v1_eval.py"],
+    strict_deps = False,
     deps = [
         ":dataset_factory",
         ":mobilenet_v1",
@@ -808,6 +813,7 @@ py_library(
 py_binary(
     name = "train_image_classifier",
     srcs = ["train_image_classifier.py"],
+    strict_deps = False,
     # WARNING: not supported in bazel; will be commented out by copybara.
     # paropts = ["--compress"],
     deps = [
@@ -830,6 +836,7 @@ py_library(
 py_binary(
     name = "eval_image_classifier",
     srcs = ["eval_image_classifier.py"],
+    strict_deps = False,
     deps = [
         ":eval_image_classifier_lib",
     ],
@@ -838,6 +845,7 @@ py_binary(
 py_binary(
     name = "export_inference_graph",
     srcs = ["export_inference_graph.py"],
+    strict_deps = False,
     # WARNING: not supported in bazel; will be commented out by copybara.
     # paropts = ["--compress"],
     deps = [":export_inference_graph_lib"],
