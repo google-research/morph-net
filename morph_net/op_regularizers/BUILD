@@ -33,6 +33,7 @@ py_library(
 py_test(
     name = "group_lasso_regularizer_test",
     srcs = ["group_lasso_regularizer_test.py"],
+    strict_deps = False,
     deps = [
         ":group_lasso_regularizer",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2

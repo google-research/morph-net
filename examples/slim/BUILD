@@ -192,6 +192,7 @@ py_library(
 py_test(
     name = "model_deploy_test",
     srcs = ["deployment/model_deploy_test.py"],
+    strict_deps = False,
     deps = [
         ":model_deploy",
         # "//numpy",
@@ -286,6 +287,7 @@ py_test(
     name = "alexnet_test",
     size = "medium",
     srcs = ["nets/alexnet_test.py"],
+    strict_deps = False,
     deps = [
         ":alexnet",
         # "//tensorflow",
@@ -315,6 +317,7 @@ py_test(
     name = "cyclegan_test",
     srcs = ["nets/cyclegan_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":cyclegan",
         # "//tensorflow",
@@ -334,6 +337,7 @@ py_test(
     name = "dcgan_test",
     srcs = ["nets/dcgan_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":dcgan",
         # "//tensorflow",
@@ -356,6 +360,7 @@ py_test(
     size = "large",
     srcs = ["nets/i3d_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":i3d",
         # "//tensorflow",
@@ -447,6 +452,7 @@ py_test(
     size = "large",
     srcs = ["nets/inception_v1_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":inception",
         # "//numpy",
@@ -459,6 +465,7 @@ py_test(
     size = "large",
     srcs = ["nets/inception_v2_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":inception",
         # "//numpy",
@@ -471,6 +478,7 @@ py_test(
     size = "large",
     srcs = ["nets/inception_v3_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":inception",
         # "//numpy",
@@ -483,6 +491,7 @@ py_test(
     size = "large",
     srcs = ["nets/inception_v4_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":inception",
         # "//tensorflow",
@@ -494,6 +503,7 @@ py_test(
     size = "large",
     srcs = ["nets/inception_resnet_v2_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":inception",
         # "//tensorflow",
@@ -530,6 +540,7 @@ py_library(
 py_test(
     name = "mobilenet_v2_test",
     srcs = ["nets/mobilenet/mobilenet_v2_test.py"],
+    strict_deps = False,
     deps = [
         ":mobilenet",
         # "//tensorflow",
@@ -550,6 +561,7 @@ py_test(
     size = "large",
     srcs = ["nets/mobilenet_v1_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":mobilenet_v1",
         # "//numpy",
@@ -604,6 +616,7 @@ py_test(
     name = "nasnet_utils_test",
     size = "medium",
     srcs = ["nets/nasnet/nasnet_utils_test.py"],
+    strict_deps = False,
     deps = [
         ":nasnet_utils",
         # "//tensorflow",
@@ -615,6 +628,7 @@ py_test(
     size = "large",
     srcs = ["nets/nasnet/nasnet_test.py"],
     shard_count = 10,
+    strict_deps = False,
     deps = [
         ":nasnet",
         # "//tensorflow",
@@ -637,6 +651,7 @@ py_test(
     size = "large",
     srcs = ["nets/nasnet/pnasnet_test.py"],
     shard_count = 4,
+    strict_deps = False,
     deps = [
         ":pnasnet",
         # "//tensorflow",
@@ -656,6 +671,7 @@ py_test(
     name = "overfeat_test",
     size = "medium",
     srcs = ["nets/overfeat_test.py"],
+    strict_deps = False,
     deps = [
         ":overfeat",
         # "//tensorflow",
@@ -674,6 +690,7 @@ py_library(
 py_test(
     name = "pix2pix_test",
     srcs = ["nets/pix2pix_test.py"],
+    strict_deps = False,
     deps = [
         ":pix2pix",
         # "//tensorflow",
@@ -704,6 +721,7 @@ py_test(
     size = "medium",
     srcs = ["nets/resnet_v1_test.py"],
     shard_count = 2,
+    strict_deps = False,
     deps = [
         ":resnet_utils",
         ":resnet_v1",
@@ -728,6 +746,7 @@ py_test(
     size = "medium",
     srcs = ["nets/resnet_v2_test.py"],
     shard_count = 2,
+    strict_deps = False,
     deps = [
         ":resnet_utils",
         ":resnet_v2",
@@ -751,6 +770,7 @@ py_test(
     size = "large",
     srcs = ["nets/s3dg_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":s3dg",
         # "//tensorflow",
@@ -770,6 +790,7 @@ py_test(
     name = "vgg_test",
     size = "medium",
     srcs = ["nets/vgg_test.py"],
+    strict_deps = False,
     deps = [
         ":vgg",
         # "//tensorflow",
@@ -791,6 +812,7 @@ py_test(
     size = "large",
     srcs = ["nets/nets_factory_test.py"],
     shard_count = 3,
+    strict_deps = False,
     deps = [
         ":nets_factory",
         # "//tensorflow",
@@ -867,6 +889,7 @@ py_test(
     name = "export_inference_graph_test",
     size = "medium",
     srcs = ["export_inference_graph_test.py"],
+    strict_deps = False,
     tags = [
         "manual",
     ],

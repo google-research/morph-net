@@ -29,6 +29,7 @@ pytype_library(
 py_test(
     name = "activation_regularizer_test",
     srcs = ["activation_regularizer_test.py"],
+    strict_deps = False,
     deps = [
         ":activation_regularizer",
         ":resource_function",
@@ -50,6 +51,7 @@ pytype_library(
 py_test(
     name = "cost_calculator_test",
     srcs = ["cost_calculator_test.py"],
+    strict_deps = False,
     deps = [
         ":cost_calculator",
         ":resource_function",
@@ -90,6 +92,7 @@ py_test(
     name = "flop_regularizer_test",
     srcs = ["flop_regularizer_test.py"],
     shard_count = 2,
+    strict_deps = False,
     deps = [
         ":flop_regularizer",
         ":resource_function",
@@ -129,6 +132,7 @@ py_test(
     name = "latency_regularizer_test",
     srcs = ["latency_regularizer_test.py"],
     shard_count = 4,
+    strict_deps = False,
     deps = [
         ":flop_regularizer",
         ":latency_regularizer",
@@ -166,6 +170,7 @@ pytype_library(
 py_test(
     name = "model_size_regularizer_test",
     srcs = ["model_size_regularizer_test.py"],
+    strict_deps = False,
     deps = [
         ":model_size_regularizer",
         ":resource_function",
@@ -191,6 +196,7 @@ pytype_library(
 py_test(
     name = "resource_function_test",
     srcs = ["resource_function_test.py"],
+    strict_deps = False,
     deps = [
         ":resource_function",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -220,6 +226,7 @@ pytype_library(
 py_test(
     name = "logistic_sigmoid_regularizers_test",
     srcs = ["logistic_sigmoid_regularizers_test.py"],
+    strict_deps = False,
     deps = [
         ":flop_regularizer",
         ":logistic_sigmoid_regularizer",

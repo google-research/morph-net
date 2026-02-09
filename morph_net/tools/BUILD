@@ -22,6 +22,7 @@ pytype_library(
 py_test(
     name = "structure_exporter_test",
     srcs = ["structure_exporter_test.py"],
+    strict_deps = False,
     deps = [
         ":structure_exporter",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
@@ -55,6 +56,7 @@ py_test(
     srcs = [
         "configurable_ops_test.py",
     ],
+    strict_deps = False,
     tags = ["notap"],
     deps = [
         ":configurable_ops",
