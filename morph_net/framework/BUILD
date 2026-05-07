@@ -1,5 +1,4 @@
 load("//devtools/python/blaze:pytype.bzl", "pytype_library")
-load("//devtools/python/blaze:strict.bzl", "py_strict_test")
 load("//third_party/bazel_rules/rules_python/python:py_library.bzl", "py_library")
 load("//third_party/bazel_rules/rules_python/python:py_test.bzl", "py_test")
 
@@ -478,7 +477,7 @@ py_test(
     ],
 )
 
-py_strict_test(
+py_test(
     name = "op_handlers_test",
     srcs = ["op_handlers_test.py"],
     deps = [
@@ -488,7 +487,7 @@ py_strict_test(
     ],
 )
 
-py_strict_test(
+py_test(
     name = "tpu_util_test",
     srcs = ["tpu_util_test.py"],
     deps = [
