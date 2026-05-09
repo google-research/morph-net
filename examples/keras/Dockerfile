@@ -36,5 +36,5 @@ RUN cd /usr/local/bin && \
     ln -s /usr/bin/pip3 pip && \
     pip install --upgrade pip setuptools
 
-RUN pip install numpy==1.16.5 tensorflow-gpu==1.15.0 contextlib2==0.6.0 tqdm==4.36.1
-RUN pip install tensorflow-datasets==1.2.0
+RUN pip install --no-cache-dir numpy==1.16.5 tensorflow-gpu==1.15.0 contextlib2==0.6.0 tqdm==4.36.1
+RUN pip install --no-cache-dir tensorflow-datasets==1.2.0
