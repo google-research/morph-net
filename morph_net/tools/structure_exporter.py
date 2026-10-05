@@ -122,7 +122,7 @@ class StructureExporter(object):
     Args:
       f: a file object where alive counts are saved.
     """
-    f.write(format_structure(self.get_alive_counts()))  # pytype: disable=wrong-arg-types
+    f.write(format_structure(self.get_alive_counts()))  # pyrefly: ignore[no-matching-overload]
 
   def create_file_and_save_alive_counts(self, base_dir: Text,
                                         global_step: int) -> None:
@@ -144,7 +144,7 @@ class StructureExporter(object):
       # Probably already exists. If not, we'll see the error in the next line.
       pass
     with tf.gfile.Open(os.path.join(directory, current_filename), 'w') as f:
-      self.save_alive_counts(f)  # pytype: disable=wrong-arg-types
+      self.save_alive_counts(f)
 
 
 # TODO(p1): maybe check that we still end up with unique names after prefix
