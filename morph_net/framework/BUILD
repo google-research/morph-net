@@ -1,4 +1,3 @@
-load("//devtools/python/blaze:pytype.bzl", "pytype_library")
 load("//third_party/bazel_rules/rules_python/python:py_library.bzl", "py_library")
 load("//third_party/bazel_rules/rules_python/python:py_test.bzl", "py_test")
 
@@ -9,9 +8,11 @@ package(
 
 licenses(["notice"])
 
-pytype_library(
+py_library(
     name = "generic_regularizers",
     srcs = ["generic_regularizers.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
     ],
 )
@@ -404,24 +405,28 @@ py_test(
     ],
 )
 
-pytype_library(
+py_library(
     name = "op_handler_decorator",
     srcs = ["op_handler_decorator.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [":op_handler"],
 )
 
-pytype_library(
+py_library(
     name = "tpu_util",
     srcs = ["tpu_util.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         "//third_party/py/tensorflow",
     ],
 )
 
-pytype_library(
+py_library(
     name = "op_handlers",
     srcs = ["op_handlers.py"],
-    strict_deps = True,
+    type_checking = True,
     deps = [
         ":concat_op_handler",
         ":depthwise_convolution_op_handler",

@@ -1,4 +1,4 @@
-load("//devtools/python/blaze:pytype.bzl", "pytype_library")
+load("//third_party/bazel_rules/rules_python/python:py_library.bzl", "py_library")
 load("//third_party/bazel_rules/rules_python/python:py_test.bzl", "py_test")
 
 package(
@@ -8,9 +8,11 @@ package(
 
 licenses(["notice"])
 
-pytype_library(
+py_library(
     name = "activation_regularizer",
     srcs = ["activation_regularizer.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         ":cost_calculator",
         ":resource_function",
@@ -42,9 +44,11 @@ py_test(
     ],
 )
 
-pytype_library(
+py_library(
     name = "cost_calculator",
     srcs = ["cost_calculator.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = ["//third_party/py/tensorflow"],
 )
 
@@ -69,9 +73,11 @@ py_test(
     ],
 )
 
-pytype_library(
+py_library(
     name = "flop_regularizer",
     srcs = ["flop_regularizer.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         ":cost_calculator",
         ":logistic_sigmoid_regularizer",
@@ -109,9 +115,11 @@ py_test(
     ],
 )
 
-pytype_library(
+py_library(
     name = "latency_regularizer",
     srcs = ["latency_regularizer.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         ":cost_calculator",
         ":logistic_sigmoid_regularizer",
@@ -148,9 +156,11 @@ py_test(
     ],
 )
 
-pytype_library(
+py_library(
     name = "model_size_regularizer",
     srcs = ["model_size_regularizer.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         ":cost_calculator",
         ":logistic_sigmoid_regularizer",
@@ -182,9 +192,11 @@ py_test(
     ],
 )
 
-pytype_library(
+py_library(
     name = "resource_function",
     srcs = ["resource_function.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         ":cost_calculator",
         "//third_party/py/morph_net/framework:op_handler_util",
@@ -208,9 +220,11 @@ py_test(
     ],
 )
 
-pytype_library(
+py_library(
     name = "logistic_sigmoid_regularizer",
     srcs = ["logistic_sigmoid_regularizer.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         "//third_party/py/morph_net/framework:generic_regularizers",
         "//third_party/py/morph_net/framework:logistic_sigmoid_source_op_handler",

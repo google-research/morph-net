@@ -1,4 +1,3 @@
-load("//devtools/python/blaze:pytype.bzl", "pytype_library")
 load("//third_party/bazel_rules/rules_python/python:py_library.bzl", "py_library")
 load("//third_party/bazel_rules/rules_python/python:py_test.bzl", "py_test")
 
@@ -9,9 +8,11 @@ package(
 
 licenses(["notice"])
 
-pytype_library(
+py_library(
     name = "structure_exporter",
     srcs = ["structure_exporter.py"],
+    strict_deps = False,
+    type_checking = True,
     deps = [
         "//third_party/py/morph_net/framework:op_regularizer_manager",
         "//third_party/py/numpy",
