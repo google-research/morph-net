@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import mock
+from unittest import mock
 
 from morph_net.framework import depth_to_space_op_handler
 from morph_net.framework import op_regularizer_manager as orm

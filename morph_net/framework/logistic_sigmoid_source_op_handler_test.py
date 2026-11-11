@@ -10,13 +10,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from absl.testing import parameterized
-import mock
+from unittest import mock
 
+from absl.testing import parameterized
 from morph_net.framework import logistic_sigmoid_source_op_handler as ls_source_op_handler
 from morph_net.framework import op_regularizer_manager as orm
 from morph_net.probabilistic_gating import activation_gating
-
 import scipy as sp
 import tensorflow.compat.v1 as tf
 

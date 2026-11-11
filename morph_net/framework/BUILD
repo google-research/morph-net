@@ -37,7 +37,6 @@ py_test(
         ":batch_norm_source_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -63,7 +62,6 @@ py_test(
         ":concat_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -96,7 +94,6 @@ py_test(
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//third_party/py/absl/testing:parameterized",
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/layers:layers_py",
     ],
@@ -127,7 +124,6 @@ py_test(
         ":depth_to_space_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
     ],
 )
@@ -150,7 +146,6 @@ py_test(
         ":depthwise_convolution_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -187,7 +182,6 @@ py_test(
         ":grouping_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -212,7 +206,6 @@ py_test(
         ":leaf_op_handler",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -254,7 +247,6 @@ py_test(
         ":op_handler_util",
         ":op_regularizer_manager",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -316,7 +308,6 @@ py_test(
         ":op_regularizer_manager",
         ":output_non_passthrough_op_handler",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
-        "//third_party/py/mock",
         "//third_party/py/tensorflow",
         "//third_party/tensorflow/contrib/framework:framework_py",
         "//third_party/tensorflow/contrib/layers:layers_py",
@@ -355,7 +346,6 @@ py_test(
         ":logistic_sigmoid_source_op_handler",
         "//learning/brain/public:disable_tf2",  # build_cleaner: keep; go/disable_tf2
         "//testing/pybase:parameterized",
-        "//third_party/py/mock",
         "//third_party/py/morph_net/framework:op_regularizer_manager",
         "//third_party/py/morph_net/probabilistic_gating:activation_gating",
         "//third_party/py/scipy",
